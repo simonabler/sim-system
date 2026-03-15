@@ -1,0 +1,97 @@
+<div class="row animated fadeIn">
+    <div class="col-12 col-md-5 col-xl-4 pl-0 pl-md-3 pr-0 pr-md-3" style="max-width: 460px; min-width: 150px;">
+        <div class="card">
+            <div class="card-header ">
+                <ul class="nav nav-pills card-header-pills float-right">
+                    <li class="nav-item">
+                        <a class="btn btn-danger"  routerLink="edit/new"><i class="fa fa-plus"></i></a>
+                    </li>
+                </ul>
+            </div>
+            <div class="card-body ">
+                <div class="col-12 col-md-5" style="max-width: 460px;">
+                    <form class="form-horizontal" [formGroup]="SearchForm">
+                        <div class="form-group row">
+                            <div class="col-12">
+                                <div class="input-group">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text samewidth">Suche:</span>
+                                    </div>
+                                    <input type="text" class="form-control" formControlName="search"
+                                        [ngClass]="{'is-invalid':submitted && f.search.errors}" />
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="row animated fadeIn">
+    <div class="col-12 col-md-4 col-xl-4 pl-0 pl-md-3 pr-0 pr-md-3"   *ngFor="let customer of (Customers$ | async)">
+        <div class="card">
+            <div class="card-header ">
+                <div class="row justify-content-between align-items-center">
+                    <div class="col-8">
+                        <span *ngIf="customer.companyName!==''">{{customer.companyName}} <br></span>
+                        {{customer.lastName}} {{customer.firstName}}
+                    </div>
+
+
+                    <div class="col my-edit  ">
+                        <a type="button" class="btn btn-primary " [routerLink]="['edit',customer.id]">
+                            <i class="fa fa-edit"></i>
+                        </a>
+                        <a type="button" class="btn btn-primary " [routerLink]="['detail',customer.id]">
+                            Detail
+                        </a>
+                    </div>
+
+                </div>
+
+            </div>
+            <div class="card-body ">
+
+                <table style="width: 100%;">
+                    <tbody>
+                        
+                        <tr>
+                            <td> {{customer.address}} </td>
+                        </tr>
+                        <tr>
+                            <td> {{customer.postcode}} {{customer.country}} </td>
+                        </tr>
+                        <tr>
+                            <td> {{customer.phoneCompany}} </td>
+                        </tr>
+                        <tr>
+                            <td> {{customer.phonePrivate}} </td>
+                        </tr>
+                        <tr>
+                            <td> {{customer.email}}</td>
+                        </tr>
+                        <tr>
+                            <td> {{customer.uid}} </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+</div>
+<!--
+   id: number;
+  email: string;
+  firstName: string;
+  lastName: string;
+  companyName: string;
+  phoneCompany: string;
+  phonePrivate: string;
+  
+  adress: string;
+  postcode: string;
+  country: string;
+  uid: string;
+-->

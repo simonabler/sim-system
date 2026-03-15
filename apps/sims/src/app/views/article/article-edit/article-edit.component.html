@@ -1,0 +1,184 @@
+<div class="modal-dialog" role="document">
+    <div class="modal-content">
+        <div class="modal-body">
+            <form class="form-horizontal" [formGroup]="ArticelForm">
+                <div class="form-group row">
+                    <div class="col-12">
+                        <div class="input-group">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text samewidth">Name:</span>
+                            </div>
+
+                            <input type="text" class="form-control" formControlName="name"
+                                [ngClass]="{'is-invalid':submitted && f.name.errors}" />
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group row">
+                    <div class="col-12">
+                        <div class="input-group">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text samewidth">Typ:</span>
+                            </div>
+
+                            <input type="text" class="form-control" formControlName="type"
+                                [ngClass]="{'is-invalid':submitted && f.type.errors}" />
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group row">
+                    <div class="col-12">
+                        <div class="input-group">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text samewidth">Barcode:</span>
+                            </div>
+
+                            <input type="text" class="form-control" formControlName="code"
+                                [ngClass]="{'is-invalid':submitted && f.code.errors}" />
+                        </div>
+                    </div>
+                </div>
+
+
+                <div class="form-group row">
+                    <div class="col-12">
+                        <div class="input-group">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text samewidth">Art. Nummer:</span>
+                            </div>
+
+                            <input type="text" class="form-control" formControlName="artNumber"
+                                [ngClass]="{'is-invalid':submitted && f.artNumber.errors}" />
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group row">
+                    <div class="col-12">
+                        <div class="input-group">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text samewidth">Hersteller:</span>
+                            </div>
+
+                            <input type="text" class="form-control" formControlName="supplier"
+                                [ngClass]="{'is-invalid':submitted && f.supplier.errors}" />
+                        </div>
+                    </div>
+                </div>
+
+
+
+                <div class="form-group row">
+                    <div class="col-12">
+                        <div class="input-group">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text ">€</span>
+                            </div>
+                            <input type="number" class="form-control" formControlName="price"
+                                [ngClass]="{'is-invalid':submitted && f.price.errors}" />
+
+                            <div class="input-group-append">
+                                <button class="input-group-text " type="button">Einheit</button>
+                            </div>
+
+                            <input type="text" class="form-control" formControlName="unit"
+                                [ngClass]="{'is-invalid':submitted && f.unit.errors}" />
+                        </div>
+                    </div>
+                </div>
+
+
+
+                <div class="form-group row">
+                    <div class="col-12">
+                        <div class="input-group">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text samewidth">Gruppe:</span>
+                            </div>
+
+                            <ng-select [items]="ArticleGroups$ | async" bindLabel="name" class="form-control"
+                                formControlName="articleGroup" placeholder="Wähle Artikelgruppe"
+                                [ngClass]="{'is-invalid':submitted && farticlegroup.errors}">
+
+                            </ng-select>
+
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group row">
+                    <div class="col-5">
+                        Einzelposition:
+                    </div>
+                    <div class="col-5">
+
+
+                            <label class="switch switch-pill switch-success">
+                                <input type="checkbox" class="switch-input" formControlName="singlePos"
+                                    [ngClass]="{'is-invalid':submitted && f.singlePos.errors}">
+                                <span class="switch-slider"></span>
+                            </label>
+                        </div>
+
+                </div>
+
+                <div class="form-group row">
+                    <div class="col-5">
+                        Lagerstand EIN:
+                    </div>
+                    <div class="col-5">
+
+   
+
+                            <label class="switch switch-pill switch-success">
+                                <input type="checkbox" class="switch-input" formControlName="trackStock"
+                                    [ngClass]="{'is-invalid':submitted && f.trackStock.errors}">
+                                <span class="switch-slider"></span>
+                            </label>
+
+                    </div>
+                </div>
+
+                <div class="form-group row">
+                    <div class="col-5">
+                        Kein Grundrabatt:
+                    </div>
+                    <div class="col-5">
+
+                            <label class="switch switch-pill switch-success">
+                                <input type="checkbox" class="switch-input" formControlName="noDiscount"
+                                    [ngClass]="{'is-invalid':submitted && f.noDiscount.errors}">
+                                <span class="switch-slider"></span>
+                            </label>
+                   
+                    </div>
+                </div>
+
+
+                <hr>
+                <div class="form-group row">
+                    <div class="col-12">
+                        <div class="input-group">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text samewidth">Beschreibung:</span>
+                            </div>
+
+                            <textarea class="form-control" formControlName="description"
+                                [ngClass]="{'is-invalid':submitted && f.description.errors}"></textarea>
+                        </div>
+                    </div>
+                </div>
+
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-warning mr-auto" data-dismiss="modal" *ngIf='f.id.value'
+                (click)="delete()">Löschen</button>
+            <button type="button" class="btn btn-secondary" data-dismiss="modal"
+                (click)="close()">Abbrechen</button>
+            <button type="button" class="btn btn-primary" (click)="save()">Speichern</button>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,253 @@
+<div class="dashboard-shell animated fadeIn">
+  <div class="toolbar card">
+    <div class="toolbar-row">
+      <div class="toolbar-item">
+        <label>Zeitraum</label>
+        <select class="form-control" [(ngModel)]="days" (change)="onApplyFilters()">
+          <option [ngValue]="7">7 Tage</option>
+          <option [ngValue]="14">14 Tage</option>
+          <option [ngValue]="30">30 Tage</option>
+          <option [ngValue]="60">60 Tage</option>
+          <option [ngValue]="90">90 Tage</option>
+        </select>
+      </div>
+
+      <div class="toolbar-item">
+        <label>Kritischer Bestand</label>
+        <input
+          type="number"
+          min="0"
+          class="form-control"
+          [(ngModel)]="threshold"
+          (change)="onApplyFilters()" />
+      </div>
+
+      <div class="toolbar-item">
+        <label>Artikelgruppe</label>
+        <select class="form-control" [(ngModel)]="articleGroupId" (change)="onApplyFilters()">
+          <option [ngValue]="null">Alle</option>
+          <option *ngFor="let group of articleGroups" [ngValue]="group.id">
+            {{ group.name }}
+          </option>
+        </select>
+      </div>
+
+      <div class="toolbar-item">
+        <label>Auto-Refresh</label>
+        <select class="form-control" [(ngModel)]="autoRefreshSeconds" (change)="onAutoRefreshChange()">
+          <option [ngValue]="0">Aus</option>
+          <option [ngValue]="30">30s</option>
+          <option [ngValue]="60">60s</option>
+          <option [ngValue]="120">120s</option>
+        </select>
+      </div>
+
+      <div class="toolbar-actions">
+        <button class="btn btn-primary" (click)="refreshNow()">Refresh</button>
+        <button class="btn btn-outline-primary" (click)="goToInventory()">Inventur</button>
+        <button class="btn btn-outline-secondary" (click)="goToArticle()">Artikel</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="status" *ngIf="loading">Dashboard wird geladen...</div>
+  <div class="status error" *ngIf="errorMessage">{{ errorMessage }}</div>
+
+  <ng-container *ngIf="!loading && summary">
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-label">Kritischer Bestand</div>
+        <div class="kpi-value">{{ summary.kpis.lowStockCount }}</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Nicht auf Lager</div>
+        <div class="kpi-value danger">{{ summary.kpis.outOfStockCount }}</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Offene Lieferscheine</div>
+        <div class="kpi-value">{{ summary.kpis.openSlipsheets }}</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Geaenderte Lieferscheine</div>
+        <div class="kpi-value">{{ summary.kpis.changedSlipsheets }}</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Offene Rechnungen</div>
+        <div class="kpi-value">{{ summary.kpis.openBills }}</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Inventur heute</div>
+        <div class="kpi-value">{{ summary.kpis.inventoryAdjustmentsTodayCount }}</div>
+        <div class="kpi-sub">
+          Delta: {{ summary.kpis.inventoryAdjustmentsTodayDelta | number: '1.0-2' }}
+        </div>
+      </div>
+    </div>
+
+    <div class="panel-grid">
+      <div class="panel card">
+        <div class="panel-head">
+          <h5>Low-Stock Liste</h5>
+          <button class="btn btn-sm btn-link" (click)="goToArticle()">Alle Artikel</button>
+        </div>
+        <div class="panel-body">
+          <div class="empty" *ngIf="!summary.lowStockItems?.length">Keine kritischen Artikel.</div>
+          <table class="table table-sm table-hover" *ngIf="summary.lowStockItems?.length">
+            <thead>
+              <tr>
+                <th>Artikel</th>
+                <th>Code</th>
+                <th>Bestand</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let item of summary.lowStockItems">
+                <td>
+                  <div>{{ item.name }}</div>
+                  <small class="text-muted">{{ item.articleGroupName || '-' }}</small>
+                </td>
+                <td>{{ item.code }}</td>
+                <td [class.text-danger]="item.stock <= 0">
+                  {{ item.stock | number: '1.0-2' }} {{ item.unit }}
+                </td>
+                <td class="text-right">
+                  <button class="btn btn-sm btn-outline-primary" (click)="goToArticle(item.code)">
+                    Oeffnen
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="panel card">
+        <div class="panel-head">
+          <h5>Dokumenten-Queue</h5>
+        </div>
+        <div class="panel-body doc-columns">
+          <div class="doc-col">
+            <h6>Offene Lieferscheine</h6>
+            <div class="empty" *ngIf="!summary.documentQueue?.openSlipsheets?.length">Keine</div>
+            <button
+              class="doc-item"
+              *ngFor="let item of summary.documentQueue?.openSlipsheets"
+              (click)="goToCustomer(item.customerId)">
+              <span>#{{ item.slipsheetnumber || item.id }}</span>
+              <small>{{ item.customerName }}</small>
+            </button>
+          </div>
+          <div class="doc-col">
+            <h6>Geaenderte Lieferscheine</h6>
+            <div class="empty" *ngIf="!summary.documentQueue?.changedSlipsheets?.length">Keine</div>
+            <button
+              class="doc-item"
+              *ngFor="let item of summary.documentQueue?.changedSlipsheets"
+              (click)="goToCustomer(item.customerId)">
+              <span>#{{ item.slipsheetnumber || item.id }}</span>
+              <small>{{ item.customerName }}</small>
+            </button>
+          </div>
+          <div class="doc-col">
+            <h6>Offene Rechnungen</h6>
+            <div class="empty" *ngIf="!summary.documentQueue?.openBills?.length">Keine</div>
+            <button
+              class="doc-item"
+              *ngFor="let item of summary.documentQueue?.openBills"
+              (click)="goToBills()">
+              <span>R{{ item.billNumber }}</span>
+              <small>{{ item.customerName }}</small>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel-grid">
+      <div class="panel card">
+        <div class="panel-head">
+          <h5>Trend: Verbrauch und Inventur-Delta</h5>
+        </div>
+        <div class="panel-body">
+          <div class="trend-legend">
+            <span><i class="dot outgoing"></i> Verbrauch</span>
+            <span><i class="dot adjust"></i> Inventur-Delta</span>
+          </div>
+          <div class="empty" *ngIf="!trendPoints?.length">
+            Keine Trenddaten verfuegbar.
+          </div>
+          <div class="empty" *ngIf="trendPoints?.length && !hasTrendActivity">
+            Keine Bewegungen im gewaehlten Zeitraum.
+          </div>
+          <div class="trend-chart" *ngIf="trendPoints?.length">
+            <div class="trend-col" *ngFor="let point of trendPoints">
+              <div class="bar-stack">
+                <div class="bar-slot">
+                  <div
+                    class="bar outgoing"
+                    [style.height.px]="getOutgoingHeightPx(point.outgoing)"></div>
+                </div>
+                <div class="bar-slot">
+                  <div
+                    class="bar adjust"
+                    [class.negative]="point.adjustmentDelta < 0"
+                    [style.height.px]="getAdjustmentHeightPx(point.adjustmentDelta)"></div>
+                </div>
+              </div>
+              <div class="label">{{ point.label }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel card">
+        <div class="panel-head">
+          <h5>Top-Bewegungen</h5>
+        </div>
+        <div class="panel-body movers-grid">
+          <div>
+            <h6>Top 7 Tage</h6>
+            <div class="empty" *ngIf="!summary.topMovingArticles7?.length">Keine Daten</div>
+            <div class="mover-row" *ngFor="let item of summary.topMovingArticles7">
+              <span>{{ item.name }}</span>
+              <strong>{{ item.totalAmount | number: '1.0-2' }} {{ item.unit }}</strong>
+            </div>
+          </div>
+          <div>
+            <h6>Top 30 Tage</h6>
+            <div class="empty" *ngIf="!summary.topMovingArticles30?.length">Keine Daten</div>
+            <div class="mover-row" *ngFor="let item of summary.topMovingArticles30">
+              <span>{{ item.name }}</span>
+              <strong>{{ item.totalAmount | number: '1.0-2' }} {{ item.unit }}</strong>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel card">
+      <div class="panel-head">
+        <h5>Letzte Inventuraktivitaeten</h5>
+      </div>
+      <div class="panel-body">
+        <div class="empty" *ngIf="!summary.recentInventoryActivities?.length">
+          Keine Inventuraktivitaeten im gewaehlten Zeitraum.
+        </div>
+        <div class="inventory-line" *ngFor="let item of summary.recentInventoryActivities">
+          <div>
+            <strong>{{ item.article?.name || 'Artikel' }}</strong>
+            <small class="text-muted">{{ item.article?.code || '-' }}</small>
+          </div>
+          <div>{{ item.createdAt | date: 'dd.MM.yyyy HH:mm' }}</div>
+          <div>
+            Neu: {{ item.amountNew | number: '1.0-2' }}
+            <span [class.text-danger]="item.diff > 0" [class.text-success]="item.diff < 0">
+              (Delta {{ item.diff | number: '1.0-2' }})
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </ng-container>
+</div>

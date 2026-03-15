@@ -1,0 +1,9 @@
+.samewidth {
+    min-width: 180px;
+}
+
+@media (max-width: 480px) {
+    .smallbreak .form-control {
+        min-width: 149px;
+    }
+}

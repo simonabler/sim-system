@@ -1,0 +1,56 @@
+services:
+  db:
+    image: postgres:17-alpine
+    container_name: sims-db-dev
+    env_file:
+      - ./conf/postgres/.env
+    volumes:
+      - sims-db-dev:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U user -d sims']
+      interval: 10s
+      timeout: 10s
+      retries: 5
+    ports:
+      - "5432:5432"
+    networks:
+      - sims-network
+
+  backend:
+    build:
+      context: .
+      dockerfile: dockerfiles/Dockerfile.backend
+    container_name: sims-backend-dev
+    env_file:
+      - .env
+    volumes:
+      - sims-uploads:/app/uploads
+    environment:
+      UPLOAD_DIR: /app/uploads/avatars
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "3000:3000"
+    networks:
+      - sims-network
+
+  frontend:
+    build:
+      context: .
+      dockerfile: dockerfiles/Dockerfile.frontend
+    container_name: sims-frontend-dev
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - sims-network
+
+networks:
+  sims-network:
+    driver: bridge
+
+volumes:
+  sims-uploads:
+  sims-db-dev:

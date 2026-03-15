@@ -1,0 +1,57 @@
+// Here you can add other styles
+@import '~ngx-toastr/toastr';
+// Mixin itself
+@mixin clearfix() {
+   &::after {
+     display: block;
+     content: "";
+     clear: both;
+   }
+ }
+ 
+
+
+.form-control.ng-select{
+    padding: 0;
+  
+    .ng-select-container {
+       height: calc(1.5em + 0.75rem);
+       border: none;
+       min-height: unset;
+    }
+  }
+
+/*
+  *::selection {
+    background:transparent;
+}
+*/
+
+.x-anchor-menu-item .x-image img {
+  -webkit-user-drag: none;
+  -khtml-user-drag: none;
+  -moz-user-drag: none;
+  -o-user-drag: none;
+ /* user-drag: none;*/
+}
+
+.extern-alert {
+  background-color: tomato !important;
+}
+
+.extern-warn {
+  background-color: gold !important;
+}
+
+
+.extern-alert {
+  background-color: tomato !important;
+}
+
+
+.nav .media-mobile-full{
+  @media screen and (max-width: 791px) {
+    min-width: 100vw !important;
+  }
+}
+

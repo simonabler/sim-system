@@ -1,0 +1,46 @@
+services:
+  frontend:
+    image: sims-frontend:latest
+    container_name: sims-frontend
+    restart: unless-stopped
+    environment:
+      # Absoluter Backend-URL fuer SSR HTTP-Calls (Node-seitig, kein Browser-Proxy verfuegbar)
+      BACKEND_URL: http://backend:3000
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.sims-frontend.tls=true"
+      - "traefik.http.routers.sims-frontend.tls.certresolver=letsEncrypt"
+      - "traefik.http.routers.sims-frontend.entrypoints=websecure"
+      - "traefik.http.routers.sims-frontend.rule=Host(`sims.abler.tirol`) && PathPrefix(`/`)"
+      - "traefik.http.routers.sims-frontend.priority=10"
+      - "traefik.http.routers.sims-frontend.middlewares=sims-frontend-compress"
+      - "traefik.http.middlewares.sims-frontend-compress.compress=true"
+      # Interner Container-Port des Frontends (ggf. anpassen)
+      - "traefik.http.services.sims-frontend.loadbalancer.server.port=80"
+
+  backend:
+    image: sims-backend:latest
+    container_name: sims-backend
+    restart: unless-stopped
+    volumes:
+      - ./.env:/app/.env
+      - /home/simon/sims/data:/data
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.sims-backend.tls=true"
+      - "traefik.http.routers.sims-backend.tls.certresolver=letsEncrypt"
+      - "traefik.http.routers.sims-backend.entrypoints=websecure"
+      - "traefik.http.routers.sims-backend.rule=Host(`sims.abler.tirol`) && PathPrefix(`/api`)"
+      # Strippt das Prefix /api bevor es an den Service geht
+     # - "traefik.http.middlewares.sims-backend-strip.stripprefixregex.regex=/api"
+     # - "traefik.http.routers.sims-backend.middlewares=sims-backend-strip@docker"
+      - "traefik.http.routers.sims-backend.priority=100"
+      # Interner Container-Port des Backends (ggf. anpassen)
+      - "traefik.http.services.sims-backend.loadbalancer.server.port=3000"
+    networks:
+      - postgresql
+
+networks:
+  postgresql:
+    name: NET_POSTGRESQL
+    external: true
