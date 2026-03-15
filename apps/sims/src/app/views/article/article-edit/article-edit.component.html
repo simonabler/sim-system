@@ -100,7 +100,7 @@
 
                             <ng-select [items]="ArticleGroups$ | async" bindLabel="name" class="form-control"
                                 formControlName="articleGroup" placeholder="Wähle Artikelgruppe"
-                                [ngClass]="{'is-invalid':submitted && farticlegroup.errors}">
+                                >
 
                             </ng-select>
 
@@ -115,11 +115,7 @@
                     <div class="col-5">
 
 
-                            <label class="switch switch-pill switch-success">
-                                <input type="checkbox" class="switch-input" formControlName="singlePos"
-                                    [ngClass]="{'is-invalid':submitted && f.singlePos.errors}">
-                                <span class="switch-slider"></span>
-                            </label>
+                            <input type="checkbox" formControlName="singlePos" class="form-check-input">
                         </div>
 
                 </div>
@@ -132,11 +128,7 @@
 
    
 
-                            <label class="switch switch-pill switch-success">
-                                <input type="checkbox" class="switch-input" formControlName="trackStock"
-                                    [ngClass]="{'is-invalid':submitted && f.trackStock.errors}">
-                                <span class="switch-slider"></span>
-                            </label>
+                            <input type="checkbox" formControlName="trackStock" class="form-check-input">
 
                     </div>
                 </div>
@@ -147,11 +139,7 @@
                     </div>
                     <div class="col-5">
 
-                            <label class="switch switch-pill switch-success">
-                                <input type="checkbox" class="switch-input" formControlName="noDiscount"
-                                    [ngClass]="{'is-invalid':submitted && f.noDiscount.errors}">
-                                <span class="switch-slider"></span>
-                            </label>
+                            <input type="checkbox" formControlName="noDiscount" class="form-check-input">
                    
                     </div>
                 </div>

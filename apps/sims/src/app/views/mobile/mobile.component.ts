@@ -1,23 +1,9 @@
-import { Component, OnInit } from '@angular/core';
-import { HostListener } from '@angular/core';
-
-
+import { Component } from '@angular/core';
+import { RouterOutlet } from '@angular/router';
 @Component({
-    selector: 'app-mobile',
-    templateUrl: './mobile.component.html',
-    styleUrls: ['./mobile.component.scss']
+  selector: 'app-mobile',
+  standalone: true,
+  imports: [RouterOutlet],
+  template: `<router-outlet />`,
 })
-export class MobileComponent implements OnInit {
-
-
-
-    constructor() {
-    }
-
-
-
-    ngOnInit() {
-    }
-
-
-}
+export class MobileComponent {}

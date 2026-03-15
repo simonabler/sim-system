@@ -4,7 +4,7 @@
             <div class="card-header ">
                 <ul class="nav nav-pills card-header-pills float-right">
                     <li class="nav-item">
-                        <button class="btn btn-danger" (click)="openModal(null)"><i class="fa fa-plus"></i></button>
+                        <button class="btn btn-danger" (click)="openModal(null)">+ Neu</button>
                     </li>
 
                     <li class="nav-item ml-2">
@@ -52,7 +52,6 @@
             </div>
         </div>
     </div>
-</div>
 
 <div class="row animated fadeIn">
 
@@ -117,11 +116,12 @@
 -->
 
 
-<!-- Modal -->
-<div bsModal class="modal fade in" #exampleModal="bs-modal" tabindex="-1" role="dialog"
-    aria-labelledby="exampleModalLabel" aria-hidden="true">
-    <app-article-edit [(article)]="selectedArticle" (added)="onAdded($event)" (deleted)="onDeleted($event)"
-        (closed)="onClose()"> </app-article-edit>
+<!-- Edit Modal -->
+<div class="modal-backdrop" *ngIf="editModalOpen" (click)="onClose()"></div>
+<div class="modal-dialog-custom" *ngIf="editModalOpen">
+  <app-article-edit [(article)]="selectedArticle" (added)="onAdded($event)" (deleted)="onDeleted($event)"
+    (closed)="onClose()"></app-article-edit>
+</div>
 
     <!-- <div class="modal-dialog" role="document">
         <div class="modal-content">

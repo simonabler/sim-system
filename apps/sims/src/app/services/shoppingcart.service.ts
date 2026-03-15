@@ -3,7 +3,6 @@ import { Article, Shoppingcart, Customer, Order } from '../models';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Subject, Observable } from 'rxjs';
 import { map, switchMap, tap } from 'rxjs/operators';
-import { identifierModuleUrl } from '@angular/compiler';
 
 @Injectable({
   providedIn: 'root'

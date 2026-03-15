@@ -1,4 +1,4 @@
-import * as Joi from '@hapi/joi';
+import * as Joi from 'joi';
 import { Module } from '@nestjs/common';
 import configuration from './configuration';
 import { MysqlConfigService } from './config.service';

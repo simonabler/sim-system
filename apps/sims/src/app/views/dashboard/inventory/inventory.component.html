@@ -1,56 +1,22 @@
-<p>inventory works!</p>
 <div class="animated fadeIn">
-  <div class="row">
-    <div class="col">
-      <div class="card">
-        <div class="card-header main-card-header">
-          <div class="row">
-            <div class="col">
-              <span>Artikel Tabelle</span>
-            </div>
-          </div>
-        </div>
-        <div class="card-body">
-          <div class="table-responsive-xl">
-            <table datatable [dtOptions]="dtOptions" [dtTrigger]="dtTrigger" class="table row-border hover mb-0"
-              style="width: 100%; min-width: 350px;">
-              <thead class="thead-light">
-                <tr>
-                  <th>Name</th>
-                  <th>Typ</th>
-                  <th>Barcode</th>
-                  <th>Art. Nummer</th>
-                  <th>Menge</th>
-                </tr>
-
-              </thead>
-              <tbody>
-                <tr *ngFor="let item of articles ;index as i;">
-                  <td>
-                    {{ item.name }}
-                  </td>
-
-                  <td>
-                    {{ item.type }}
-                  </td>
-                  <td>
-                    {{ item.code }}
-                  </td>
-                  <td>
-                    {{ item.artNumber }}
-                  </td>
-                  <td>
-                    {{ item.stock }}
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-
-    </div><!--/.col-->
-
-
-  </div><!--/.row-->
+  <div class="card">
+    <div class="card-header">Artikel Tabelle</div>
+    <div class="card-body" style="padding:0;overflow-x:auto">
+      <table class="table">
+        <thead>
+          <tr><th>Name</th><th>Typ</th><th>Barcode</th><th>Art.-Nummer</th><th>Bestand</th></tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let item of articles">
+            <td>{{ item.name }}</td>
+            <td>{{ item.type }}</td>
+            <td><code>{{ item.code }}</code></td>
+            <td>{{ item.artNumber }}</td>
+            <td [class.text-danger]="item.stock <= 0">{{ item.stock }} {{ item.unit }}</td>
+          </tr>
+          <tr *ngIf="!articles.length"><td colspan="5" class="empty">Keine Artikel.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
 </div>

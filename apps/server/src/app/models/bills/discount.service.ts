@@ -1,9 +1,9 @@
 import { HttpException, Injectable, MethodNotAllowedException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CreateUpdateDiscountDto } from './dto/add-update-discount.dto';
-import { BaseService } from 'src/common/base.service';
+import { BaseService } from '../../common/base.service';
 import { Discount } from './entities/discount.entity';
-import { DiscountEntity } from './serializers/Discount.serializer';
+import { DiscountEntity } from './serializers/discount.serializer';
 import { DiscountRepository } from './discount.repository';
 import { CustomerEntity } from '../customer/serializers/customer.serializer';
 import { IdDto } from '../../common/dto/id.dto';

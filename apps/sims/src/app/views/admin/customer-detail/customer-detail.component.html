@@ -1,194 +1,84 @@
-<div class="row animated fadeIn justify-content-center main-screen">
+<div class="animated fadeIn" style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;flex-wrap:wrap">
 
-    <div class="col-12  col-xl-6 pl-0 pl-xl-0 pr-0 pr-xl-1">
-        <div class="card">
-            <div class="card-header ">
-                Rechnungen
-            </div>
-            <div class="card-body">
-                <!-- [dtOptions]="dtOptions" [dtTrigger]="dtTrigger" -->
-                <table datatable id="billTable" style="width:100%; min-width: 560px;" [dtOptions]="dtOptionsBills"
-                    [dtTrigger]="dtTriggerBills" class="table row-border hover table-striped table-bordered">
-                    <!-- Table Header -->
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Rechn. Nr</th>
-                            <th>Kunde</th>
-                            <th>Datum</th>
-                            <th>Betrag</th>
-                            <th>Aktionen</th>
-                        </tr>
-                    </thead>
-
-                    <!-- Table Body -->
-                    <tbody>
-                        <tr *ngIf="isLoading">
-                            <td colspan="6">
-                                <!--   <app-loader-animation [aktiv]="isLoading" type="ball"></app-loader-animation> -->
-                            </td>
-                        </tr>
-                        <tr *ngFor="let bill of bills; let i = index" [class.extern-alert]="!bill.getOverallClosed()"
-                            (click)="selectBill(bill.getNumber())">
-                            <td>{{ bill.id }}</td>
-                            <td>{{ bill.getNumber() }}</td>
-                            <td>{{ bill.getCustomer().getName() }}</td>
-                            <td>{{ bill.billDate | date:"dd.MM.yyyy":'UTC' }}</td>
-                            <td>{{ bill.getPrice()| currency:'EUR':'symbol' }}</td>
-                            <td>
-                                <button class="btn btn-info" (click)="downloadBill(bill)">
-                                    <i class="fa fa-file-pdf-o"></i>
-                                </button>
-
-                                <button class="btn btn-warning" (click)="editBill(bill)" *ngIf="bill.billNumber">
-                                    <i class="fa fa-edit"></i>
-                                </button>
-                                <!--
-
-
-                                    <button class="btn btn-success" (click)="markAsPayed(bill)"
-                                        *ngIf="!bill.paymentAt">
-                                        <i class="fa fa-eur"></i>
-                                    </button> -->
-
-
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
+  <!-- Bills table -->
+  <div class="card">
+    <div class="card-header">Rechnungen</div>
+    <div class="card-body" style="padding:0;overflow-x:auto">
+      <table class="table">
+        <thead><tr><th>Nr</th><th>Datum</th><th>Betrag</th><th></th></tr></thead>
+        <tbody>
+          <tr *ngFor="let bill of bills" [class.text-danger]="!bill.getOverallClosed()">
+            <td>{{ bill.getNumber() }}</td>
+            <td>{{ bill.billDate | date:'dd.MM.yyyy':'UTC' }}</td>
+            <td>{{ bill.getPrice() | currency:'EUR' }}</td>
+            <td style="display:flex;gap:.25rem">
+              <button class="btn btn-sm btn-info" (click)="downloadBill(bill)">PDF</button>
+              <button class="btn btn-sm btn-warning" (click)="editBill(bill)" *ngIf="bill.billNumber">✎</button>
+            </td>
+          </tr>
+          <tr *ngIf="!bills?.length"><td colspan="4" class="empty">Keine Rechnungen.</td></tr>
+        </tbody>
+      </table>
     </div>
-    <div class="col-12  col-xl-6 pl-0 pl-xl-1 pr-0 pr-xl-0">
-        <div class="card">
-            <div class="card-header ">
-                Lieferscheine
-                <button (click)="makeBill()" type="button" class="btn btn-secondary">Mache Rechnung</button>
+  </div>
 
-            </div>
-            <div class="card-body">
-                <!-- [dtOptions]="dtOptions" [dtTrigger]="dtTrigger" -->
-                <table datatable id="slipTable" [dtOptions]="dtOptions" [dtTrigger]="dtTrigger"
-                    style="width:100%; min-width: 660px;" class="table row-border hover table-striped table-bordered">
-                    <!-- Table Header -->
-                    <thead>
-                        <tr>
-                            <td></td>
-                            <th>ID</th>
-                            <th>Lief. Nr</th>
-                            <th>Rechn. Nr</th>
-                            <th>Datum</th>
-                            <th>Status</th>
-                            <th>Betrag</th>
-                            <th>Aktionen</th>
-                        </tr>
-                    </thead>
-
-                    <!-- Table Body -->
-                    <tbody>
-                        <tr *ngIf="isLoading">
-                            <td colspan="7">
-                                <!--   <app-loader-animation [aktiv]="isLoading" type="ball"></app-loader-animation> -->
-                            </td>
-                        </tr>
-                        <tr *ngFor="let shlipsheet of shoppingcarts; let i = index"
-                            [class.extern-alert]="shlipsheet.state === 'changed'"
-                            [class.extern-warn]="shlipsheet.state === 'open'" (click)="cartIdx=i">
-                            <td></td>
-                            <td>{{ shlipsheet.id }}</td>
-                            <td>{{ shlipsheet.slipsheetnumber }}</td>
-                            <td>{{ shlipsheet.bill?.getNumber() }}</td>
-                            <td>{{ shlipsheet.updatedAt | date:"dd.MM.yyyy":'UTC' }}</td>
-                            <td>{{ shlipsheet.getState() }}</td>
-                            <td>{{ shlipsheet.getPrice() | currency:'EUR':'symbol' }}</td>
-                            <td>
-
-
-                                <a class="btn btn-info" (click)="downloadSlip(shlipsheet)">
-                                    <i class="fa fa-file-pdf-o"></i>
-                                </a>
-
-                                <a class="btn btn-info" (click)="printSlip(shlipsheet)">
-                                    <i class="fa fa-print"></i>
-                                </a>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
+  <!-- Slipsheets table -->
+  <div class="card">
+    <div class="card-header" style="display:flex;align-items:center;justify-content:space-between">
+      <span>Lieferscheine</span>
+      <button class="btn btn-sm btn-secondary" (click)="makeBill(selectedSlipIds)" [disabled]="!selectedSlipIds.length">
+        Rechnung erstellen ({{ selectedSlipIds.length }})
+      </button>
     </div>
-    <div class="col-12  col-xl-12 pl-0 pl-md-0 pr-0 pr-md-0">
-        <div class="card">
-            <div class="card-header ">
-                Warenkorb
-                <ul class="nav nav-pills card-header-pills float-right">
-                    <li class="nav-item">
-                        <button class="btn btn-danger" (click)="addOrder()"
-                            [disabled]="cartIdx == undefined || cartIdx < 0">
-                            <i class="fa fa-plus"></i>
-                        </button>
-                    </li>
-                </ul>
-            </div>
-            <div class="card-body">
-                <app-shoppingcart #shoppingcart [shoppingcart]="shoppingcarts[cartIdx]"
-                    (shoppingcartChange)="changeShoppingcarts($event)" [showArticlenr]="true" [showDiscount]="true"
-                    [showEdit]="true">
-                </app-shoppingcart>
-            </div>
-        </div>
-
+    <div class="card-body" style="padding:0;overflow-x:auto">
+      <table class="table">
+        <thead><tr><th style="width:2rem"></th><th>Nr</th><th>Rechn.</th><th>Datum</th><th>Status</th><th>Betrag</th><th></th></tr></thead>
+        <tbody>
+          <tr *ngFor="let slip of shoppingcarts; let i=index"
+              [class.text-warning]="slip.state==='open'"
+              [class.text-danger]="slip.state==='changed'"
+              (click)="cartIdx=i" style="cursor:pointer">
+            <td><input type="checkbox" [checked]="isSelected(slip.id)" (change)="toggleSlip(slip.id)" (click)="$event.stopPropagation()"></td>
+            <td>{{ slip.slipsheetnumber }}</td>
+            <td>{{ slip.bill?.getNumber() }}</td>
+            <td>{{ slip.updatedAt | date:'dd.MM.yyyy':'UTC' }}</td>
+            <td>{{ slip.getState() }}</td>
+            <td>{{ slip.getPrice() | currency:'EUR' }}</td>
+            <td style="display:flex;gap:.25rem">
+              <button class="btn btn-sm btn-info" (click)="$event.stopPropagation();downloadSlip(slip)">PDF</button>
+            </td>
+          </tr>
+          <tr *ngIf="!shoppingcarts?.length"><td colspan="7" class="empty">Keine Lieferscheine.</td></tr>
+        </tbody>
+      </table>
     </div>
+  </div>
 
+  <!-- Cart -->
+  <div class="card" style="grid-column:1/-1">
+    <div class="card-header">Warenkorb</div>
+    <div class="card-body">
+      <app-shoppingcart
+        [shoppingcart]="shoppingcarts[cartIdx!]"
+        (shoppingcartChange)="changeShoppingcarts($event)"
+        [showArticlenr]="true" [showDiscount]="true" [showEdit]="true">
+      </app-shoppingcart>
+    </div>
+  </div>
 </div>
 
-
-
-
-
-<!-- Modal -->
-<div bsModal class="modal fade in" #billModal="bs-modal" tabindex="-1" role="dialog" aria-labelledby="billModalLabel"
-    aria-hidden="true">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <div class="modal-body">
-
-
-                <form class="form-horizontal" [formGroup]="BillForm">
-
-                    <div class="form-group row">
-                        <div class="col-12">
-                            <div class="input-group">
-                                <div class="input-group-prepend">
-                                    <span class="input-group-text samewidth">Rchnungsnummer:</span>
-                                </div>
-
-                                <input type="text" class="form-control" formControlName="billNumber"
-                                    [ngClass]="{'is-invalid':submitted && f.amount.errors}" />
-                            </div>
-                        </div>
-
-
-                        <div class="col-12">
-                            <div class="input-group">
-                                <div class="input-group-prepend">
-                                    <span class="input-group-text samewidth">Rech. Datum:</span>
-                                </div>
-
-                                <input type="text" class="form-control" formControlName="billDate"
-                                    [ngClass]="{'is-invalid':submitted && f.billDate.errors}" />
-                            </div>
-                        </div>
-
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal"
-                    (click)="billModal.hide()">Abbrechen</button>
-                <button type="button" class="btn btn-primary" (click)="saveBill()">Speichern</button>
-            </div>
-        </div>
-    </div>
+<!-- Bill edit modal -->
+<div class="modal-backdrop" *ngIf="billModalOpen" (click)="billModalOpen=false"></div>
+<div class="modal-dialog-custom" *ngIf="billModalOpen">
+  <div class="modal-header"><strong>Rechnung bearbeiten</strong><button (click)="billModalOpen=false">✕</button></div>
+  <div class="modal-body">
+    <form [formGroup]="BillForm">
+      <div class="form-group"><label>Rechnungsnummer</label><input class="form-control" formControlName="billNumber"></div>
+      <div class="form-group"><label>Datum</label><input class="form-control" formControlName="billDate"></div>
+    </form>
+  </div>
+  <div class="modal-footer">
+    <button class="btn btn-secondary" (click)="billModalOpen=false">Abbrechen</button>
+    <button class="btn btn-primary" (click)="saveBill()">Speichern</button>
+  </div>
 </div>

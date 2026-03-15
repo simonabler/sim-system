@@ -1,210 +1,88 @@
 <div class="scroll-container">
-
-    <div class="annotation-box" *ngIf="shoppingcartStorage?.id">
-        <div class="annotation-head">Kommission</div>
-        <div class="annotation-list" *ngIf="shoppingcartStorage?.annotations?.length > 0">
-            <div class="annotation-item" *ngFor="let annotation of shoppingcartStorage?.annotations">
-                {{annotation.text}}
-            </div>
-        </div>
-        <div class="annotation-empty" *ngIf="!shoppingcartStorage?.annotations?.length">
-            Keine Kommission vorhanden.
-        </div>
-        <div class="annotation-input" *ngIf="showEdit">
-            <input
-                type="text"
-                class="form-control"
-                [(ngModel)]="annotationText"
-                maxlength="250"
-                placeholder="Kommission hinzufuegen" />
-            <button
-                type="button"
-                class="btn btn-secondary"
-                (click)="addAnnotation()"
-                [disabled]="!annotationText?.trim()">
-                Hinzufuegen
-            </button>
-        </div>
+  <div class="annotation-box" *ngIf="shoppingcartStorage?.id">
+    <div class="annotation-head">Kommission</div>
+    <div class="annotation-list" *ngIf="shoppingcartStorage?.annotations?.length > 0">
+      <div class="annotation-item" *ngFor="let a of shoppingcartStorage?.annotations">{{ a.text }}</div>
     </div>
+    <div class="annotation-empty" *ngIf="!shoppingcartStorage?.annotations?.length">
+      Keine Kommission vorhanden.
+    </div>
+    <div class="annotation-input" *ngIf="showEdit">
+      <input type="text" class="form-control" [(ngModel)]="annotationText"
+        maxlength="250" placeholder="Kommission hinzufügen" />
+      <button type="button" class="btn btn-secondary" (click)="addAnnotation()"
+        [disabled]="!annotationText?.trim()">Hinzufügen</button>
+    </div>
+  </div>
 
-    <table>
-        <tbody>
-            <tr *ngFor="let order of shoppingcartStorage?.orderEntries"
-                style="border-bottom: 1px solid #c8ced3; white-space: nowrap;" class="cart-row mb-sm-1">
-                <td style="padding-left: 20px;  padding-top: 7px; padding-bottom: 7px; width: 1%;"> {{order.amount}} <i
-                        class="fa fa-times times" style="margin: 0;"></i></td>
-                <td *ngIf="showArticlenr" style="text-align: right; padding-right: 10px; width: 1%;">
-                    {{order.article?.artNumber || '' }} </td>
-                <td> {{order.article?.name || order.text}}</td>
+  <table>
+    <tbody>
+      <tr *ngFor="let order of shoppingcartStorage?.orderEntries" class="cart-row">
+        <td>{{ order.amount }} ×</td>
+        <td *ngIf="showArticlenr">{{ order.article?.artNumber || '' }}</td>
+        <td>{{ order.article?.name || order.text }}</td>
+        <td *ngIf="showDiscount">{{ order.article?.articleGroup?.name }}</td>
+        <td *ngIf="showDiscount">{{ order.articleGroupRabatt | number:'1.2-2' }}%</td>
+        <td *ngIf="showDiscount">{{ order.customerRabatt | number:'1.2-2' }}%</td>
+        <td>€</td>
+        <td>{{ order.getPrice() | number:'1.2-2' }}</td>
+        <td>
+          <button class="btn btn-sm btn-outline-primary" (click)="editOrder(order)" *ngIf="showEdit">✎</button>
+          <button class="btn btn-sm btn-outline-danger" (click)="deleteOrder(order)">✕</button>
+        </td>
+      </tr>
+    </tbody>
+  </table>
 
-                <td *ngIf="showDiscount" style="text-align: right; padding-right: 10px; width: 1%;">
-                    {{order.article?.articleGroup?.name}} </td>
-                <td *ngIf="showDiscount" style="text-align: right; padding-right: 10px; width: 1%;">
-                    {{order.articleGroupRabatt| number : '1.2-2'}}% </td>
-                <td *ngIf="showDiscount" style="text-align: right; padding-right: 10px; width: 1%;">
-                    {{order.customerRabatt| number : '1.2-2'}}% </td>
-
-
-                <td style="width: 1%;"> <i class="fa fa-eur" style="margin: 0px 2px 0px 2px; color:#c8ced3;"></i> </td>
-                <td style="text-align: right; padding-right: 10px; width: 1%;"> {{order.getPrice() | number : '1.2-2'}}
-                </td>
-                <td style="text-align: right; padding-right: 10px; width: 1%;">
-                    <button class="btn btn-info" (click)="editOrder(order)" *ngIf="showEdit">
-                        <i class="fa fa-edit"></i>
-                    </button>
-                    <button class="btn btn-danger" (click)="deleteOrder(order)">
-                        <i class="fa fa-trash"></i>
-                    </button>
-                </td>
-            </tr>
-        </tbody>
-
-    </table>
-
+  <button *ngIf="showEdit" class="btn btn-sm btn-outline-primary" style="margin:.5rem" (click)="openAddModal()">
+    + Artikel
+  </button>
 </div>
 
-
-
-<!-- Modal -->
-<div bsModal class="modal fade in" #shoppingcartModal="bs-modal" tabindex="-1" role="dialog"
-    aria-labelledby="shoppingcartModalLabel" aria-hidden="true">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <div class="modal-body">
-
-
-                <form class="form-horizontal" [formGroup]="CartForm">
-
-                    <div class="form-group row">
-
-
-
-                        <div class="col-12">
-                            <div class="input-group">
-                                <div class="input-group-prepend">
-                                    <span class="input-group-text samewidth">Menge:</span>
-                                </div>
-
-                                <input type="number" class="form-control" formControlName="amount"
-                                    [ngClass]="{'is-invalid':submitted && f.amount.errors}" />
-
-                                <div class="input-group-append">
-                                    <span class="input-group-text sameappend">
-                                        {{f.article?.value?.unit}}
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-
-
-                        <div class="col-12">
-                            <div class="input-group">
-                                <div class="input-group-prepend">
-                                    <span class="input-group-text samewidth">Artikel:</span>
-                                </div>
-
-                                <ng-select [items]="Articles$  | async" bindLabel="name" autofocus class="form-control"
-                                    [ngClass]="{'invalid-select': submitted && f.article.errors}"
-                                    formControlName="article" [searchFn]="transSearchFn">
-
-                                    <ng-template ng-option-tmp let-item="item" let-index="index"
-                                        let-search="searchTerm">
-                                        <div class="mt-2">
-                                            <h6 class="card-subtitle mb-2 text-muted">{{item.name}}</h6>
-                                            <small class="ml-2"> {{item.artNumber}}</small>
-                                        </div>
-                                    </ng-template>
-
-                                    <ng-template ng-label-tmp let-item="item">
-                                        <span class="ng-value-label">
-                                            {{item.name}} - <small>{{item.artNumber}}</small></span>
-
-                                    </ng-template>
-                                </ng-select>
-
-                            </div>
-                        </div>
-
-                        <div class="col-12">
-                            <div class="input-group">
-                                <div class="input-group-prepend">
-                                    <span class="input-group-text samewidth">Preis:</span>
-                                </div>
-
-                                <input type="number" class="form-control" formControlName="price"
-                                    [ngClass]="{'is-invalid':submitted && f.price.errors}" />
-
-                                <div class="input-group-append">
-                                    <span class="input-group-text sameappend">
-                                        €
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="col-12">
-                            <div class="input-group">
-                                <div class="input-group-prepend">
-                                    <span class="input-group-text samewidth">Rabatt:</span>
-                                </div>
-
-                                <input type="number" class="form-control" formControlName="articleGroupRabatt"
-                                    [ngClass]="{'is-invalid':submitted && f.articleGroupRabatt.errors}" />
-
-                                <div class="input-group-append">
-                                    <span class="input-group-text sameappend">
-                                        %
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="col-12" *ngIf="f.id.value !== null || f.article.value === null">
-                            <div class="input-group">
-                                <div class="input-group-prepend">
-                                    <span class="input-group-text samewidth">Kund.Rabatt:</span>
-                                </div>
-
-                                <input type="number" class="form-control" formControlName="customerRabatt"
-                                    [ngClass]="{'is-invalid':submitted && f.customerRabatt.errors}" />
-
-                                <div class="input-group-append">
-                                    <span class="input-group-text sameappend">
-                                        %
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-
-
-
-
-
-                        <div class="col-12" *ngIf="f.article.value === null">
-                            <div class="input-group">
-                                <div class="input-group-prepend">
-                                    <span class="input-group-text samewidth">Text:</span>
-                                </div>
-
-                                <input type="text" class="form-control" formControlName="text"
-                                    [ngClass]="{'is-invalid':submitted && f.text.errors}" />
-                            </div>
-                        </div>
-
-
-
-                    </div>
-
-
-                </form>
-
-
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal"
-                    (click)="shoppingcartModal.hide()">Abbrechen</button>
-                <button type="button" class="btn btn-primary" (click)="saveShoppingcart()">Speichern</button>
-            </div>
-        </div>
+<!-- Native modal -->
+<div class="modal-backdrop" *ngIf="modalOpen" (click)="closeModal()"></div>
+<div class="modal-dialog-custom" *ngIf="modalOpen">
+  <div class="modal-content">
+    <div class="modal-header">
+      <strong>Artikel bearbeiten</strong>
+      <button (click)="closeModal()">✕</button>
     </div>
+    <div class="modal-body">
+      <form [formGroup]="CartForm">
+        <div class="form-group">
+          <label>Menge</label>
+          <input type="number" class="form-control" formControlName="amount" />
+        </div>
+        <div class="form-group">
+          <label>Artikel</label>
+          <ng-select [items]="Articles$ | async" bindLabel="name" formControlName="article"
+            [searchFn]="transSearchFn" placeholder="Artikel wählen">
+            <ng-template ng-option-tmp let-item="item">
+              <strong>{{ item.name }}</strong> <small>{{ item.artNumber }}</small>
+            </ng-template>
+          </ng-select>
+        </div>
+        <div class="form-group" *ngIf="f['article'].value === null">
+          <label>Text</label>
+          <input type="text" class="form-control" formControlName="text" />
+        </div>
+        <div class="form-group">
+          <label>Preis €</label>
+          <input type="number" class="form-control" formControlName="price" />
+        </div>
+        <div class="form-group">
+          <label>Rabatt %</label>
+          <input type="number" class="form-control" formControlName="articleGroupRabatt" />
+        </div>
+        <div class="form-group" *ngIf="f['id'].value !== null || f['article'].value === null">
+          <label>Kundenrabatt %</label>
+          <input type="number" class="form-control" formControlName="customerRabatt" />
+        </div>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" (click)="closeModal()">Abbrechen</button>
+      <button class="btn btn-primary" (click)="saveShoppingcart()">Speichern</button>
+    </div>
+  </div>
 </div>

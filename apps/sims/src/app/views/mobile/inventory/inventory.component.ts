@@ -1,118 +1,74 @@
 import { Component, OnInit, HostListener } from '@angular/core';
-import { FormGroup, FormControl, Validators } from '@angular/forms';
-import { Observable } from 'rxjs';
-import { Article } from '../../../models';
-import { debounceTime } from 'rxjs/operators';
-import { ArticleService } from '../../../services/article.service';
+import { CommonModule } from '@angular/common';
+import { ReactiveFormsModule, FormGroup, FormControl, Validators } from '@angular/forms';
 import { ToastrService } from 'ngx-toastr';
+import { Article } from '../../../models';
+import { ArticleService } from '../../../services/article.service';
+import { debounceTime } from 'rxjs/operators';
 
 @Component({
   selector: 'app-inventory',
+  standalone: true,
+  imports: [CommonModule, ReactiveFormsModule],
   templateUrl: './inventory.component.html',
-  styleUrls: ['./inventory.component.css']
+  styleUrls: ['./inventory.component.css'],
 })
-export class InventoryComponent implements OnInit {
-
-
-  InputForm: FormGroup;
-  Articles$: Observable<any[]>;
-  Article: Article;
+export class MobileInventoryComponent implements OnInit {
+  InputForm!: FormGroup;
+  Article: Article | null = null;
   submitted = false;
-
-
-  constructor(
-    private articleService: ArticleService,
-    private toastr: ToastrService) {
-
-    this.createDefaultForm();
-  }
 
   get f() { return this.InputForm.controls; }
 
+  constructor(private articleService: ArticleService, private toastr: ToastrService) {}
 
-  ngOnInit(): void {
+  ngOnInit() { this.createForm(); }
+
+  createForm() {
+    this.InputForm = new FormGroup({
+      code: new FormControl('', [Validators.required]),
+      should: new FormControl({ value: 0, disabled: true }),
+      is: new FormControl(0, [Validators.required, Validators.min(0)]),
+    });
+    this.InputForm.get('code')!.valueChanges.pipe(debounceTime(250)).subscribe(v => this.findCode(v));
   }
 
   @HostListener('document:onbarcodescaned', ['$event'])
-  onBarcodeReaderInput(e: CustomEvent) {
-    this.InputForm.get('code').setValue(e.detail);
-  }
+  onBarcodeReaderInput(e: CustomEvent) { this.InputForm.get('code')!.setValue(e.detail); }
 
-  createDefaultForm() {
-    this.InputForm = new FormGroup({
-
-      code: new FormControl(
-        '', [
-        Validators.required,
-      ]),
-      should: new FormControl(
-        { value: 0, disabled: true }, []),
-      is: new FormControl(
-        0, [
-        Validators.required,
-        Validators.min(0)
-      ])
+  findCode(code: string) {
+    this.articleService.getByCode(code).subscribe({
+      next: data => this.setArticleData(data),
+      error: () => this.setArticleData(null),
     });
-
-
-    this.InputForm.get('code').valueChanges.pipe(
-      debounceTime(250)
-    ).subscribe(data => this.findCode(data));
   }
 
-  findCode(code) {
-    this.articleService.getByCode(code).subscribe(
-      articleData => {
-        this.setArticleData(articleData);
-      },
-      error => {
-        console.error(error);
-        this.setArticleData(null);
-      });
-  }
-
-  reset() {
-    this.InputForm.reset();
-    this.submitted = false;
-  }
-
-  setArticleData(article: Article) {
-
-    if (article && article instanceof Article) {
+  setArticleData(article: Article | null) {
+    if (article) {
       this.Article = article;
-      this.InputForm.get('should').setValue(this.Article.stock);
-      this.InputForm.get('is').setValue(this.Article.stock);
+      this.InputForm.get('should')!.setValue(article.stock);
+      this.InputForm.get('is')!.setValue(article.stock);
     } else {
       this.Article = null;
-      this.InputForm.get('should').setValue(0.0);
-      this.InputForm.get('is').setValue(0.0);
+      this.InputForm.get('should')!.setValue(0);
+      this.InputForm.get('is')!.setValue(0);
     }
   }
 
+  reset() { this.InputForm.reset(); this.submitted = false; }
+
   onSubmit() {
-
-    this.InputForm.updateValueAndValidity();
-
     this.submitted = true;
-
-    if (this.InputForm.invalid || !this.Article) {
-      return;
-    }
-
-    const formData = this.InputForm.getRawValue();
-
-    this.articleService.createInventory(this.Article, formData.is)
-      .subscribe(data => {
+    this.InputForm.updateValueAndValidity();
+    if (this.InputForm.invalid || !this.Article) return;
+    const { is } = this.InputForm.getRawValue();
+    this.articleService.createInventory(this.Article, is).subscribe({
+      next: data => {
         this.setArticleData(data);
         this.submitted = false;
         this.toastr.success(`OK: ${data.stock} ${data.unit}`, '', { timeOut: 1000 });
       },
-        (error) => {
-          console.error(error);
-          this.setArticleData(null);
-          this.toastr.error(error);
-        });
+      error: e => { this.setArticleData(null); this.toastr.error(e); },
+    });
   }
-
-
 }

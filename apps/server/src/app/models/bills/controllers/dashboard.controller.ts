@@ -15,7 +15,7 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { ReS } from '../../../common/res.model';
-import { AppConfigService } from 'src/config/app/config.service';
+import { AppConfigService } from '../../../config/app/config.service';
 import { SlipsheetService } from '../slipsheet.service';
 import { CustomerService } from '../../customer/customer.service';
 import { TimeRangeDto } from '../../../common/dto/time-range.dto';

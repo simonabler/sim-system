@@ -4,7 +4,7 @@
             <div class="card-header ">
                 <ul class="nav nav-pills card-header-pills float-right">
                     <li class="nav-item">
-                        <a class="btn btn-danger"  routerLink="edit/new"><i class="fa fa-plus"></i></a>
+                        <a class="btn btn-danger"  routerLink="/admin/customer/new"><i class="fa fa-plus"></i></a>
                     </li>
                 </ul>
             </div>
@@ -40,10 +40,10 @@
 
 
                     <div class="col my-edit  ">
-                        <a type="button" class="btn btn-primary " [routerLink]="['edit',customer.id]">
+                        <a type="button" class="btn btn-primary " [routerLink]="['/admin/customer/edit', customer.id]">
                             <i class="fa fa-edit"></i>
                         </a>
-                        <a type="button" class="btn btn-primary " [routerLink]="['detail',customer.id]">
+                        <a type="button" class="btn btn-primary " [routerLink]="['/admin/customer/detail', customer.id]">
                             Detail
                         </a>
                     </div>

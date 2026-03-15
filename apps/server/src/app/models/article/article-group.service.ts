@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { BaseService } from 'src/common/base.service';
+import { BaseService } from '../../common/base.service';
 import { ArticleGroupRepository } from './article-group.repository';
 import { ArticleGroup } from './entities/article-group.entity';
 import { ArticleGroupEntity } from './serializers/article-group.serializer';

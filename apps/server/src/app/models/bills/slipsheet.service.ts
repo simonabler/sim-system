@@ -5,7 +5,7 @@
   UnprocessableEntityException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { BaseService } from 'src/common/base.service';
+import { BaseService } from '../../common/base.service';
 import { SlipsheetRepository } from './slipsheet.repository';
 import { Slipsheet } from './entities/slipsheet.entity';
 import { SlipsheetEntity } from './serializers/slipsheet.serializer';
@@ -13,8 +13,8 @@ import { CustomerEntity } from '../customer/serializers/customer.serializer';
 import { SlipsheetState } from './enums/slipsheet-state.enum';
 import { Between, EntityManager } from 'typeorm';
 import { join } from 'path';
-import { PdfMakerService } from 'src/common/services/pdfmaker.service';
-import { AppConfigService } from 'src/config/app/config.service';
+import { PdfMakerService } from '../../common/services/pdfmaker.service';
+import { AppConfigService } from '../../config/app/config.service';
 import { TimeRangeDto } from '../../common/dto/time-range.dto';
 
 @Injectable()

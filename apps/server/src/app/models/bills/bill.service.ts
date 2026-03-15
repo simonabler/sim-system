@@ -10,15 +10,15 @@ import { UpdateBillDto } from './dto/update-bill.dto';
 import { BillRepository } from './bill.repository';
 import { BillEntity } from './serializers/bill.serializer';
 import { EntityManager } from 'typeorm';
-import { BaseService } from 'src/common/base.service';
+import { BaseService } from '../../common/base.service';
 import { Bill } from './entities/bill.entity';
 import { SlipsheetEntity } from './serializers/slipsheet.serializer';
 import { SlipsheetState } from './enums/slipsheet-state.enum';
 import { SlipsheetService } from './slipsheet.service';
 import { BillState } from './enums/bill-state.enum';
-import { PdfMakerService } from 'src/common/services/pdfmaker.service';
+import { PdfMakerService } from '../../common/services/pdfmaker.service';
 import { join } from 'path';
-import { AppConfigService } from 'src/config/app/config.service';
+import { AppConfigService } from '../../config/app/config.service';
 import { Slipsheet } from './entities/slipsheet.entity';
 
 @Injectable()

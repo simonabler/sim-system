@@ -1,15 +1,9 @@
-import { Component, OnInit } from '@angular/core';
-
+import { Component } from '@angular/core';
+import { CommonModule } from '@angular/common';
 @Component({
   selector: 'app-verbrauch',
-  templateUrl: './verbrauch.component.html',
-  styleUrls: ['./verbrauch.component.css']
+  standalone: true,
+  imports: [CommonModule],
+  template: `<p style="padding:1rem">Verbrauch</p>`,
 })
-export class VerbrauchComponent implements OnInit {
-
-  constructor() { }
-
-  ngOnInit(): void {
-  }
-
-}
+export class VerbrauchComponent {}

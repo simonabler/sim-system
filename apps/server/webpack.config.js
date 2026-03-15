@@ -1,5 +1,16 @@
 const { NxAppWebpackPlugin } = require('@nx/webpack/app-plugin');
 const { join } = require('path');
+const { existsSync } = require('fs');
+
+// Only include compiled migration assets if the typeorm dist output already exists
+const migrationsInput = join(__dirname, '../../dist/typeorm/apps/server/src/migrations');
+const migrationAsset = existsSync(migrationsInput)
+  ? [{
+      glob: '**/*.js',
+      input: migrationsInput,
+      output: 'migrations',
+    }]
+  : [];
 
 module.exports = {
   output: {
@@ -7,6 +18,11 @@ module.exports = {
     ...(process.env.NODE_ENV !== 'production' && {
       devtoolModuleFilenameTemplate: '[absolute-resource-path]',
     }),
+  },
+  resolve: {
+    alias: {
+      src: join(__dirname, 'src'),
+    },
   },
   plugins: [
     new NxAppWebpackPlugin({
@@ -16,16 +32,7 @@ module.exports = {
       tsConfig: './tsconfig.app.json',
       assets: [
         './src/assets',
-        // Migrations als kompilierte JS-Dateien ins dist kopieren.
-        // tsc kompiliert sie via tsconfig.typeorm.json separat –
-        // Webpack bundelt sie NICHT (TypeORM lädt sie dynamisch per Glob).
-        // optional: true → Build schlägt nicht fehl wenn tsc noch nicht gelaufen ist.
-        {
-          glob: '**/*.js',
-          input: '../../dist/typeorm/apps/server/src/migrations',
-          output: 'migrations',
-          optional: true,
-        },
+        ...migrationAsset,
       ],
       optimization: false,
       outputHashing: 'none',

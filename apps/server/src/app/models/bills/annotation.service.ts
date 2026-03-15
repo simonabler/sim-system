@@ -2,7 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { AnnotationRepository } from './annotation.repository';
 import { AnnotationEntity } from './serializers/annotation.serializer';
-import { BaseService } from 'src/common/base.service';
+import { BaseService } from '../../common/base.service';
 import { Annotation } from './entities/annotation.entity';
 
 @Injectable()

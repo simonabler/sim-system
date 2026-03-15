@@ -1,7 +1,8 @@
 import { Component, EventEmitter, HostListener, Input, OnInit, Output } from '@angular/core';
-import { FormGroup, FormControl, Validators } from '@angular/forms';
+import { CommonModule } from '@angular/common';
+import { ReactiveFormsModule, FormGroup, FormControl, Validators } from '@angular/forms';
+import { NgSelectModule } from '@ng-select/ng-select';
 import { ToastrService } from 'ngx-toastr';
-
 import { Observable } from 'rxjs';
 import { Article, ArticleGroup } from '../../../models';
 import { ArticleGroupService } from '../../../services/article-group.service';
@@ -9,196 +10,108 @@ import { ArticleService } from '../../../services/article.service';
 
 @Component({
   selector: 'app-article-edit',
+  standalone: true,
+  imports: [CommonModule, ReactiveFormsModule, NgSelectModule],
   templateUrl: './article-edit.component.html',
-  styleUrls: ['./article-edit.component.css']
+  styleUrls: ['./article-edit.component.css'],
 })
 export class ArticleEditComponent implements OnInit {
+  ArticleGroups$!: Observable<ArticleGroup[]>;
+  ArticelForm!: FormGroup;
+  private initValues: any;
+  submitted = false;
+  private _article: Article | null = null;
 
-  ArticleGroups$: Observable<ArticleGroup[]>;
-  ArticelForm: FormGroup;
-  ArticelFormInitValues;
-  get f() { return this.ArticelForm.controls; }
-  get farticlegroup() { return this.ArticelForm.get('articleGroup').get('name'); }
-  submitted;
-
-  _article: Article;
-
-  @Input()
-  set article(value) {
+  @Input() set article(value: Article | null) {
     this._article = value;
-    this.openModal(this._article);
+    if (this.ArticelForm) this.openModal(value);
   }
+  get article() { return this._article; }
 
-  get article(): Article {
-    return this._article;
-  }
+  @Output() articleChange = new EventEmitter<Article>();
+  @Output() added = new EventEmitter<Article>();
+  @Output() deleted = new EventEmitter<Article>();
+  @Output() closed = new EventEmitter<void>();
 
-  @Output() articleChange: EventEmitter<Article> = new EventEmitter<Article>();
-
-
-  @Output()
-  added: EventEmitter<Article> = new EventEmitter<Article>();
-
-  @Output()
-  deleted: EventEmitter<Article> = new EventEmitter<Article>();
-
-  @Output()
-  closed: EventEmitter<Article> = new EventEmitter<Article>();
+  get f() { return this.ArticelForm.controls; }
 
   constructor(
     private articleService: ArticleService,
     private articlegroupService: ArticleGroupService,
-    private toastr: ToastrService
-  ) {
+    private toastr: ToastrService,
+  ) {}
 
-
+  ngOnInit() {
     this.ArticelForm = new FormGroup({
-      id: new FormControl(
-        null, []),
-      name: new FormControl(
-        '', [
-        Validators.required
-      ]),
-      code: new FormControl(
-        '', [
-        Validators.required
-      ]),
-      description: new FormControl(
-        '', []),
-      artNumber: new FormControl(
-        '', []),
-      supplier: new FormControl(
-        '', [
-        Validators.required
-      ]),
-      type: new FormControl(
-        '', [
-        Validators.required
-      ]),
-      price: new FormControl(
-        '', [
-        Validators.required,
-        Validators.min(0)
-      ]),
-
-      singlePos: new FormControl(
-        false, [Validators.required
-      ]),
-      trackStock: new FormControl(
-        true, [Validators.required
-      ]),
-      noDiscount: new FormControl(
-        false, [Validators.required
-      ]),
-      articleGroup: new FormControl({
-        id: new FormControl(),
-        name: new FormControl(
-          '', [
-          Validators.required,
-          Validators.min(0)
-        ])
-      }),
-      unit: new FormControl(
-        '', [
-        Validators.required
-      ]),
-
+      id: new FormControl(null),
+      name: new FormControl('', [Validators.required]),
+      code: new FormControl('', [Validators.required]),
+      description: new FormControl(''),
+      artNumber: new FormControl(''),
+      supplier: new FormControl('', [Validators.required]),
+      type: new FormControl('', [Validators.required]),
+      price: new FormControl('', [Validators.required, Validators.min(0)]),
+      singlePos: new FormControl(false),
+      trackStock: new FormControl(true),
+      noDiscount: new FormControl(false),
+      articleGroup: new FormControl(null),
+      unit: new FormControl('', [Validators.required]),
     });
-
-    this.ArticelFormInitValues = this.ArticelForm.value;
+    this.initValues = this.ArticelForm.value;
     this.ArticleGroups$ = this.articlegroupService.getAll();
-
-
+    if (this._article) this.openModal(this._article);
   }
-
-  ngOnInit(): void {
-  }
-
 
   @HostListener('document:onbarcodescaned', ['$event'])
   onBarcodeReaderInput(e: CustomEvent) {
-    this.ArticelForm.get('code').setValue(e.detail);
+    this.ArticelForm.get('code')!.setValue(e.detail);
   }
 
-  openModal(article) {
+  openModal(article: Article | null) {
     this.resetForm();
-    if (article) {
-      this.loadFormValues(article);
-    }
+    if (article) this.ArticelForm.patchValue(article);
   }
 
   save() {
+    this.submitted = true;
+    if (this.ArticelForm.invalid) return;
     const article = new Article(this.ArticelForm.getRawValue());
-    console.log(article)
-    console.log(this.ArticelForm.getRawValue())
-
-    if (article.id) {
-      this.update(article);
-    } else {
-      this.newArticle(article);
-    }
+    if (article.id) this.update(article);
+    else this.newArticle(article);
   }
 
-  update(article) {
-    this.articleService.update(article)
-      .subscribe(data => {
-        if (!data) {
-          throw new Error('Fehler beim Updaten');
-        }
+  update(article: Article) {
+    this.articleService.update(article).subscribe({
+      next: data => {
         Object.assign(article, data);
-        this.article = article;
-        this.articleChange.emit(this.article);
-        this.toastr.success('Artikel erfolgreich aktualisiert', 'Erfolgreich');
+        this.articleChange.emit(article);
+        this.toastr.success('Artikel aktualisiert');
         this.close();
-      }, error => {
-        console.error(error);
-        this.toastr.error(error);
-      });
+      },
+      error: e => this.toastr.error(e),
+    });
   }
 
-  newArticle(article) {
-    console.log(article)
-    this.articleService.create(article)
-      .subscribe(data => {
-        if (!data) {
-          throw new Error('Fehler beim Erstellen');
-        }
-        this.added.next(data);
+  newArticle(article: Article) {
+    this.articleService.create(article).subscribe({
+      next: data => {
+        this.added.emit(data);
+        this.toastr.success('Artikel erstellt');
         this.close();
-        this.toastr.success('Artikel erfolgreich erstellt', 'Erfolgreich');
-      }, error => {
-        console.error(error);
-        this.toastr.error('Fehler beim Erstellen', error);
-      });
+      },
+      error: e => this.toastr.error(e),
+    });
   }
 
   delete() {
-
-    const articleToDel = new Article(this.ArticelForm.getRawValue());
-    if (this.f.id.value) {
-      this.articleService.delete(articleToDel)
-        .subscribe(data => {
-          if (!data) {
-            throw new Error('Fehler beim Löschen');
-          }
-          this.deleted.next(data)
-        }, error => {
-          console.error(error);
-        });
-    }
+    if (!this.f['id'].value) return;
+    const article = new Article(this.ArticelForm.getRawValue());
+    this.articleService.delete(article).subscribe({
+      next: data => this.deleted.emit(data),
+      error: e => console.error(e),
+    });
   }
 
-  close() {
-    this.closed.emit(null);
-  }
-
-  resetForm() {
-    this.submitted = false;
-    this.ArticelForm.patchValue(this.ArticelFormInitValues);
-  }
-
-  loadFormValues(article) {
-    this.ArticelForm.patchValue(article);
-  }
-
+  close() { this.closed.emit(); }
+  resetForm() { this.submitted = false; if (this.initValues) this.ArticelForm.patchValue(this.initValues); }
 }

@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { BaseService } from 'src/common/base.service';
+import { BaseService } from '../../common/base.service';
 import { CustomerRepository } from './customer.repository';
 import { Customer } from './entities/customer.entity';
 import { CustomerEntity } from './serializers/customer.serializer';

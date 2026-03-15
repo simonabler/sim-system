@@ -38,9 +38,9 @@ import { createReadStream } from 'fs';
 import { existsSync } from 'fs';
 import { join } from 'path';
 import { BillState } from '../enums/bill-state.enum';
-import { PdfMakerService } from 'src/common/services/pdfmaker.service';
-import { AppConfigService } from 'src/config/app/config.service';
-import { IdDto } from 'src/common/dto/id.dto';
+import { PdfMakerService } from '../../../common/services/pdfmaker.service';
+import { AppConfigService } from '../../../config/app/config.service';
+import { IdDto } from '../../../common/dto/id.dto';
 import { SlipsheetEntity } from '../serializers/slipsheet.serializer';
 import { SlipsheetService } from '../slipsheet.service';
 

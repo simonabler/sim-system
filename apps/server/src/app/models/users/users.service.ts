@@ -43,7 +43,7 @@ export class UsersService {
   }
 
   async getByName(
-    name: number,
+    name: string,
     relations: string[] = [],
     throwsException = false,
   ): Promise<UserEntity | null> {

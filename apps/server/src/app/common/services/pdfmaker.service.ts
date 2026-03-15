@@ -1,14 +1,14 @@
 import { Injectable } from "@nestjs/common";
-//import  PdfPrinter from 'pdfmake';
-const PdfPrinter = require('pdfmake')
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const PdfPrinter = require('pdfmake/js/Printer.js').default;
 
 import { Content, ContentTable, TDocumentDefinitions } from "pdfmake/interfaces";
 import { SlipsheetEntity } from "../../models/bills/serializers/slipsheet.serializer";
 import { createWriteStream, readFileSync } from 'fs';
 import moment = require("moment");
-import { BillEntity } from "src/models/bills/serializers/bill.serializer";
-import { OrderEntryEntity } from "src/models/bills/serializers/order-entry.serializer";
-import { AnnotationEntity } from "src/models/bills/serializers/annotation.serializer";
+import { BillEntity } from "../../models/bills/serializers/bill.serializer";
+import { OrderEntryEntity } from "../../models/bills/serializers/order-entry.serializer";
+import { AnnotationEntity } from "../../models/bills/serializers/annotation.serializer";
 
 @Injectable()
 export class PdfMakerService {
@@ -115,7 +115,7 @@ export class PdfMakerService {
         return {
             pageOrientation: 'portrait',
             pageMargins: [60, 150, 60, 100],
-            header: function (currentPageNumber, pageCount, currentPage) {
+            header: function (currentPageNumber: any, pageCount: any, currentPage: any): any {
                 return [{
 
                     columns: [
@@ -170,7 +170,7 @@ export class PdfMakerService {
                 ]
 
             },
-            footer: function (currentPage, pageCount) {
+            footer: function (currentPage: any, pageCount: any): any {
                 return [
                     {
                         canvas: [{ type: 'line', x1: 50, y1: 0, x2: 595 - 50, y2: 0, lineWidth: 1 }],
@@ -391,7 +391,7 @@ export class PdfMakerService {
         table.table.body.push(row);
 
 
-        return table;
+        return table as unknown as Content;
 
     }
 

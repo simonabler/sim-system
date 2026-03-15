@@ -1,42 +1,24 @@
-import { Component, OnInit } from "@angular/core";
-import { BsModalRef } from "ngx-bootstrap";
-import { Observable, Subject } from "rxjs";
+import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { CommonModule } from '@angular/common';
 
 @Component({
-  selector: 'modal-content',
+  selector: 'app-question-prompt',
+  standalone: true,
+  imports: [CommonModule],
   template: `
-      <div class="modal-header">
-        <h4 class="modal-title pull-left">{{title}}</h4>
-        <button type="button" class="close pull-right" aria-label="Close" (click)="bsModalRef.hide()">
-        <span aria-hidden="true">&times;</span>
-      </button>
-      </div>
-      <div class="modal-body">
-          {{message}}
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-default btn-success" (click)="onExit(true)">{{successBtnName}}</button>
-        <button type="button" class="btn btn-default" (click)="onExit(false)">{{closeBtnName}}</button>
-      </div>
-    `
+    <div class="modal-header">
+      <h4>{{ title }}</h4>
+    </div>
+    <div class="modal-body"><p>{{ message }}</p></div>
+    <div class="modal-footer">
+      <button class="btn btn-success" (click)="confirm.emit(true)">{{ successBtnName }}</button>
+      <button class="btn btn-secondary" (click)="confirm.emit(false)">{{ closeBtnName }}</button>
+    </div>`,
 })
-
-export class QuestionPromptContentComponent implements OnInit {
-  title: string;
-  message: string;
-  closeBtnName: string;
-  successBtnName: string;
-  successSubject: Subject<boolean> = new Subject<boolean>();
-  success: Observable<boolean> = this.successSubject.asObservable();
-
-  constructor(public bsModalRef: BsModalRef) { }
-
-  ngOnInit() {
-  }
-
-  onExit(state: boolean) {
-    this.successSubject.next(state);
-    this.bsModalRef.hide();
-  }
-
+export class QuestionPromptContentComponent {
+  @Input() title = 'Bestätigen';
+  @Input() message = 'Fortfahren?';
+  @Input() closeBtnName = 'Abbrechen';
+  @Input() successBtnName = 'OK';
+  @Output() confirm = new EventEmitter<boolean>();
 }

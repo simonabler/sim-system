@@ -1,210 +1,130 @@
-import { Component, OnInit, Input, Output, EventEmitter, ViewChild } from '@angular/core';
-import { ShoppingcartService } from '../../services/shoppingcart.service';
-import { Shoppingcart, Order, Article } from '../../models';
-import { BsModalService, ModalDirective } from 'ngx-bootstrap';
-import { ArticleService } from '../../services/article.service';
+import { Component, OnInit, Input, Output, EventEmitter } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { ReactiveFormsModule, FormGroup, FormControl, Validators } from '@angular/forms';
+import { NgSelectModule } from '@ng-select/ng-select';
+import { FormsModule } from '@angular/forms';
 import { ToastrService } from 'ngx-toastr';
-import { FormGroup, Validators, FormControl } from '@angular/forms';
-import { QuestionPromptContentComponent } from '../common/modals/question-prompt.component';
-import { filter } from 'rxjs/operators';
+import { ShoppingcartService } from '../../services/shoppingcart.service';
+import { ArticleService } from '../../services/article.service';
+import { Shoppingcart, Order, Article } from '../../models';
 
 @Component({
   selector: 'app-shoppingcart',
+  standalone: true,
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, NgSelectModule],
   templateUrl: './shoppingcart.component.html',
-  styleUrls: ['./shoppingcart.component.scss']
+  styleUrls: ['./shoppingcart.component.scss'],
 })
 export class ShoppingcartComponent implements OnInit {
-
-  shoppingcartStorage: Shoppingcart;
-  Articles$;
-  CartForm;
+  shoppingcartStorage: Shoppingcart | null = null;
+  Articles$: any;
+  CartForm!: FormGroup;
   annotationText = '';
-  submitted;
-  @ViewChild('shoppingcartModal', { static: false }) public modal: ModalDirective;
+  submitted = false;
+  modalOpen = false;
 
+  @Output() shoppingcartChange = new EventEmitter<Shoppingcart>();
 
-  @Output() shoppingcartChange: EventEmitter<Shoppingcart> = new EventEmitter<Shoppingcart>();
+  @Input() set shoppingcart(value: Shoppingcart) { this.shoppingcartStorage = value; }
+  get shoppingcart(): Shoppingcart | null { return this.shoppingcartStorage; }
 
-  @Input() set shoppingcart(value: Shoppingcart) {
-    this.shoppingcartStorage = value;
-  }
-  get shoppingcart(): Shoppingcart {
-    return this.shoppingcartStorage;
-  }
+  @Input() showDiscount = false;
+  @Input() showArticlenr = false;
+  @Input() showEdit = false;
 
-  @Input()
-  showDiscount: boolean;
-
-  @Input()
-  showArticlenr: boolean;
-
-
-  _showEdit: boolean;
-
-  @Input() set showEdit(value: boolean) {
-    this._showEdit = value;
-    if (this._showEdit) {
-      this.Articles$ = this.articleService.getAll();
-    }
-  }
-  get showEdit(): boolean {
-    return this._showEdit;
-  }
   get f() { return this.CartForm.controls; }
-
 
   constructor(
     private shoppingcartService: ShoppingcartService,
     private articleService: ArticleService,
-    private toastrService: ToastrService,
-    private modalService: BsModalService) {
+    private toastr: ToastrService,
+  ) {}
 
+  ngOnInit() {
+    this.initForm();
+    this.Articles$ = this.articleService.getAll();
   }
 
-  ngOnInit(): void {
-
-    this.intiForm();
-  }
-
-  intiForm() {
-
+  initForm() {
     this.CartForm = new FormGroup({
-
-      id: new FormControl(null, [
-        // Validators.required,
-      ]),
-      articleGroupRabatt: new FormControl(0, [
-        // Validators.required,
-      ]),
-      customerRabatt: new FormControl(0, [
-        // Validators.required,
-      ]),
-      amount: new FormControl(0, [
-        Validators.required,
-      ]),
-      price: new FormControl(0, [
-        // Validators.required,
-      ]),
-      article: new FormControl(null, [
-      ]),
-      text: new FormControl('', [
-        // Validators.required,
-      ]),
+      id: new FormControl(null),
+      articleGroupRabatt: new FormControl(0),
+      customerRabatt: new FormControl(0),
+      amount: new FormControl(0, [Validators.required]),
+      price: new FormControl(0),
+      article: new FormControl(null),
+      text: new FormControl(''),
     });
   }
 
-  loadFormData(data: Order) {
-    this.submitted = false;
-    this.CartForm.patchValue(data);
+  openAddModal() {
+    this.initForm();
+    this.modalOpen = true;
   }
 
-
-  deleteOrder(order) {
-    this.openModalWithComponent().content.success
-      .pipe(filter(data => data === true))
-      .subscribe(result => {
-        let orderToSend = Object.assign({}, order);
-        orderToSend.amount = 0;
-        this.shoppingcartService.updateOrder(this.shoppingcartStorage, orderToSend).subscribe(
-          (data: Shoppingcart) => {
-            console.log(result)
-
-            this.shoppingcart = data;
-            this.shoppingcartChange.emit(data);
-          }, (error) => {
-          });
-      })
+  editOrder(order: Order) {
+    this.CartForm.patchValue(order);
+    this.modalOpen = true;
   }
 
+  closeModal() { this.modalOpen = false; }
 
-  openModalWithComponent() {
-    const initialState = {
-
-      title: 'Löschen',
-      message: 'Eintrag Löschen?',
-      closeBtnName: 'Abbrechen',
-      successBtnName: 'Löschen'
-    };
-
-    const modalRef = this.modalService.show(QuestionPromptContentComponent, { initialState });
-    return modalRef
-  }
-
-  editOrder(order) {
-    this.loadFormData(new Order(order));
-    this.modal.show();
-  }
-
-  addOrder() {
-    const order = new Order();
-    order.id = null;
-    this.intiForm();
-    this.modal.show();
+  deleteOrder(order: Order) {
+    if (!confirm('Eintrag löschen?')) return;
+    const o = new Order({ ...order, amount: 0 });
+    this.shoppingcartService.updateOrder(this.shoppingcartStorage!, o).subscribe({
+      next: (data: Shoppingcart) => {
+        this.shoppingcartStorage = data;
+        this.shoppingcartChange.emit(data);
+      },
+    });
   }
 
   addAnnotation() {
-    const annotation = (this.annotationText || '').trim();
-    if (!this.shoppingcart?.id || !annotation) {
-      return;
-    }
-
-    this.shoppingcartService.addAnnotation(this.shoppingcart, annotation)
-      .subscribe(
-        (data: Shoppingcart) => {
-          this.shoppingcart = data;
-          this.annotationText = '';
-          this.shoppingcartChange.emit(data);
-          this.toastrService.success('Kommission wurde hinzugefuegt');
-        },
-        () => this.toastrService.error('Kommission konnte nicht gespeichert werden'),
-      );
+    const text = (this.annotationText || '').trim();
+    if (!this.shoppingcartStorage?.id || !text) return;
+    this.shoppingcartService.addAnnotation(this.shoppingcartStorage, text).subscribe({
+      next: (data: Shoppingcart) => {
+        this.shoppingcartStorage = data;
+        this.annotationText = '';
+        this.shoppingcartChange.emit(data);
+        this.toastr.success('Kommission hinzugefügt');
+      },
+      error: () => this.toastr.error('Fehler beim Speichern'),
+    });
   }
 
-
-
   saveShoppingcart() {
-
     this.submitted = true;
-
-    this.CartForm.updateValueAndValidity();
-
-    if (this.CartForm.invalid) {
-      console.log("Involid")
-      return;
-    }
+    if (this.CartForm.invalid) return;
     this.submitted = false;
     const order = new Order(this.CartForm.getRawValue());
 
     if (!order.id) {
-      this.shoppingcartService.addOrder(this.shoppingcart, order)
-        .subscribe((data: Shoppingcart) => {
-          this.shoppingcart = data;
+      this.shoppingcartService.addOrder(this.shoppingcartStorage!, order).subscribe({
+        next: (data: Shoppingcart) => {
+          this.shoppingcartStorage = data;
           this.shoppingcartChange.emit(data);
-
-          this.toastrService.success(`Artikel wurde hinzugefügt`);
-          this.modal.hide();
-        }, error => {
-          this.toastrService.error(error);
-        });
-
-    } else {
-      this.shoppingcartService.updateOrder(this.shoppingcart, order)
-        .subscribe((data: Shoppingcart) => {
-
-          console.log(data);
-          this.shoppingcart = data;
-          this.shoppingcartChange.emit(data);
-          this.toastrService.success(`Artikel wurde geändert`);
-          this.modal.hide();
+          this.toastr.success('Artikel hinzugefügt');
+          this.closeModal();
         },
-          (error) => this.toastrService.error(error));
+        error: (e) => this.toastr.error(e),
+      });
+    } else {
+      this.shoppingcartService.updateOrder(this.shoppingcartStorage!, order).subscribe({
+        next: (data: Shoppingcart) => {
+          this.shoppingcartStorage = data;
+          this.shoppingcartChange.emit(data);
+          this.toastr.success('Artikel geändert');
+          this.closeModal();
+        },
+        error: (e) => this.toastr.error(e),
+      });
     }
   }
 
-
   transSearchFn = (term: string, item: Article) => {
-    term = term.toLocaleLowerCase();
-    return item.name?.toLocaleLowerCase().indexOf(term) > -1 || item.artNumber?.toLocaleLowerCase().indexOf(term) > -1;
-  }
-
+    const t = term.toLocaleLowerCase();
+    return (item.name?.toLocaleLowerCase().includes(t) || item.artNumber?.toLocaleLowerCase().includes(t)) ?? false;
+  };
 }

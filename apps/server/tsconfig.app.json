@@ -3,11 +3,16 @@
   "compilerOptions": {
     "outDir": "../../dist/out-tsc",
     "module": "NodeNext",
-    "types": ["node", "multer"],
+    "moduleResolution": "NodeNext",
+    "types": ["node", "multer", "pdfkit"],
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
-    "target": "es2021"
+    "target": "es2021",
+    "baseUrl": "src",
+    "paths": {
+      "src/*": ["./*"]
+    }
   },
   "include": ["src/**/*.ts"],
-  "exclude": ["jest.config.ts", "src/**/*.spec.ts", "src/**/*.test.ts", "src/__mocks__"]
+  "exclude": ["jest.config.ts", "src/**/*.spec.ts", "src/**/*.test.ts", "src/__mocks__", "src/**/utils/mocks/**"]
 }

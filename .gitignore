@@ -49,3 +49,14 @@ Thumbs.db
 .vscode
 .env*
 !conf/postgres/.env.template
+# Backend
+apps/server/.env
+apps/server/.env.*
+apps/server/storage/
+!apps/server/storage/.gitkeep
+
+# Build outputs
+dist/
+
+# NX cache
+.nx/cache

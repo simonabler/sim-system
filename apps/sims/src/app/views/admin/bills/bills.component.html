@@ -1,122 +1,42 @@
-<div class="row animated fadeIn justify-content-center main-screen">
-
-
-    <div class="col-12">
-
-        <div class="col">
-            <div class="card">
-                <div class="card-header ">
-                    Lieferscheine
-                </div>
-                <div class="card-body">
-                    <!-- [dtOptions]="dtOptions" [dtTrigger]="dtTrigger" -->
-                    <table style="width:100%; min-width: 290px;" datatable id="slipTable" [dtOptions]="dtOptionsSlip"
-                        [dtTrigger]="dtTriggerSlip" class="table row-border hover table-striped table-bordered">
-                        <!-- Table Header -->
-                        <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>Rechn. Nr</th>
-                                <th>Nr</th>
-                                <th>Kunde</th>
-                                <th>Datum</th>
-                                <th>Betrag</th>
-                                <th>Aktionen</th>
-                            </tr>
-                        </thead>
-
-                        <!-- Table Body -->
-                        <tbody>
-                            <tr *ngIf="isLoading">
-                                <td colspan="6">
-                                    <!--   <app-loader-animation [aktiv]="isLoading" type="ball"></app-loader-animation> -->
-                                </td>
-                            </tr>
-                            <tr *ngFor="let slipsheet of shoppingcarts; let i = index"
-                                [class.extern-alert]="slipsheet.id== null"
-                                routerLink="/admin/customer/detail/{{slipsheet.customer.id}}">
-                                <td>{{ slipsheet.id }}</td>
-                                <td>{{ slipsheet.bill?.getNumber() }}</td>
-                                <td>{{ slipsheet.slipsheetnumber }}</td>
-                                <td>{{ slipsheet.customer.getName() }}</td>
-                                <td>{{ slipsheet.billDate | date:"dd.MM.yyyy":'UTC' }}</td>
-                                <td>{{ slipsheet.getPrice() | currency:'EUR':'symbol' }}</td>
-                                <td>
-
-                                    <a class="btn btn-info" (click)="downloadSlip(slipsheet)">
-                                        <i class="fa fa-file-pdf-o"></i>
-                                    </a>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
-        <div class="col">
-            <div class="card">
-                <div class="card-header ">
-                    Rechnungen
-                </div>
-                <div class="card-body">
-                    <!-- [dtOptions]="dtOptions" [dtTrigger]="dtTrigger" -->
-                    <table datatable id="billTable" style="width:100%; min-width: 290px;" [dtOptions]="dtOptionsBills"
-                        [dtTrigger]="dtTriggerBills" class="table row-border hover table-striped table-bordered">
-                        <!-- Table Header -->
-                        <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>Nr</th>
-                                <th>Kunde</th>
-                                <th>Datum</th>
-                                <th>Betrag</th>
-                                <th>Aktionen</th>
-                            </tr>
-                        </thead>
-
-                        <!-- Table Body -->
-                        <tbody>
-                            <tr *ngIf="isLoading">
-                                <td colspan="6">
-                                    <!--   <app-loader-animation [aktiv]="isLoading" type="ball"></app-loader-animation> -->
-                                </td>
-                            </tr>
-                            <tr *ngFor="let bill of bills; let i = index" [class.extern-alert]="bill.state === 'edit'"
-                                [class.extern-warn]="bill.state === 'open'">
-                                <td>{{ bill.id }}</td>
-                                <td>{{ bill.getNumber() }}</td>
-                                <td>{{ bill.getCustomer().getName() }}</td>
-                                <td>{{ bill.updatedAt | date:"dd.MM.yyyy":'UTC' }}</td>
-                                <td>{{ bill.getPrice()| currency:'EUR':'symbol' }}</td>
-                                <td>
-
-                                    <button class="btn btn-info" (click)="downloadBill(bill)">
-                                        <i class="fa fa-file-pdf-o"></i>
-                                    </button>
-
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
-
-
-        <div class="col">
-            <div class="card">
-                <div class="card-header ">
-                    Warenkorb
-                </div>
-                <div class="card-body">
-                    <app-shoppingcart [(shoppingcart)]="shoppingcarts[cartIdx]" [showDiscount]="true">
-                    </app-shoppingcart>
-                </div>
-            </div>
-
-        </div>
+<div class="animated fadeIn">
+  <div class="card" style="margin-bottom:1rem">
+    <div class="card-header">Lieferscheine</div>
+    <div class="card-body" style="padding:0;overflow-x:auto">
+      <table class="table">
+        <thead><tr><th>ID</th><th>Rechn. Nr</th><th>Nr</th><th>Kunde</th><th>Datum</th><th>Betrag</th><th></th></tr></thead>
+        <tbody>
+          <tr *ngFor="let slip of shoppingcarts" [routerLink]="'/admin/customer/detail/'+slip.customer.id" style="cursor:pointer">
+            <td>{{ slip.id }}</td>
+            <td>{{ slip.bill?.getNumber() }}</td>
+            <td>{{ slip.slipsheetnumber }}</td>
+            <td>{{ slip.customer.getName() }}</td>
+            <td>{{ slip.updatedAt | date:'dd.MM.yyyy':'UTC' }}</td>
+            <td>{{ slip.getPrice() | currency:'EUR' }}</td>
+            <td><button class="btn btn-sm btn-info" (click)="$event.stopPropagation();downloadSlip(slip)">PDF</button></td>
+          </tr>
+          <tr *ngIf="!shoppingcarts.length"><td colspan="7" class="empty">Keine Lieferscheine.</td></tr>
+        </tbody>
+      </table>
     </div>
+  </div>
 
+  <div class="card" style="margin-bottom:1rem">
+    <div class="card-header">Rechnungen</div>
+    <div class="card-body" style="padding:0;overflow-x:auto">
+      <table class="table">
+        <thead><tr><th>ID</th><th>Nr</th><th>Kunde</th><th>Datum</th><th>Betrag</th><th></th></tr></thead>
+        <tbody>
+          <tr *ngFor="let bill of bills" [class.text-danger]="bill.state==='open'" [class.text-warning]="bill.state==='edit'">
+            <td>{{ bill.id }}</td>
+            <td>{{ bill.getNumber() }}</td>
+            <td>{{ bill.getCustomer().getName() }}</td>
+            <td>{{ bill.updatedAt | date:'dd.MM.yyyy':'UTC' }}</td>
+            <td>{{ bill.getPrice() | currency:'EUR' }}</td>
+            <td><button class="btn btn-sm btn-info" (click)="downloadBill(bill)">PDF</button></td>
+          </tr>
+          <tr *ngIf="!bills.length"><td colspan="6" class="empty">Keine Rechnungen.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
 </div>

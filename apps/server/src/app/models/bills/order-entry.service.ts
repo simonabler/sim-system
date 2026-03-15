@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { BaseService } from 'src/common/base.service';
+import { BaseService } from '../../common/base.service';
 import { OrderEntryRepository } from './order-entry.repository';
 import { OrderEntry } from './entities/order-entry.entity';
 import { OrderEntryEntity } from './serializers/order-entry.serializer';

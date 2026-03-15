@@ -1,5 +1,6 @@
 export const environment = {
   production: true,
-  apiUrlHTTP: 'http://192.168.10.155:8000/api/v1',
-  apiUrlHTTPS: 'https://192.168.10.155:8000/api/v1'
+  apiUrl: '/api/v1',
+  apiUrlHTTP: '/api/v1',
+  apiUrlHTTPS: '/api/v1',
 };

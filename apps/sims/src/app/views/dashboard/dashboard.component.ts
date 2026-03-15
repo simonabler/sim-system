@@ -1,4 +1,6 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ArticleGroup } from '../../models';
 import { ArticleGroupService } from '../../services/article-group.service';
@@ -8,6 +10,8 @@ import {
 } from '../../services/dashboard.service';
 
 @Component({
+  standalone: true,
+  imports: [CommonModule, FormsModule],
   templateUrl: 'dashboard.component.html',
   styleUrls: ['./dashboard.component.scss'],
 })

@@ -1,11 +1,11 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { ModelRepository } from 'src/models/model.repository';
+import { ModelRepository } from '../models/model.repository';
 import { DeepPartial } from 'typeorm';
 import { ModelEntity } from './serializers/model.serializer';
+import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 
 @Injectable()
-export class BaseService<T, K extends ModelEntity> {
+export class BaseService<T extends object, K extends ModelEntity> {
 
   constructor(
     private readonly repository: ModelRepository<T, K>
@@ -41,27 +41,13 @@ export class BaseService<T, K extends ModelEntity> {
       .catch((error) => Promise.reject(error));
   }
 
-
   async getByName(
     name: string,
     relations: string[] = [],
     throwsException = false,
   ): Promise<K | null> {
     return this.repository
-      .findOne({
-        where: { name: name },
-        relations,
-      })
-      .then((entity) => {
-        if (!entity && throwsException) {
-          return Promise.reject(new NotFoundException('Model not found.'));
-        }
-
-        return Promise.resolve(
-          entity ? this.repository.transform(entity) : null,
-        );
-      })
-      .catch((error) => Promise.reject(error));
+      .getByNameDirect(name, relations, throwsException);
   }
 
   async create(inputs: DeepPartial<T>): Promise<K> {
@@ -74,7 +60,7 @@ export class BaseService<T, K extends ModelEntity> {
   ): Promise<K> {
     return await this.repository.updateEntity(
       id,
-      inputs,
+      inputs as unknown as QueryDeepPartialEntity<T>,
     );
   }
 }

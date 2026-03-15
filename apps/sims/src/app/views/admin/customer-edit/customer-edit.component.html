@@ -1,248 +1,32 @@
-<div class="row animated fadeIn justify-content-center main-screen">
-    <div class="col-12 col-sm-12 col-md-12 col-lg-7 col-xl-7 pl-0 pl-md-3 pr-0 pr-md-3" style="max-width:700px;">
-        <div class="card">
-            <div class="card-header ">
-                Details
-            </div>
-            <div class="card-body ">
-
-                <form class="form-horizontal" [formGroup]="CustomerForm">
-
-                    <div class="form-group row">
-                        <div class="col-12">
-                            <div class="input-group">
-                                <div class="input-group-prepend">
-                                    <span class="input-group-text samewidth">Firma:</span>
-                                </div>
-
-                                <input type="text" class="form-control" formControlName="companyName"
-                                    [ngClass]="{'is-invalid':submitted && f.companyName.errors}" />
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="form-group row">
-                        <div class="col-12">
-                            <div class="input-group smallbreak">
-                                <div class="input-group-prepend">
-                                    <span class="input-group-text samewidth">Vorname:</span>
-                                </div>
-
-                                <input type="text" class="form-control" formControlName="firstName"
-                                    [ngClass]="{'is-invalid':submitted && f.firstName.errors}" />
-                                <div class="input-group-prepend">
-                                    <span class="input-group-text samewidth">Nachname:</span>
-                                </div>
-
-                                <input type="text" class="form-control" formControlName="lastName"
-                                    [ngClass]="{'is-invalid':submitted && f.lastName.errors}" />
-                            </div>
-                        </div>
-                    </div>
-
-
-
-
-                    <div class="form-group row">
-                        <div class="col-12">
-                            <div class="input-group">
-                                <div class="input-group-prepend">
-                                    <span class="input-group-text samewidth">Kunden Nr.:</span>
-                                </div>
-
-                                <input type="text" class="form-control" formControlName="customerNumber"
-                                    [ngClass]="{'is-invalid':submitted && f.customerNumber.errors}" />
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="form-group row">
-                        <div class="col-12">
-                            <div class="input-group">
-                                <div class="input-group-prepend">
-                                    <span class="input-group-text samewidth">Adresse:</span>
-                                </div>
-
-                                <input type="text" class="form-control" formControlName="address"
-                                    [ngClass]="{'is-invalid':submitted && f.address.errors}" />
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="form-group row">
-                        <div class="col-12">
-                            <div class="input-group smallbreak">
-                                <div class="input-group-prepend">
-                                    <span class="input-group-text samewidth">Postl.:</span>
-                                </div>
-
-                                <input type="text" class="form-control" formControlName="postcode"
-                                    [ngClass]="{'is-invalid':submitted && f.postcode.errors}" />
-                                <div class="input-group-prepend">
-                                    <span class="input-group-text samewidth">Land:</span>
-                                </div>
-
-                                <input type="text" class="form-control" formControlName="country"
-                                    [ngClass]="{'is-invalid':submitted && f.country.errors}" />
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="form-group row">
-                        <div class="col-12">
-                            <div class="input-group">
-                                <div class="input-group-prepend">
-                                    <span class="input-group-text samewidth">Tel. priv:</span>
-                                </div>
-
-                                <input type="text" class="form-control" formControlName="phonePrivate"
-                                    [ngClass]="{'is-invalid':submitted && f.phonePrivate.errors}" />
-                            </div>
-                        </div>
-                    </div>
-
-
-                    <div class="form-group row">
-                        <div class="col-12">
-                            <div class="input-group">
-                                <div class="input-group-prepend">
-                                    <span class="input-group-text samewidth">Tel. gesch:</span>
-                                </div>
-
-                                <input type="text" class="form-control" formControlName="phoneCompany"
-                                    [ngClass]="{'is-invalid':submitted && f.phoneCompany.errors}" />
-                            </div>
-                        </div>
-                    </div>
-
-
-                    <div class="form-group row">
-                        <div class="col-12">
-                            <div class="input-group">
-                                <div class="input-group-prepend">
-                                    <span class="input-group-text samewidth">Email:</span>
-                                </div>
-
-                                <input type="text" class="form-control" formControlName="email"
-                                    [ngClass]="{'is-invalid':submitted && f.email.errors}" />
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="form-group row">
-                        <div class="col-12">
-                            <div class="input-group">
-                                <div class="input-group-prepend">
-                                    <span class="input-group-text samewidth">UID:</span>
-                                </div>
-
-                                <input type="text" class="form-control" formControlName="uid"
-                                    [ngClass]="{'is-invalid':submitted && f.uid.errors}" />
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="form-group row">
-                        <div class="col-12">
-                            <div class="input-group">
-                                <div class="input-group-prepend">
-                                    <span class="input-group-text samewidth">Rabatt:</span>
-                                </div>
-
-                                <input type="number" class="form-control" style="text-align: right;"
-                                    formControlName="customerDiscount"
-                                    [ngClass]="{'is-invalid':submitted && f.customerDiscount.errors}" />
-
-                                <div class="input-group-append">
-                                    <span class="input-group-text">
-                                        %
-                                    </span>
-                                </div>
-
-                            </div>
-                        </div>
-                    </div>
-
-
-                </form>
-
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-warning mr-auto" data-dismiss="modal" *ngIf='true'>Löschen</button>
-                <button type="button" class="btn btn-secondary" data-dismiss="modal" (click)="back()">Zurück</button>
-                <button type="button" class="btn btn-primary" (click)="save()">Speichern</button>
-            </div>
+<div class="animated fadeIn" style="max-width:700px">
+  <div class="card">
+    <div class="card-header">Kundendaten</div>
+    <div class="card-body">
+      <form [formGroup]="CustomerForm">
+        <div class="form-group"><label>Firma</label><input class="form-control" formControlName="companyName"></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+          <div class="form-group"><label>Vorname</label><input class="form-control" formControlName="firstName"></div>
+          <div class="form-group"><label>Nachname</label><input class="form-control" formControlName="lastName"></div>
         </div>
-    </div>
-    <div class="col-12 col-sm-12 col-md-12 col-lg-5 col-xl-5 pl-0 pl-md-3 pr-0 pr-md-3">
-
-        <div class="card">
-            <div class="card-header" style="line-height: 32px;">
-                Rabatt
-                <ul class="nav nav-pills card-header-pills float-right">
-                    <li class="nav-item">
-                        <button class="btn btn-danger" (click)="addDiscount()">
-                            <i class="fa fa-plus"></i>
-                        </button>
-                    </li>
-                </ul>
-            </div>
-            <div class="card-body ">
-
-                <table style="width: 100%;">
-                    <tbody>
-                        <tr *ngFor="let discount of this.customer?.discounts "
-                            style="border-bottom: 1px solid #c8ced3; white-space: nowrap;">
-                            <td>{{discount.articleGroup.name}} </td>
-
-                            <td style="text-align: right; padding-right: 10px; width: 1%;">
-                                {{discount.value| number : '1.2-2'}}% </td>
-
-                            <td style="text-align: right; padding-right: 10px; width: 1%;">
-                                <button class="btn btn-success" (click)="editDiscount(discount)">
-                                    <i class="fa fa-edit"></i>
-                                </button>
-
-                                <button class="btn btn-danger" (click)="deleteDiscount(discount)">
-                                    <i class="fa fa-trash"></i>
-                                </button>
-                            </td>
-                        </tr>
-                    </tbody>
-
-                </table>
-
-
-
-            </div>
+        <div class="form-group"><label>Kunden-Nr.</label><input class="form-control" formControlName="customerNumber"></div>
+        <div class="form-group"><label>Adresse</label><input class="form-control" formControlName="address"></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+          <div class="form-group"><label>PLZ</label><input class="form-control" formControlName="postcode"></div>
+          <div class="form-group"><label>Land</label><input class="form-control" formControlName="country"></div>
         </div>
-    </div>
-
-</div>
-
-
-<!-- Modal -->
-<div bsModal class="modal fade in" #discountModal="bs-modal" tabindex="-1" role="dialog"
-    aria-labelledby="discountModalLabel" aria-hidden="true">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <div class="modal-body">
-                <div class="row">
-                    <div class="col">
-                        <ng-select [items]="ArticleGroups$ | async" bindLabel="name"
-                            [(ngModel)]="discountValue.articleGroup" placeholder="Wähle Artikelgruppe">
-                        </ng-select>
-                    </div>
-                    <div class="col">
-                        <input [(ngModel)]="discountValue.value" type="number" style="height: 100%; width: 100px;"> %
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal"
-                    (click)="discountModal.hide()">Abbrechen</button>
-                <button type="button" class="btn btn-primary" (click)="saveDiscount()">Speichern</button>
-            </div>
+        <div class="form-group"><label>Tel. privat</label><input class="form-control" formControlName="phonePrivate"></div>
+        <div class="form-group"><label>Tel. geschäftlich</label><input class="form-control" formControlName="phoneCompany"></div>
+        <div class="form-group"><label>E-Mail</label><input class="form-control" type="email" formControlName="email"></div>
+        <div class="form-group"><label>UID</label><input class="form-control" formControlName="uid"></div>
+        <div class="form-group">
+          <label>Kundenrabatt %</label>
+          <input class="form-control" type="number" formControlName="customerDiscount" style="max-width:140px">
         </div>
+      </form>
     </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" (click)="back()">Zurück</button>
+      <button class="btn btn-primary" (click)="save()">Speichern</button>
+    </div>
+  </div>
 </div>

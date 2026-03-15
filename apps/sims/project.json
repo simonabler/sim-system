@@ -7,14 +7,13 @@
   "tags": [],
   "targets": {
     "build": {
-      "executor": "@angular-devkit/build-angular:browser",
+      "executor": "@angular-devkit/build-angular:application",
       "outputs": [
         "{options.outputPath}"
       ],
       "options": {
         "outputPath": "dist/apps/sims/browser",
         "index": "apps/sims/src/index.html",
-        "main": "apps/sims/src/main.ts",
         "polyfills": [
           "zone.js"
         ],
@@ -28,7 +27,8 @@
         ],
         "styles": [
           "apps/sims/src/styles.scss"
-        ]
+        ],
+        "browser": "apps/sims/src/main.ts"
       },
       "configurations": {
         "production": {
@@ -63,12 +63,8 @@
           }
         },
         "development": {
-          "buildOptimizer": false,
           "optimization": false,
-          "vendorChunk": true,
-          "extractLicenses": false,
-          "sourceMap": true,
-          "namedChunks": true
+          "sourceMap": true
         }
       },
       "defaultConfiguration": "production"
@@ -116,71 +112,6 @@
         "port": 4200,
         "spa": true
       }
-    },
-    "server": {
-      "dependsOn": [
-        "build"
-      ],
-      "executor": "@angular-devkit/build-angular:server",
-      "options": {
-        "outputPath": "dist/apps/sims/server",
-        "main": "apps/sims/src/server.ts",
-        "tsConfig": "apps/sims/tsconfig.server.json",
-        "inlineStyleLanguage": "scss"
-      },
-      "configurations": {
-        "production": {
-          "outputHashing": "media",
-          "fileReplacements": [
-            {
-              "replace": "apps/sims/src/environments/environments.ts",
-              "with": "apps/sims/src/environments/environments.prod.ts"
-            }
-          ]
-        },
-        "development": {
-          "buildOptimizer": false,
-          "optimization": false,
-          "sourceMap": true,
-          "extractLicenses": false,
-          "vendorChunk": true
-        }
-      },
-      "defaultConfiguration": "production"
-    },
-    "serve-ssr": {
-      "continuous": true,
-      "executor": "@angular-devkit/build-angular:ssr-dev-server",
-      "configurations": {
-        "development": {
-          "browserTarget": "sims:build:development",
-          "serverTarget": "sims:server:development"
-        },
-        "production": {
-          "browserTarget": "sims:build:production",
-          "serverTarget": "sims:server:production"
-        }
-      },
-      "defaultConfiguration": "development"
-    },
-    "prerender": {
-      "executor": "@angular-devkit/build-angular:prerender",
-      "options": {
-        "routes": [
-          "/"
-        ]
-      },
-      "configurations": {
-        "development": {
-          "browserTarget": "sims:build:development",
-          "serverTarget": "sims:server:development"
-        },
-        "production": {
-          "browserTarget": "sims:build:production",
-          "serverTarget": "sims:server:production"
-        }
-      },
-      "defaultConfiguration": "production"
     }
   }
 }

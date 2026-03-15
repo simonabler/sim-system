@@ -1,7 +1,7 @@
 import { Expose, Type } from 'class-transformer';
 import { ModelEntity } from '../../../common/serializers/model.serializer';
 import { Discount } from '../../bills/entities/discount.entity';
-import { DiscountEntity } from '../../bills/serializers/Discount.serializer';
+import { DiscountEntity } from '../../bills/serializers/discount.serializer';
 import { ICustomer } from '../interfaces/customer.interface';
 
 export const defaultCustomerForSerializing: string[] = [

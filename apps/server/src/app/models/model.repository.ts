@@ -1,16 +1,17 @@
 import { plainToClass } from 'class-transformer';
-import { Repository, DeepPartial, In, InsertResult } from 'typeorm';
+import { Repository, DeepPartial, In, InsertResult, FindOptionsWhere } from 'typeorm';
 import { NotFoundException } from '@nestjs/common';
 import { ModelEntity } from '../common/serializers/model.serializer';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
-export class ModelRepository<T, K extends ModelEntity> extends Repository<T> {
+
+export class ModelRepository<T extends object, K extends ModelEntity> extends Repository<T> {
   async get(
     id: number,
     relations: string[] = [],
     throwsException = false,
   ): Promise<K | null> {
     return this.findOne({
-      where: { id },
+      where: { id } as unknown as FindOptionsWhere<T>,
       relations,
     })
       .then((entity) => {
@@ -29,7 +30,7 @@ export class ModelRepository<T, K extends ModelEntity> extends Repository<T> {
     throwsException = false,
   ): Promise<K[] | null> {
     return this.find({
-      where: { id: In(ids) },
+      where: { id: In(ids) } as unknown as FindOptionsWhere<T>,
       relations,
     })
       .then((entity) => {
@@ -89,9 +90,7 @@ export class ModelRepository<T, K extends ModelEntity> extends Repository<T> {
     relations: string[] = [],
   ): Promise<K> {
     return (
-      this.insert(inputs)
-        //.then(async (entity: InsertResult) => entity.generatedMaps[0] )
-        //.then(async (entity) => await this.get((entity as any).id, relations))
+      this.insert(inputs as QueryDeepPartialEntity<T>)
         .then(
           async (entity: InsertResult) =>
             await this.get(entity.identifiers[0].id, relations),
@@ -106,12 +105,11 @@ export class ModelRepository<T, K extends ModelEntity> extends Repository<T> {
     relations: string[] = [],
   ): Promise<K> {
     return this.update(id, inputs)
-      .then(async () => 
-      await this.get(id, relations)
+      .then(async () =>
+        await this.get(id, relations),
       )
       .catch((error) => Promise.reject(error));
   }
-
 
   async updateEntities(
     ids: number[],
@@ -119,9 +117,28 @@ export class ModelRepository<T, K extends ModelEntity> extends Repository<T> {
     relations: string[] = [],
   ): Promise<K[]> {
     return this.update(ids, inputs)
-      .then(async () => 
-      await this.getAll(ids, relations)
+      .then(async () =>
+        await this.getAll(ids, relations),
       )
+      .catch((error) => Promise.reject(error));
+  }
+
+  // getByName used by BaseService
+  async getByNameDirect(
+    name: string,
+    relations: string[] = [],
+    throwsException = false,
+  ): Promise<K | null> {
+    return this.findOne({
+      where: { name } as unknown as FindOptionsWhere<T>,
+      relations,
+    })
+      .then((entity) => {
+        if (!entity && throwsException) {
+          return Promise.reject(new NotFoundException('Model not found.'));
+        }
+        return Promise.resolve(entity ? this.transform(entity) : null);
+      })
       .catch((error) => Promise.reject(error));
   }
 

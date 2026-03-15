@@ -48,7 +48,7 @@ import { CreateUpdateDiscountDto } from '../../bills/dto/add-update-discount.dto
 import { ArticleGroupService } from '../../article/article-group.service';
 import { Discount } from '../../bills/entities/discount.entity';
 import { DiscountService } from '../../bills/discount.service';
-import { DiscountEntity } from '../../bills/serializers/Discount.serializer';
+import { DiscountEntity } from '../../bills/serializers/discount.serializer';
 
 
 

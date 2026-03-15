@@ -2,7 +2,7 @@ import { EntityRepository } from 'typeorm';
 import { ModelRepository } from '../model.repository';
 import { classToPlain, plainToClass } from 'class-transformer';
 import { Discount } from './entities/discount.entity';
-import { allDiscountForSerializing, DiscountEntity } from './serializers/Discount.serializer';
+import { allDiscountForSerializing, DiscountEntity } from './serializers/discount.serializer';
 @EntityRepository(Discount)
 export class DiscountRepository extends ModelRepository<Discount, DiscountEntity> {
   transform(model: Discount): DiscountEntity {
