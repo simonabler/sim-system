@@ -1,12 +1,19 @@
 /**
- * REQ-002 — Response-Wrapper (ReS / ReE)  [Unit — ErrorFilter]
- * TC-002-006: Non-HttpException → HTTP 500 + ReE
+ * REQ-002 + REQ-004 — ErrorFilter (Unit)
  *
  * Spec:   test-req/REQ-002-response-wrapper.md
+ *         test-req/REQ-004-error-filter.md
  * Source: apps/server/src/common/filters/errors.filter.ts
  *
  * Testet ErrorFilter.catch() direkt mit gemocktem ArgumentsHost.
  * Dadurch ist der Test deterministisch ohne laufenden Server.
+ *
+ * TC-Zuordnung:
+ *   TC-002-006 — Non-HttpException → HTTP 500 + ReE
+ *   TC-004-003 — message-Array passthrough (kein double-wrap)
+ *   TC-004-004 — message-String → einelementiges Array
+ *   TC-004-005 — Non-HttpException → HTTP 500 (message + statusCode)
+ *   TC-004-006 — TypeError → error: "TypeError"
  *
  * Ausführen: npx nx test server --testFile=errors.filter.spec.ts
  */
@@ -65,9 +72,9 @@ describe('ErrorFilter', () => {
   });
 
   // -------------------------------------------------------------------------
-  // TC-002-006: Non-HttpException → HTTP 500
+  // TC-002-006 / TC-004-005: Non-HttpException → HTTP 500
   // -------------------------------------------------------------------------
-  describe('TC-002-006: Non-HttpException gibt HTTP 500 + ReE zurück', () => {
+  describe('TC-002-006 / TC-004-005: Non-HttpException gibt HTTP 500 + ReE zurück', () => {
     it('setzt HTTP-Statuscode 500', () => {
       const { host, capture } = createMockHost();
       filter.catch(new Error('Unexpected failure'), host);
@@ -104,7 +111,7 @@ describe('ErrorFilter', () => {
       expect(capture.body?.error).toBe('Error');
     });
 
-    it('Body: error ist "TypeError" für TypeError-Instanz', () => {
+    it('TC-004-006: Body: error ist "TypeError" für TypeError-Instanz', () => {
       const { host, capture } = createMockHost();
       filter.catch(new TypeError('type mismatch'), host);
       expect(capture.body?.error).toBe('TypeError');
@@ -118,10 +125,10 @@ describe('ErrorFilter', () => {
   });
 
   // -------------------------------------------------------------------------
-  // Bonus-Coverage: HttpException-Pfad (stärkt REQ-004, belegt hier REQ-002)
+  // TC-004-003 + TC-004-004: HttpException — message-Normalisierung
   // -------------------------------------------------------------------------
-  describe('HttpException-Pfad — message-Normalisierung (belegt REQ-002 + REQ-004)', () => {
-    it('message wird zu Array gewrappt wenn es ein String ist', () => {
+  describe('TC-004-003 / TC-004-004: HttpException-Pfad — message-Normalisierung', () => {
+    it('TC-004-004: message wird zu Array gewrappt wenn es ein String ist', () => {
       const { host, capture } = createMockHost();
       // BadRequestException mit String-Message
       filter.catch(new BadRequestException('single string message'), host);
@@ -129,7 +136,7 @@ describe('ErrorFilter', () => {
       expect(capture.body?.message).toEqual(['single string message']);
     });
 
-    it('message bleibt Array wenn es bereits ein Array ist (passthrough)', () => {
+    it('TC-004-003: message bleibt Array wenn es bereits ein Array ist (passthrough)', () => {
       const { host, capture } = createMockHost();
       // NestJS ValidationPipe erzeugt BadRequestException mit Array
       const exception = new BadRequestException({
