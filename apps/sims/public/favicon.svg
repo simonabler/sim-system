@@ -1,8 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
-  <!-- Navy rectangle – Hauptblock links -->
-  <rect x="1" y="1" width="16" height="21" rx="4" fill="#2E3F5C"/>
-  <!-- Teal rectangle – mittlere Schicht -->
-  <rect x="11" y="5" width="14" height="14" rx="3" fill="#7BAABA"/>
-  <!-- Sand rectangle – Akzent unten rechts -->
-  <rect x="17" y="17" width="9" height="9" rx="2.5" fill="#D4B896"/>
-</svg>

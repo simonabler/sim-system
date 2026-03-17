@@ -1,0 +1,10 @@
+// Bootstrap – nur Grid
+@use 'bootstrap/scss/bootstrap-grid';
+
+// sims Design System
+@import './styles/variables';
+@import './styles/reset';
+@import './styles/typography';
+@import './styles/layout';
+@import './styles/components';
+@import './styles/mobile';

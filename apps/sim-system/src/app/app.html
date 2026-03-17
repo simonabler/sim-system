@@ -1,0 +1,39 @@
+<!-- App-Layout mit Navigation -->
+
+<!-- TOP BAR (Mobile) -->
+<nav class="sims-topbar">
+  <span></span>
+  <span class="sims-topbar-title">SIMS</span>
+  <span></span>
+</nav>
+
+<!-- SIDEBAR (Desktop) -->
+<aside class="sims-sidebar">
+  <div class="sims-sidebar-logo">SIMS</div>
+  @for (section of navItems; track section.label) {
+    <div class="sims-nav-section-label">{{ section.label }}</div>
+    @for (item of section.children; track item.route) {
+      <a class="sims-nav-item" [class.active]="isActive(item.route)" [routerLink]="item.route">
+        <span>{{ item.icon }}</span>
+        <span>{{ item.label }}</span>
+      </a>
+    }
+  }
+</aside>
+
+<!-- MAIN -->
+<main class="sims-main">
+  <div class="sims-page-content page-enter">
+    <router-outlet />
+  </div>
+</main>
+
+<!-- BOTTOM NAV (Mobile) -->
+<nav class="sims-bottom-nav">
+  @for (item of bottomNavItems; track item.route) {
+    <button class="sims-bottom-nav-item touch-target" [class.active]="isActive(item.route)" [routerLink]="item.route">
+      <span style="font-size:22px; line-height:1;">{{ item.icon }}</span>
+      <span>{{ item.label }}</span>
+    </button>
+  }
+</nav>

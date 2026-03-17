@@ -1,0 +1,99 @@
+<div class="sims-page-header">
+  <div>
+    <div class="eyebrow">Übersicht</div>
+    <h1 class="page-title">Dashboard</h1>
+  </div>
+  <button class="btn-sims-outline" (click)="refreshNow()">Aktualisieren</button>
+</div>
+
+@if (loading) {
+  <div class="row g-3 mb-4">
+    @for (i of [1,2,3,4]; track i) {
+      <div class="col-6 col-md-3"><div class="sims-card skeleton" style="height:90px;"></div></div>
+    }
+  </div>
+}
+
+@if (error) {
+  <div class="sims-card" style="color:var(--status-error); border-color:var(--status-error-border);">{{ error }}</div>
+}
+
+@if (summary && !loading) {
+  <!-- KPI Cards -->
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+      <div class="sims-card kpi-card" (click)="goToArticle()">
+        <div class="kpi-label eyebrow">Artikel gesamt</div>
+        <div class="kpi-value mono">{{ summary.kpis.totalArticles }}</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="sims-card kpi-card kpi-warn" (click)="goToArticle()">
+        <div class="kpi-label eyebrow">Niedriger Bestand</div>
+        <div class="kpi-value mono">{{ summary.kpis.lowStockCount }}</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="sims-card kpi-card" (click)="goToSlipsheets()">
+        <div class="kpi-label eyebrow">Offene Lieferscheine</div>
+        <div class="kpi-value mono">{{ summary.kpis.openSlipsheets }}</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="sims-card kpi-card" (click)="goToBills()">
+        <div class="kpi-label eyebrow">Offene Rechnungen</div>
+        <div class="kpi-value mono">{{ summary.kpis.openBills }}</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Niedriger Bestand -->
+  @if (summary.lowStockItems?.length) {
+    <div class="sims-card mb-4">
+      <div class="section-title eyebrow" style="margin-bottom:1rem;">Niedriger Bestand</div>
+      @for (item of summary.lowStockItems; track item.id) {
+        <div class="low-stock-row" (click)="goToArticle(item.code)">
+          <span class="mono" style="font-size:0.8rem; color:var(--ink-3);">{{ item.code }}</span>
+          <span style="flex:1; padding:0 1rem;">{{ item.name }}</span>
+          <span class="sims-badge" [class]="item.stock <= 0 ? 'sims-badge-error' : 'sims-badge-warning'">
+            {{ item.stock }} {{ item.unit }}
+          </span>
+        </div>
+      }
+    </div>
+  }
+
+  <!-- Offene Dokumente -->
+  <div class="row g-3">
+    <div class="col-12 col-md-6">
+      <div class="sims-card">
+        <div class="eyebrow" style="margin-bottom:1rem;">Offene Lieferscheine</div>
+        @if (!summary.documentQueue.openSlipsheets?.length) {
+          <div class="sims-empty-state"><div class="empty-desc">Keine offenen Lieferscheine</div></div>
+        }
+        @for (slip of summary.documentQueue.openSlipsheets; track slip.id) {
+          <div class="doc-row" [routerLink]="['/slipsheets', slip.id]" style="cursor:pointer;">
+            <span class="mono" style="font-size:0.8rem;">{{ slip.slipsheetnumber }}</span>
+            <span style="flex:1; padding:0 0.75rem; font-size:0.875rem;">{{ slip.customerName }}</span>
+            <span class="sims-badge sims-badge-warning">offen</span>
+          </div>
+        }
+      </div>
+    </div>
+    <div class="col-12 col-md-6">
+      <div class="sims-card">
+        <div class="eyebrow" style="margin-bottom:1rem;">Offene Rechnungen</div>
+        @if (!summary.documentQueue.openBills?.length) {
+          <div class="sims-empty-state"><div class="empty-desc">Keine offenen Rechnungen</div></div>
+        }
+        @for (bill of summary.documentQueue.openBills; track bill.id) {
+          <div class="doc-row" [routerLink]="['/bills', bill.id]" style="cursor:pointer;">
+            <span class="mono" style="font-size:0.8rem;">{{ bill.billNumber }}</span>
+            <span style="flex:1; padding:0 0.75rem; font-size:0.875rem;">{{ bill.customerName }}</span>
+            <span class="sims-badge sims-badge-neutral">offen</span>
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+}

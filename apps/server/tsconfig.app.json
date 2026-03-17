@@ -2,17 +2,22 @@
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "outDir": "../../dist/out-tsc",
-    "module": "NodeNext",
-    "moduleResolution": "NodeNext",
-    "types": ["node", "multer", "pdfkit"],
+    "module": "commonjs",
+    "target": "ES2019",
+    "lib": ["ES2019"],
+    "types": ["node"],
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
-    "target": "es2021",
-    "baseUrl": "src",
-    "paths": {
-      "src/*": ["./*"]
-    }
+    "strictPropertyInitialization": false,
+    "strict": false,
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true
   },
   "include": ["src/**/*.ts"],
-  "exclude": ["jest.config.ts", "src/**/*.spec.ts", "src/**/*.test.ts", "src/__mocks__", "src/**/utils/mocks/**"]
+  "exclude": [
+    "jest.config.ts",
+    "jest.config.cts",
+    "src/**/*.spec.ts",
+    "src/**/*.test.ts"
+  ]
 }

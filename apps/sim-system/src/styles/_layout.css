@@ -1,0 +1,99 @@
+/* ── Mobile (Basis) ── */
+.sims-topbar {
+  position: fixed; top: 0; left: 0; right: 0;
+  height: 56px; background: var(--accent-primary); color: white;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 1rem; z-index: 100;
+}
+.sims-topbar-title {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.78rem; letter-spacing: 0.2em; text-transform: uppercase;
+}
+.sims-bottom-nav {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  height: 60px; background: white; border-top: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-around;
+  z-index: 100;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.sims-bottom-nav-item {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  min-width: 44px; min-height: 44px; gap: 2px;
+  color: var(--ink-3); background: none; border: none; padding: 0 8px;
+  font-family: 'DM Mono', monospace; font-size: 0.6rem;
+  text-transform: uppercase; letter-spacing: 0.06em;
+  cursor: pointer;
+}
+.sims-bottom-nav-item.active { color: var(--accent-highlight); }
+
+.sims-page-content {
+  padding-top: 56px;
+  padding-bottom: calc(60px + env(safe-area-inset-bottom));
+  padding-left: 1rem; padding-right: 1rem;
+}
+.sims-sidebar { display: none; }
+.sims-main    { margin-left: 0; }
+
+/* ── Desktop (≥ 768px) ── */
+@media (min-width: 768px) {
+  .sims-topbar     { display: none; }
+  .sims-bottom-nav { display: none; }
+
+  .sims-sidebar {
+    display: flex; flex-direction: column;
+    width: 240px; background: var(--accent-primary);
+    position: fixed; height: 100vh; top: 0; left: 0; z-index: 50;
+    overflow-y: auto;
+  }
+
+  .sims-sidebar-logo {
+    padding: 1.5rem 1.25rem 1rem;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.875rem; letter-spacing: 0.2em; text-transform: uppercase;
+    color: white;
+  }
+
+  .sims-nav-section-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.12em;
+    color: rgba(255,255,255,0.35);
+    padding: 1rem 1.25rem 0.4rem;
+  }
+
+  .sims-nav-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 0.6rem 1.25rem;
+    font-family: 'Inter', sans-serif; font-size: 0.875rem;
+    color: rgba(255,255,255,0.7);
+    text-decoration: none; cursor: pointer;
+    border-left: 3px solid transparent;
+    transition: background 0.15s, color 0.15s;
+  }
+  .sims-nav-item.active {
+    color: white;
+    background: rgba(255,255,255,0.1);
+    border-left-color: white;
+  }
+  .sims-nav-item:hover { color: white; background: rgba(255,255,255,0.07); }
+
+  .sims-main { margin-left: 240px; }
+
+  .sims-page-content {
+    padding: 2rem 2.5rem;
+    padding-top: 2rem; padding-bottom: 2rem;
+    min-height: 100vh;
+    background: var(--bg-light);
+  }
+}
+
+/* Page header */
+.sims-page-header {
+  margin-bottom: 1.5rem;
+}
+@media (min-width: 768px) {
+  .sims-page-header {
+    display: flex; align-items: flex-end;
+    justify-content: space-between;
+    margin-bottom: 2rem;
+  }
+}

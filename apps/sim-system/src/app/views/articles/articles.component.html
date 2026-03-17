@@ -1,0 +1,62 @@
+<div class="sims-page-header">
+  <div>
+    <div class="eyebrow">Stammdaten</div>
+    <h1 class="page-title">Artikel</h1>
+  </div>
+  <button class="btn-sims-primary" (click)="newArticle()">+ Artikel</button>
+</div>
+
+<!-- Suchleiste -->
+<div class="row g-2 mb-3">
+  <div class="col-6">
+    <input type="search" class="sims-input" placeholder="Bezeichnung…" [formControl]="searchCtrl" />
+  </div>
+  <div class="col-6">
+    <input type="search" class="sims-input" placeholder="Barcode…" [formControl]="codeCtrl" />
+  </div>
+</div>
+
+@if (loading) {
+  <div class="sims-card skeleton" style="height:200px;"></div>
+}
+
+@if (!loading && filtered.length === 0) {
+  <div class="sims-empty-state">
+    <div class="empty-icon">📦</div>
+    <div class="empty-title">Keine Artikel gefunden</div>
+    <div class="empty-desc">Passe die Suche an oder lege einen neuen Artikel an.</div>
+  </div>
+}
+
+@if (!loading && filtered.length > 0) {
+  <div class="sims-card-table">
+    <table class="table-responsive-cards">
+      <thead>
+        <tr>
+          <th>Bezeichnung</th>
+          <th>Artikel-Nr.</th>
+          <th>Barcode</th>
+          <th>Lagerstand</th>
+          <th>Einheit</th>
+          <th>Status</th>
+          <th>Inventurdatum</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (article of filtered; track article.id) {
+          <tr (click)="goToArticle(article.id)">
+            <td data-label="Bezeichnung">{{ article.name }}</td>
+            <td data-label="Artikel-Nr." class="numeric">{{ article.artNumber }}</td>
+            <td data-label="Barcode" class="numeric">{{ article.code }}</td>
+            <td data-label="Lagerstand" class="numeric">{{ article.stock }}</td>
+            <td data-label="Einheit">{{ article.unit }}</td>
+            <td data-label="Status">
+              <span [class]="getBadgeClass(article.stock)">{{ getBadgeLabel(article.stock) }}</span>
+            </td>
+            <td data-label="Inventurdatum">{{ article.inventoryDate ? (article.inventoryDate | date:'dd.MM.yyyy') : '—' }}</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+}

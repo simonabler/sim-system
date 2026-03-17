@@ -1,0 +1,45 @@
+<div class="sims-page-header">
+  <div>
+    <div class="eyebrow">Stammdaten</div>
+    <h1 class="page-title">Kunden</h1>
+  </div>
+  <button class="btn-sims-primary" (click)="newCustomer()">+ Kunde</button>
+</div>
+
+<div class="mb-3">
+  <input type="search" class="sims-input" placeholder="Name oder Firma suchen…" [formControl]="searchCtrl" />
+</div>
+
+@if (loading) { <div class="sims-card skeleton" style="height:200px;"></div> }
+
+@if (!loading && filtered.length === 0) {
+  <div class="sims-empty-state">
+    <div class="empty-icon">👤</div>
+    <div class="empty-title">Keine Kunden gefunden</div>
+  </div>
+}
+
+@if (!loading && filtered.length > 0) {
+  <div class="sims-card-table">
+    <table class="table-responsive-cards">
+      <thead>
+        <tr>
+          <th>Name / Firma</th>
+          <th>Kundennummer</th>
+          <th>E-Mail</th>
+          <th>Ort</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (c of filtered; track c.id) {
+          <tr (click)="goToCustomer(c.id)">
+            <td data-label="Name / Firma">{{ c.getName() }}</td>
+            <td data-label="Kundennummer" class="numeric">{{ c.customerNumber }}</td>
+            <td data-label="E-Mail">{{ c.email }}</td>
+            <td data-label="Ort">{{ c.postcode }} {{ c.country }}</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+}

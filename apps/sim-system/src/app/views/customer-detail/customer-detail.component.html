@@ -1,0 +1,111 @@
+<div class="sims-page-header">
+  <div>
+    <div class="eyebrow">Kunden</div>
+    <h1 class="page-title">{{ isNew ? 'Neuer Kunde' : (customer?.getName() || 'Kunde') }}</h1>
+  </div>
+  <button class="btn-sims-ghost" (click)="back()">← Zurück</button>
+</div>
+
+@if (loading) { <div class="sims-card skeleton" style="height:400px;"></div> }
+@if (error) { <div class="sims-card mb-3" style="color:var(--status-error);">{{ error }}</div> }
+
+@if (!loading) {
+  <form [formGroup]="form" (ngSubmit)="save()">
+    <div class="sims-card mb-3">
+      <div class="row g-3">
+        <div class="col-12 col-md-6">
+          <label class="sims-label">Vorname</label>
+          <input type="text" class="sims-input" formControlName="firstName" />
+        </div>
+        <div class="col-12 col-md-6">
+          <label class="sims-label">Nachname</label>
+          <input type="text" class="sims-input" formControlName="lastName" />
+        </div>
+        <div class="col-12">
+          <label class="sims-label">Firma</label>
+          <input type="text" class="sims-input" formControlName="companyName" />
+        </div>
+        <div class="col-12 col-md-6">
+          <label class="sims-label">E-Mail</label>
+          <input type="email" class="sims-input" formControlName="email" autocomplete="email" />
+        </div>
+        <div class="col-12 col-md-6">
+          <label class="sims-label">Kundennummer</label>
+          <input type="text" class="sims-input" formControlName="customerNumber" />
+        </div>
+        <div class="col-12 col-md-6">
+          <label class="sims-label">Tel. Firma</label>
+          <input type="tel" class="sims-input" formControlName="phoneCompany" />
+        </div>
+        <div class="col-12 col-md-6">
+          <label class="sims-label">Tel. Privat</label>
+          <input type="tel" class="sims-input" formControlName="phonePrivate" />
+        </div>
+        <div class="col-12">
+          <label class="sims-label">Adresse</label>
+          <input type="text" class="sims-input" formControlName="address" />
+        </div>
+        <div class="col-6 col-md-3">
+          <label class="sims-label">PLZ</label>
+          <input type="text" class="sims-input" formControlName="postcode" />
+        </div>
+        <div class="col-6 col-md-3">
+          <label class="sims-label">Land</label>
+          <input type="text" class="sims-input" formControlName="country" />
+        </div>
+        <div class="col-12 col-md-3">
+          <label class="sims-label">UID</label>
+          <input type="text" class="sims-input" formControlName="uid" />
+        </div>
+        <div class="col-12 col-md-3">
+          <label class="sims-label">Globalrabatt %</label>
+          <input type="number" class="sims-input" formControlName="customerDiscount" inputmode="decimal" min="0" max="100" />
+        </div>
+      </div>
+    </div>
+
+    <div class="sticky-actions">
+      <button type="submit" class="btn-sims-primary" [disabled]="saving">
+        {{ saving ? 'Wird gespeichert…' : 'Speichern' }}
+      </button>
+    </div>
+  </form>
+
+  <!-- Lieferscheine -->
+  @if (!isNew && slipsheets.length > 0) {
+    <div class="sims-card mb-3 mt-4">
+      <div class="eyebrow mb-3">Lieferscheine</div>
+      <table class="table-responsive-cards">
+        <thead><tr><th>Nr.</th><th>Datum</th><th>Status</th></tr></thead>
+        <tbody>
+          @for (s of slipsheets; track s.id) {
+            <tr [routerLink]="['/slipsheets', s.id]">
+              <td data-label="Nr." class="numeric">{{ s.slipsheetnumber }}</td>
+              <td data-label="Datum">{{ s.createdAt | date:'dd.MM.yyyy' }}</td>
+              <td data-label="Status"><span [class]="slipsheetBadge(s.state)">{{ s.getStateLabel() }}</span></td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+
+  <!-- Rechnungen -->
+  @if (!isNew && bills.length > 0) {
+    <div class="sims-card mt-3">
+      <div class="eyebrow mb-3">Rechnungen</div>
+      <table class="table-responsive-cards">
+        <thead><tr><th>Nummer</th><th>Datum</th><th>Status</th></tr></thead>
+        <tbody>
+          @for (b of bills; track b.id) {
+            <tr [routerLink]="['/bills', b.id]">
+              <td data-label="Nummer" class="numeric">{{ b.getNumber() }}</td>
+              <td data-label="Datum">{{ b.billDate | date:'dd.MM.yyyy' }}</td>
+              <td data-label="Status"><span [class]="billBadge(b.state)">{{ b.state }}</span></td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+}

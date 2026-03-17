@@ -1,0 +1,47 @@
+:root {
+  /* Neutrals */
+  --white:      #ffffff;
+  --bg-light:   #f7f7f4;
+  --bg-subtle:  #fbfbf9;
+  --ink:        #0f172a;
+  --ink-2:      #475569;
+  --ink-3:      #94a3b8;
+  --border:     #e2e8f0;
+  --border-sub: rgba(226, 232, 240, 0.7);
+
+  /* Akzent */
+  --accent-primary:   #1e3a5f;
+  --accent-secondary: #2d5282;
+  --accent-highlight: #3b82f6;
+  --accent-light:     #eff6ff;
+  --accent-muted:     #dbeafe;
+
+  /* Status */
+  --status-success:        #059669;
+  --status-success-light:  #ecfdf5;
+  --status-success-border: #6ee7b7;
+  --status-warning:        #d97706;
+  --status-warning-light:  #fffbeb;
+  --status-warning-border: #fcd34d;
+  --status-error:          #dc2626;
+  --status-error-light:    #fef2f2;
+  --status-error-border:   #fca5a5;
+  --status-neutral:        #64748b;
+  --status-neutral-light:  #f1f5f9;
+
+  /* Spacing */
+  --space-1:  0.25rem;
+  --space-2:  0.5rem;
+  --space-3:  0.75rem;
+  --space-4:  1rem;
+  --space-6:  1.5rem;
+  --space-8:  2rem;
+  --space-12: 3rem;
+
+  /* Typography */
+  --text-body:  1rem;
+  --text-sm:    0.9375rem;
+  --text-xs:    0.875rem;
+  --text-label: 0.75rem;
+  --text-micro: 0.6875rem;
+}

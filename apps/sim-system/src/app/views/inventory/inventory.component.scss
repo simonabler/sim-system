@@ -1,0 +1,71 @@
+.mb-4 { margin-bottom: 1.5rem; }
+.mb-3 { margin-bottom: 1rem; }
+
+.scan-input-wrap {
+  flex: 1;
+  display: flex; align-items: center;
+  background: var(--bg-light);
+  border: 1.5px solid var(--accent-highlight);
+  border-radius: 14px;
+  padding: 0 14px;
+  height: 54px;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+.scan-input {
+  border: none; background: transparent; outline: none;
+  font-family: 'DM Mono', monospace;
+  font-size: 1.05rem; letter-spacing: 0.04em;
+  color: var(--ink); width: 100%;
+  min-height: 44px;
+}
+
+.scan-camera-btn {
+  width: 54px; height: 54px;
+  background: var(--accent-primary); border: none; border-radius: 14px;
+  display: flex; align-items: center; justify-content: center;
+  color: white; flex-shrink: 0; cursor: pointer;
+}
+
+.article-info-table th {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.6rem; text-transform: uppercase;
+  letter-spacing: 0.1em; color: var(--ink-3);
+  padding: 7px 14px; white-space: nowrap; width: 1%;
+}
+.article-info-table td {
+  font-size: 0.875rem; color: var(--ink-2);
+  padding: 7px 14px 7px 0;
+}
+
+.count-half {
+  flex: 1; padding: 12px 14px;
+  display: flex; flex-direction: column; gap: 4px;
+}
+
+.step-btn {
+  width: 36px; height: 36px; border-radius: 50%;
+  border: 1px solid var(--border); background: white;
+  font-size: 1.25rem; color: var(--ink-2);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; flex-shrink: 0;
+}
+.is-input {
+  border: none; outline: none; background: transparent;
+  font-family: 'DM Mono', monospace; font-size: 1.4rem;
+  color: var(--accent-primary); width: 5rem; text-align: center;
+  min-height: 44px;
+}
+
+.diff-banner {
+  &.negative { background: var(--status-error-light); }
+  &.positive  { background: var(--status-warning-light); }
+  &.zero      { background: var(--status-success-light); }
+}
+
+.inv-submit:disabled { opacity: 0.35; pointer-events: none; }
+
+.log-diff {
+  &.ok  { color: var(--status-success); }
+  &.neg { color: var(--status-error); }
+  &.pos { color: var(--status-warning); }
+}

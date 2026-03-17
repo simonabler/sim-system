@@ -1,0 +1,21 @@
+.kpi-card {
+  cursor: pointer;
+  transition: transform 0.15s;
+}
+.kpi-label { margin-bottom: 0.5rem; }
+.kpi-value {
+  font-size: 1.75rem;
+  font-weight: 600;
+  color: var(--ink);
+}
+.kpi-warn .kpi-value { color: var(--status-warning); }
+.low-stock-row, .doc-row {
+  display: flex;
+  align-items: center;
+  padding: 0.6rem 0;
+  border-bottom: 1px solid var(--border-sub);
+  &:last-child { border-bottom: none; }
+}
+@media (hover: hover) {
+  .kpi-card:hover { transform: translateY(-2px); }
+}

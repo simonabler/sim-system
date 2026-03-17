@@ -1,30 +1,31 @@
 import 'reflect-metadata';
 
 import { NestFactory } from '@nestjs/core';
-import { AppModule } from './app/app.module';
+import { AppModule } from './app.module';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
-
-
-import { ErrorFilter } from './app/common/filters/errors.filter';
-import { AppConfigService } from './app/config/app/config.service';
+import { ErrorFilter } from './common/filters/errors.filter';
+import { AppConfigService } from './config/app/config.service';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 
-
-
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule, {
-    cors: true
+  const app = await NestFactory.create(AppModule);
+
+  // Bug #8 fix: replace cors: true with proper CORS config
+  app.enableCors({
+    origin: process.env.CORS_ORIGIN?.split(',') ?? ['http://localhost:4200'],
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    credentials: true,
   });
-  //await app.init();
+
   app.setGlobalPrefix('api/v1');
   app.useGlobalFilters(new ErrorFilter());
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
+      transform: true,
     }),
   );
   const appConfig: AppConfigService = app.get<AppConfigService>(AppConfigService);
-
 
   bootstrapSwagger(app, appConfig);
 
@@ -44,7 +45,6 @@ function bootstrapSwagger(app: INestApplication, appConfig: AppConfigService) {
     ignoreGlobalPrefix: true,
     deepScanRoutes: true,
     include: [AppModule],
-
   });
 
   SwaggerModule.setup('api/v1/doc', app, document, {
@@ -73,7 +73,6 @@ function bootstrapSwaggerUniversall(
   const document = SwaggerModule.createDocument(app, config, {
     ignoreGlobalPrefix: true,
     deepScanRoutes: false,
-   // include: [AuditLogModule, AuthModule],
   });
 
   SwaggerModule.setup('api/v1/doc/univ', app, document, {
@@ -85,7 +84,6 @@ function bootstrapSwaggerUniversall(
     ...getSwaggerOptions(),
   });
 }
-
 
 function getSwaggerOptions() {
   return {

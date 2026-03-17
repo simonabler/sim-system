@@ -3,7 +3,7 @@
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/domain/src",
   "projectType": "library",
-  "tags": ["scope:shared", "type:domain"],
+  "tags": [],
   "targets": {
     "build": {
       "executor": "@nx/js:tsc",
@@ -12,20 +12,14 @@
         "outputPath": "dist/libs/domain",
         "main": "libs/domain/src/index.ts",
         "tsConfig": "libs/domain/tsconfig.lib.json",
-        "assets": []
+        "assets": ["libs/domain/*.md"]
       }
     },
     "test": {
       "executor": "@nx/jest:jest",
-      "outputs": ["{workspaceRoot}/coverage/libs/domain"],
+      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
       "options": {
-        "jestConfig": "libs/domain/jest.config.ts"
-      }
-    },
-    "lint": {
-      "executor": "@nx/eslint:lint",
-      "options": {
-        "lintFilePatterns": ["libs/domain/**/*.ts"]
+        "jestConfig": "libs/domain/jest.config.cts"
       }
     }
   }
