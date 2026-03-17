@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Expose } from 'class-transformer';
+import { Expose, Transform } from 'class-transformer';
 
 export class ReturnHelper {
   @ApiProperty({ example: true, description: 'success indicator' })
@@ -16,6 +16,7 @@ export class ReS<T> extends ReturnHelper {
   }
 
   @Expose()
+  @Transform(({ value }) => value) // preserves null when ClassSerializerInterceptor + excludeExtraneousValues:true is active
   public data: T;
 }
 

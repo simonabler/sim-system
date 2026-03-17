@@ -15,7 +15,7 @@ export class AppConfigService {
     return this.configService.get<string>('app.url', 'http://localhost:9000');
   }
   get port(): number {
-    return Number(this.configService.get<number>('app.port', 9000));
+    return Number(this.configService.get<number>('app.port', 3000));
   }
   get jwt_secret(): string {
     return this.configService.get<string>('app.jwt_secret', 'ACCESS_TOKEN_SECRET');
