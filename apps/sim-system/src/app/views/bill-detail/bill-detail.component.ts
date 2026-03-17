@@ -1,8 +1,9 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { switchMap, map, catchError, of } from 'rxjs';
 import { BillService } from '../../services/bill.service';
-import { Bill } from '../../models/bill.model';
 
 @Component({
   selector: 'app-bill-detail',
@@ -10,46 +11,49 @@ import { Bill } from '../../models/bill.model';
   imports: [CommonModule, RouterModule],
   templateUrl: './bill-detail.component.html',
   styleUrl: './bill-detail.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class BillDetailComponent implements OnInit {
-  bill: Bill | null = null;
-  loading = true;
-  error = '';
-  downloading = false;
+export class BillDetailComponent {
+  private route = inject(ActivatedRoute);
+  private router = inject(Router);
+  private billService = inject(BillService);
 
-  constructor(
-    private route: ActivatedRoute,
-    private router: Router,
-    private billService: BillService,
-  ) {}
+  readonly error = signal('');
+  readonly downloading = signal(false);
 
-  ngOnInit() {
-    const id = +this.route.snapshot.paramMap.get('id')!;
-    this.billService.getAll().subscribe({
-      next: bills => {
-        this.bill = bills.find(b => b.id === id) || null;
-        this.loading = false;
-        if (!this.bill) this.error = 'Rechnung nicht gefunden.';
-      },
-      error: () => { this.loading = false; this.error = 'Rechnung konnte nicht geladen werden.'; }
-    });
-  }
+  readonly bill = toSignal(
+    this.route.paramMap.pipe(
+      map(p => +p.get('id')!),
+      switchMap(id =>
+        this.billService.getAll().pipe(
+          map(bills => {
+            const found = bills.find(b => b.id === id);
+            if (!found) this.error.set('Rechnung nicht gefunden.');
+            return found ?? null;
+          }),
+          catchError(() => { this.error.set('Rechnung konnte nicht geladen werden.'); return of(null); })
+        )
+      )
+    )
+  );
 
-  // Bug #2 fix: GET /bills/:id/pdf is read-only – does NOT regenerate the PDF
+  readonly loading = computed(() => this.bill() === undefined && !this.error());
+
   downloadPdf() {
-    if (!this.bill) return;
-    this.downloading = true;
-    this.billService.getPdf(this.bill.id).subscribe({
+    const b = this.bill();
+    if (!b) return;
+    this.downloading.set(true);
+    this.billService.getPdf(b.id).subscribe({
       next: blob => {
-        this.downloading = false;
+        this.downloading.set(false);
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `rechnung-${this.bill!.getNumber()}.pdf`;
+        a.download = `rechnung-${b.getNumber()}.pdf`;
         a.click();
         URL.revokeObjectURL(url);
       },
-      error: () => { this.downloading = false; this.error = 'PDF nicht gefunden. Bitte neu erzeugen.'; }
+      error: () => { this.downloading.set(false); this.error.set('PDF nicht gefunden. Bitte neu erzeugen.'); }
     });
   }
 

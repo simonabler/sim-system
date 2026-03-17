@@ -1,15 +1,15 @@
 <div class="sims-page-header">
   <div>
     <div class="eyebrow">Kunden</div>
-    <h1 class="page-title">{{ isNew ? 'Neuer Kunde' : (customer?.getName() || 'Kunde') }}</h1>
+    <h1 class="page-title">{{ isNew() ? 'Neuer Kunde' : (customer()?.getName() || 'Kunde') }}</h1>
   </div>
   <button class="btn-sims-ghost" (click)="back()">← Zurück</button>
 </div>
 
-@if (loading) { <div class="sims-card skeleton" style="height:400px;"></div> }
-@if (error) { <div class="sims-card mb-3" style="color:var(--status-error);">{{ error }}</div> }
+@if (loading()) { <div class="sims-card skeleton" style="height:400px;"></div> }
+@if (error()) { <div class="sims-card mb-3" style="color:var(--status-error);">{{ error() }}</div> }
 
-@if (!loading) {
+@if (!loading()) {
   <form [formGroup]="form" (ngSubmit)="save()">
     <div class="sims-card mb-3">
       <div class="row g-3">
@@ -65,20 +65,20 @@
     </div>
 
     <div class="sticky-actions">
-      <button type="submit" class="btn-sims-primary" [disabled]="saving">
-        {{ saving ? 'Wird gespeichert…' : 'Speichern' }}
+      <button type="submit" class="btn-sims-primary" [disabled]="saving()">
+        {{ saving() ? 'Wird gespeichert…' : 'Speichern' }}
       </button>
     </div>
   </form>
 
   <!-- Lieferscheine -->
-  @if (!isNew && slipsheets.length > 0) {
+  @if (!isNew() && slipsheets().length > 0) {
     <div class="sims-card mb-3 mt-4">
       <div class="eyebrow mb-3">Lieferscheine</div>
       <table class="table-responsive-cards">
         <thead><tr><th>Nr.</th><th>Datum</th><th>Status</th></tr></thead>
         <tbody>
-          @for (s of slipsheets; track s.id) {
+          @for (s of slipsheets(); track s.id) {
             <tr [routerLink]="['/slipsheets', s.id]">
               <td data-label="Nr." class="numeric">{{ s.slipsheetnumber }}</td>
               <td data-label="Datum">{{ s.createdAt | date:'dd.MM.yyyy' }}</td>
@@ -91,13 +91,13 @@
   }
 
   <!-- Rechnungen -->
-  @if (!isNew && bills.length > 0) {
+  @if (!isNew() && bills().length > 0) {
     <div class="sims-card mt-3">
       <div class="eyebrow mb-3">Rechnungen</div>
       <table class="table-responsive-cards">
         <thead><tr><th>Nummer</th><th>Datum</th><th>Status</th></tr></thead>
         <tbody>
-          @for (b of bills; track b.id) {
+          @for (b of bills(); track b.id) {
             <tr [routerLink]="['/bills', b.id]">
               <td data-label="Nummer" class="numeric">{{ b.getNumber() }}</td>
               <td data-label="Datum">{{ b.billDate | date:'dd.MM.yyyy' }}</td>

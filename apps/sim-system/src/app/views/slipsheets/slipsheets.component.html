@@ -6,16 +6,16 @@
   <button class="btn-sims-primary" (click)="newOrder()">+ Neue Bestellung</button>
 </div>
 
-@if (loading) { <div class="sims-card skeleton" style="height:200px;"></div> }
+@if (loading()) { <div class="sims-card skeleton" style="height:200px;"></div> }
 
-@if (!loading && slipsheets.length === 0) {
+@if (!loading() && slipsheets().length === 0) {
   <div class="sims-empty-state">
     <div class="empty-icon">🚚</div>
     <div class="empty-title">Keine Lieferscheine</div>
   </div>
 }
 
-@if (!loading && slipsheets.length > 0) {
+@if (!loading() && slipsheets().length > 0) {
   <div class="sims-card-table">
     <table class="table-responsive-cards">
       <thead>
@@ -28,13 +28,13 @@
         </tr>
       </thead>
       <tbody>
-        @for (s of slipsheets; track s.id) {
+        @for (s of slipsheets(); track s.id) {
           <tr (click)="goTo(s.id)">
             <td data-label="Nummer" class="numeric">{{ s.slipsheetnumber }}</td>
             <td data-label="Kunde">{{ s.customer?.companyName || s.customer?.lastName }}</td>
             <td data-label="Datum">{{ s.createdAt | date:'dd.MM.yyyy' }}</td>
             <td data-label="Status"><span [class]="badgeClass(s.state)">{{ s.getStateLabel() }}</span></td>
-            <td data-label="Positionen" class="numeric">{{ s.orderEntries?.length || 0 }}</td>
+            <td data-label="Positionen" class="numeric">{{ s.orderEntries.length }}</td>
           </tr>
         }
       </tbody>

@@ -1,17 +1,16 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable, Subject } from 'rxjs';
+import { BehaviorSubject, Observable } from 'rxjs';
 import { map, switchMap } from 'rxjs/operators';
 import { Slipsheet, Order } from '../models/bill.model';
 
 @Injectable({ providedIn: 'root' })
 export class SlipsheetService {
-  private currentSlipsheetSubject = new Subject<Slipsheet>();
-  private currentSlipsheet = new Slipsheet();
+  private currentSlipsheetSubject = new BehaviorSubject<Slipsheet | undefined>(undefined);
 
   constructor(private http: HttpClient) {}
 
-  getCurrentSlipsheet(): Observable<Slipsheet> {
+  getCurrentSlipsheet(): Observable<Slipsheet | undefined> {
     return this.currentSlipsheetSubject.asObservable();
   }
 
@@ -44,18 +43,23 @@ export class SlipsheetService {
     );
   }
 
-  create(data: { article: any; amount: number; customer: any }): Observable<Slipsheet> {
+  /** POST /slipsheets — GetOrCreate: findet offenen LS für Kunden oder erstellt neuen, fügt direkt erste Position hinzu */
+  getOrCreate(data: { article: any; amount: number; customer: any }): Observable<Slipsheet> {
     return this.http.post<any>('slipsheets', data).pipe(
       map(o => {
         if (o.success) {
           const slip = new Slipsheet(o.data);
-          this.currentSlipsheet = slip;
           this.currentSlipsheetSubject.next(slip);
           return slip;
         }
         throw new Error(o.message);
       })
     );
+  }
+
+  /** @deprecated use getOrCreate */
+  create(data: { article: any; amount: number; customer: any }): Observable<Slipsheet> {
+    return this.getOrCreate(data);
   }
 
   addOrder(slipsheet: Slipsheet, order: Order): Observable<Slipsheet> {
@@ -71,15 +75,14 @@ export class SlipsheetService {
     return this.http.put<any>(`order-entries/${order.id}`, order).pipe(
       map(o => {
         if (o.success) {
-          if (slipsheet && order.amount !== 0) {
-            slipsheet.orderEntries = slipsheet.orderEntries.map(m =>
-              m.id === order.id ? new Order(o.data) : m
-            );
-          } else if (slipsheet && order.amount === 0) {
-            slipsheet.orderEntries = slipsheet.orderEntries.filter(m => m.id !== order.id);
-          }
-          slipsheet.state = o.data?.slipsheet?.state || 'changed';
-          return slipsheet;
+          const newEntries = order.amount !== 0
+            ? slipsheet.orderEntries.map(m => m.id === order.id ? new Order(o.data) : m)
+            : slipsheet.orderEntries.filter(m => m.id !== order.id);
+          return new Slipsheet({
+            ...slipsheet,
+            orderEntries: newEntries,
+            state: o.data?.slipsheet?.state || 'changed',
+          });
         }
         throw new Error(o.message);
       })

@@ -1,18 +1,18 @@
 <div class="sims-page-header">
   <div>
     <div class="eyebrow">Artikel</div>
-    <h1 class="page-title">{{ isNew ? 'Neuer Artikel' : 'Artikel bearbeiten' }}</h1>
+    <h1 class="page-title">{{ isNew() ? 'Neuer Artikel' : 'Artikel bearbeiten' }}</h1>
   </div>
   <button class="btn-sims-ghost" (click)="back()">← Zurück</button>
 </div>
 
-@if (loading) { <div class="sims-card skeleton" style="height:400px;"></div> }
+@if (loading()) { <div class="sims-card skeleton" style="height:400px;"></div> }
 
-@if (error) {
-  <div class="sims-card mb-3" style="color:var(--status-error); border-color:var(--status-error-border);">{{ error }}</div>
+@if (error()) {
+  <div class="sims-card mb-3" style="color:var(--status-error); border-color:var(--status-error-border);">{{ error() }}</div>
 }
 
-@if (!loading) {
+@if (!loading()) {
   <form [formGroup]="form" (ngSubmit)="save()">
     <div class="sims-card mb-3">
       <div class="row g-3">
@@ -56,7 +56,7 @@
           <label class="sims-label">Artikelgruppe</label>
           <select class="sims-select" formControlName="articleGroup">
             <option [value]="null">— keine —</option>
-            @for (g of articleGroups; track g.id) {
+            @for (g of articleGroups(); track g.id) {
               <option [value]="g.id">{{ g.name }}</option>
             }
           </select>
@@ -84,11 +84,11 @@
     <div class="sticky-actions">
       <div class="row g-2">
         <div class="col-12 col-md-auto">
-          <button type="submit" class="btn-sims-primary" [disabled]="saving">
-            {{ saving ? 'Wird gespeichert…' : 'Speichern' }}
+          <button type="submit" class="btn-sims-primary" [disabled]="saving()">
+            {{ saving() ? 'Wird gespeichert…' : 'Speichern' }}
           </button>
         </div>
-        @if (!isNew) {
+        @if (!isNew()) {
           <div class="col-12 col-md-auto">
             <button type="button" class="btn-sims-danger" (click)="delete()">Löschen</button>
           </div>

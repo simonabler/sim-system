@@ -16,11 +16,11 @@
   </div>
 </div>
 
-@if (loading) {
+@if (loading()) {
   <div class="sims-card skeleton" style="height:200px;"></div>
 }
 
-@if (!loading && filtered.length === 0) {
+@if (!loading() && filtered().length === 0) {
   <div class="sims-empty-state">
     <div class="empty-icon">📦</div>
     <div class="empty-title">Keine Artikel gefunden</div>
@@ -28,7 +28,7 @@
   </div>
 }
 
-@if (!loading && filtered.length > 0) {
+@if (!loading() && filtered().length > 0) {
   <div class="sims-card-table">
     <table class="table-responsive-cards">
       <thead>
@@ -43,7 +43,7 @@
         </tr>
       </thead>
       <tbody>
-        @for (article of filtered; track article.id) {
+        @for (article of filtered(); track article.id) {
           <tr (click)="goToArticle(article.id)">
             <td data-label="Bezeichnung">{{ article.name }}</td>
             <td data-label="Artikel-Nr." class="numeric">{{ article.artNumber }}</td>

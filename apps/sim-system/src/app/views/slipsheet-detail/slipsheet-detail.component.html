@@ -1,31 +1,31 @@
 <div class="sims-page-header">
   <div>
     <div class="eyebrow">Lieferscheine</div>
-    <h1 class="page-title">{{ slipsheet?.slipsheetnumber || '…' }}</h1>
+    <h1 class="page-title">{{ slipsheet()?.slipsheetnumber || '…' }}</h1>
   </div>
   <button class="btn-sims-ghost" (click)="back()">← Zurück</button>
 </div>
 
-@if (loading) { <div class="sims-card skeleton" style="height:300px;"></div> }
-@if (error) { <div class="sims-card" style="color:var(--status-error);">{{ error }}</div> }
+@if (loading()) { <div class="sims-card skeleton" style="height:300px;"></div> }
+@if (error()) { <div class="sims-card" style="color:var(--status-error);">{{ error() }}</div> }
 
-@if (slipsheet && !loading) {
+@if (slipsheet() && !loading()) {
   <!-- Kunde + Status -->
   <div class="sims-card mb-3">
     <div class="row g-2">
       <div class="col-12 col-md-4">
         <div class="eyebrow">Kunde</div>
         <div style="font-size:1rem; margin-top:0.25rem;">
-          {{ slipsheet.customer?.companyName || (slipsheet.customer?.lastName + ' ' + slipsheet.customer?.firstName) }}
+          {{ slipsheet()!.customer?.companyName || (slipsheet()!.customer?.lastName + ' ' + slipsheet()!.customer?.firstName) }}
         </div>
       </div>
       <div class="col-6 col-md-4">
         <div class="eyebrow">Datum</div>
-        <div style="margin-top:0.25rem;">{{ slipsheet.createdAt | date:'dd.MM.yyyy' }}</div>
+        <div style="margin-top:0.25rem;">{{ slipsheet()!.createdAt | date:'dd.MM.yyyy' }}</div>
       </div>
       <div class="col-6 col-md-4">
         <div class="eyebrow">Status</div>
-        <div style="margin-top:0.25rem;"><span [class]="badgeClass(slipsheet.state)">{{ slipsheet.getStateLabel() }}</span></div>
+        <div style="margin-top:0.25rem;"><span [class]="badgeClass(slipsheet()!.state)">{{ slipsheet()!.getStateLabel() }}</span></div>
       </div>
     </div>
   </div>
@@ -43,7 +43,7 @@
         </tr>
       </thead>
       <tbody>
-        @for (o of slipsheet.orderEntries; track o.id) {
+        @for (o of slipsheet()!.orderEntries; track o.id) {
           <tr>
             <td data-label="Artikel">{{ o.article?.name || o.text }}</td>
             <td data-label="Menge" class="numeric">{{ o.amount }}</td>
@@ -60,7 +60,7 @@
   <div class="sticky-sum">
     <div class="sum-row">
       <span style="font-weight:500;">Gesamt (netto)</span>
-      <span class="mono" style="font-size:1.25rem;">{{ total | number:'1.2-2' }} €</span>
+      <span class="mono" style="font-size:1.25rem;">{{ total() | number:'1.2-2' }} €</span>
     </div>
   </div>
 

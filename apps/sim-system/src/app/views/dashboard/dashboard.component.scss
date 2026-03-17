@@ -8,7 +8,8 @@
   font-weight: 600;
   color: var(--ink);
 }
-.kpi-warn .kpi-value { color: var(--status-warning); }
+.kpi-warn .kpi-value  { color: var(--status-warning); }
+.kpi-error .kpi-value { color: var(--status-error); }
 .low-stock-row, .doc-row {
   display: flex;
   align-items: center;

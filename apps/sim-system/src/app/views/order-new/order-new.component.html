@@ -1,101 +1,230 @@
 <div class="sims-page-header">
   <div>
     <div class="eyebrow">Neue Bestellung</div>
-    <h1 class="page-title">{{ positions.length }} Position{{ positions.length !== 1 ? 'en' : '' }}</h1>
+    <h1 class="page-title">
+      @if (slipsheet()) { LS {{ slipsheet()!.slipsheetnumber }} }
+      @else { Neuer Lieferschein }
+    </h1>
   </div>
-  <button class="btn-sims-ghost" (click)="back()">Abbrechen</button>
-</div>
-
-<!-- Kunden-Strip -->
-<div class="customer-strip">
-  @if (selectedCustomer) {
-    <div class="customer-avatar">{{ selectedCustomer.getInitials() }}</div>
-    <div style="flex:1;">
-      <div style="font-size:0.875rem; font-weight:500;">{{ selectedCustomer.getName() }}</div>
-      <div class="mono" style="font-size:0.7rem; color:var(--ink-3);">{{ selectedCustomer.customerNumber }}</div>
-    </div>
-    <button class="btn-sims-ghost" style="font-size:0.8rem;" (click)="selectedCustomer = null">Ändern</button>
-  } @else {
-    <div style="flex:1; color:var(--ink-3); font-size:0.875rem;">Kein Kunde gewählt</div>
-    <select class="sims-select" style="max-width:220px;" (change)="selectCustomer(customers[$any($event.target).value])">
-      <option value="">Kunden wählen…</option>
-      @for (c of customers; track c.id; let i = $index) {
-        <option [value]="i">{{ c.getName() }}</option>
-      }
-    </select>
-  }
-</div>
-
-<!-- Positionen -->
-<div style="margin-top:1rem;">
-  @for (pos of positions; track $index; let i = $index) {
-    <div class="sims-card position-card mb-3">
-      <div class="position-top">
-        <div>
-          <div style="font-size:0.9375rem; font-weight:500;">{{ pos.article?.name || pos.text || 'Textposition' }}</div>
-          @if (pos.article?.artNumber) {
-            <div class="mono" style="font-size:0.7rem; color:var(--ink-3);">{{ pos.article?.artNumber }}</div>
-          }
-          @if (!pos.article) { <span class="sims-badge sims-badge-neutral">TEXTPOSITION</span> }
-        </div>
-        <span class="mono" style="font-size:0.875rem; color:var(--ink-2);">{{ pos.price | number:'1.2-2' }} € / Stk.</span>
-      </div>
-      <div class="position-bottom">
-        <button class="btn-sims-ghost" style="padding:0.25rem 0.5rem; font-size:0.75rem; min-height:36px;" (click)="removePosition(i)">🗑</button>
-        <div style="display:flex; align-items:center; gap:8px;">
-          <button class="step-btn-sm" (click)="stepAmount(i, -1)">−</button>
-          <span class="mono" style="min-width:2rem; text-align:center;">{{ pos.amount }}</span>
-          <button class="step-btn-sm" (click)="stepAmount(i, 1)">+</button>
-          <span style="font-size:0.75rem; color:var(--ink-3);">{{ pos.article?.unit || 'Pausch.' }}</span>
-        </div>
-        <span class="mono" style="font-size:0.875rem; font-weight:500;">{{ (pos.amount * pos.price) | number:'1.2-2' }} €</span>
-      </div>
-    </div>
-  }
-
-  <!-- Hinzufügen -->
-  @if (!showArticlePicker) {
-    <button class="add-position-btn" (click)="showArticlePicker = true">
-      <span>+</span> Artikel oder Textposition hinzufügen
-    </button>
-  }
-
-  @if (showArticlePicker) {
-    <div class="sims-card mb-3">
-      <input type="search" class="sims-input" placeholder="Artikel suchen…" [formControl]="searchQuery" style="margin-bottom:0.75rem;" />
-      <div class="article-list">
-        @for (a of filteredArticles.slice(0, 20); track a.id) {
-          <button class="article-list-item" (click)="addArticle(a)">
-            <span style="flex:1; font-size:0.875rem;">{{ a.name }}</span>
-            <span class="mono" style="font-size:0.75rem; color:var(--ink-3);">{{ a.price | number:'1.2-2' }} €</span>
-          </button>
-        }
-      </div>
-      <button class="btn-sims-outline" style="margin-top:0.75rem;" (click)="addTextPosition()">Textposition hinzufügen</button>
-    </div>
-  }
-</div>
-
-<!-- Notiz -->
-<div class="sims-card mb-3 mt-3">
-  <label class="sims-label">Notiz</label>
-  <textarea class="sims-textarea" [formControl]="noteCtrl" rows="2" placeholder="Interne Notiz…"></textarea>
-</div>
-
-<!-- Zusammenfassung -->
-<div class="order-summary mb-3">
-  <div class="sum-line"><span>Netto</span><span class="mono">{{ total | number:'1.2-2' }} €</span></div>
-  <div class="sum-line"><span>MwSt. 20 %</span><span class="mono">{{ totalVat | number:'1.2-2' }} €</span></div>
-  <div class="sum-line sum-total"><span>Gesamt</span><span class="mono">{{ totalGross | number:'1.2-2' }} €</span></div>
-</div>
-
-@if (error) { <div class="sims-card mb-3" style="color:var(--status-error);">{{ error }}</div> }
-
-<!-- Aktionen -->
-<div class="bottom-action-area">
-  <button class="btn-sims-primary" (click)="submit()" [disabled]="!canSubmit || submitting"
-          [style.opacity]="canSubmit ? '1' : '0.4'" [style.pointer-events]="canSubmit ? 'auto' : 'none'">
-    {{ submitting ? 'Wird erstellt…' : 'Lieferschein erstellen' }}
-  </button>
   <button class="btn-sims-ghost" (click)="back()">Verwerfen</button>
+</div>
+
+@if (error()) {
+  <div class="sims-card mb-3" style="color:var(--status-error);">{{ error() }}</div>
+}
+
+<!-- ─── Kunden-Strip ─────────────────────────────────────────────── -->
+<div class="customer-strip mb-3">
+  @if (selectedCustomer()) {
+    <div class="customer-avatar">{{ selectedCustomer()!.getInitials() }}</div>
+    <div style="flex:1; min-width:0;">
+      <div style="font-size:0.9rem; font-weight:500; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+        {{ selectedCustomer()!.getName() }}
+      </div>
+      <div class="mono" style="font-size:0.7rem; color:var(--ink-3);">{{ selectedCustomer()!.customerNumber }}</div>
+    </div>
+    <button class="btn-sims-ghost" style="font-size:0.8rem;" (click)="clearCustomer()">Ändern</button>
+  } @else {
+    <div style="flex:1; min-width:0;">
+      <input type="search" class="sims-input" placeholder="Kunden suchen…"
+             [formControl]="customerSearchCtrl" autocomplete="off" />
+      @if (filteredCustomers().length && customerSearchCtrl.value) {
+        <div class="customer-dropdown">
+          @for (c of filteredCustomers().slice(0, 8); track c.id) {
+            <button class="customer-dropdown-item" (click)="selectCustomer(c)">
+              <span style="font-weight:500;">{{ c.getName() }}</span>
+              <span class="mono" style="font-size:0.7rem; color:var(--ink-3); margin-left:0.5rem;">{{ c.customerNumber }}</span>
+            </button>
+          }
+        </div>
+      }
+    </div>
+  }
+</div>
+
+<!-- ─── Scan-Bereich ─────────────────────────────────────────────── -->
+<div class="sims-card mb-3">
+  <label class="sims-label eyebrow" style="margin-bottom:0.75rem;">Barcode scannen oder eingeben</label>
+  <div style="display:flex; gap:0.75rem; align-items:center;">
+    <input
+      #codeInput
+      type="text"
+      class="sims-input"
+      [formControl]="codeCtrl"
+      placeholder="Barcode…"
+      autofocus
+      autocomplete="off"
+      inputmode="text"
+      style="flex:1;"
+      (keydown.enter)="addPending()"
+    />
+  </div>
+
+  <!-- Artikel-Infokarte -->
+  @if (pendingArticle()) {
+    <div class="article-found-card mt-3">
+      <div style="flex:1; min-width:0;">
+        <div style="font-size:0.9375rem; font-weight:500;">{{ pendingArticle()!.name }}</div>
+        <div style="display:flex; gap:0.5rem; align-items:center; margin-top:0.25rem; flex-wrap:wrap;">
+          <span class="mono" style="font-size:0.75rem; color:var(--ink-3);">{{ pendingArticle()!.artNumber }}</span>
+          @if (pendingArticle()!.type) {
+            <span class="sims-badge sims-badge-neutral">{{ pendingArticle()!.type }}</span>
+          }
+          @if (pendingArticle()!.trackStock) {
+            <span class="sims-badge"
+                  [class]="pendingArticle()!.stock <= 0 ? 'sims-badge-error' : pendingArticle()!.stock < 10 ? 'sims-badge-warning' : 'sims-badge-success'">
+              {{ pendingArticle()!.stock }} {{ pendingArticle()!.unit }}
+            </span>
+          }
+        </div>
+      </div>
+      <div class="mono" style="font-size:0.9rem; color:var(--ink-2); white-space:nowrap;">
+        {{ pendingArticle()!.price | number:'1.2-2' }} €
+      </div>
+    </div>
+
+    <!-- Menge-Stepper + Hinzufügen -->
+    <div style="display:flex; align-items:center; gap:0.75rem; margin-top:1rem; flex-wrap:wrap;">
+      <div style="display:flex; align-items:center; gap:6px;">
+        <button class="step-btn" (click)="stepPending(-1)" aria-label="Weniger">−</button>
+        <span class="mono" style="font-size:1.1rem; min-width:2.5rem; text-align:center;">{{ pendingAmount() }}</span>
+        <button class="step-btn" (click)="stepPending(1)" aria-label="Mehr">+</button>
+        <span class="mono" style="font-size:0.8rem; color:var(--ink-3);">{{ pendingArticle()!.unit }}</span>
+      </div>
+      <button class="btn-sims-primary" (click)="addPending()" [disabled]="submitting() || !selectedCustomer()">
+        {{ submitting() ? 'Wird hinzugefügt…' : 'Hinzufügen' }}
+      </button>
+    </div>
+  }
+</div>
+
+<!-- ─── Positionen-Tabelle ───────────────────────────────────────── -->
+@if (slipsheet()?.orderEntries?.length) {
+  <div class="sims-card-table mb-3">
+    <table class="table-responsive-cards">
+      <thead>
+        <tr>
+          <th>Artikel / Text</th>
+          <th>Menge</th>
+          <th>Preis/Stk.</th>
+          <th>Gesamt</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (order of slipsheet()!.orderEntries; track order.id) {
+          @if (editingOrder()?.id === order.id) {
+            <!-- Inline-Edit Zeile -->
+            <tr class="editing-row">
+              <td data-label="Artikel">{{ order.article?.name || order.text }}</td>
+              <td data-label="Menge">
+                <div style="display:flex; align-items:center; gap:6px;">
+                  <button class="step-btn-sm" (click)="stepEdit(-1)">−</button>
+                  <span class="mono">{{ editAmount() }}</span>
+                  <button class="step-btn-sm" (click)="stepEdit(1)">+</button>
+                </div>
+              </td>
+              <td data-label="Preis/Stk." class="numeric">{{ order.price | number:'1.2-2' }} €</td>
+              <td data-label="Gesamt" class="numeric mono">{{ (editAmount() * order.price) | number:'1.2-2' }} €</td>
+              <td style="white-space:nowrap;">
+                <button class="btn-sims-primary" style="padding:0.25rem 0.75rem; font-size:0.8rem;" (click)="saveEdit()" [disabled]="submitting()">✓</button>
+                <button class="btn-sims-ghost" style="padding:0.25rem 0.5rem; font-size:0.8rem;" (click)="cancelEdit()">✕</button>
+              </td>
+            </tr>
+          } @else {
+            <!-- Normal-Zeile -->
+            <tr>
+              <td data-label="Artikel">
+                {{ order.article?.name || order.text || 'Textposition' }}
+                @if (!order.article) { <span class="sims-badge sims-badge-neutral" style="margin-left:0.5rem;">TEXT</span> }
+              </td>
+              <td data-label="Menge" class="numeric">{{ order.amount }} {{ order.article?.unit || '' }}</td>
+              <td data-label="Preis/Stk." class="numeric">{{ order.price | number:'1.2-2' }} €</td>
+              <td data-label="Gesamt" class="numeric mono" style="font-weight:500;">{{ order.getPrice() | number:'1.2-2' }} €</td>
+              <td style="white-space:nowrap;">
+                <button class="btn-sims-icon" (click)="startEdit(order)" title="Bearbeiten">✏️</button>
+                <button class="btn-sims-icon" (click)="deleteOrder(order)" title="Löschen">🗑</button>
+              </td>
+            </tr>
+          }
+        }
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Summe -->
+  <div class="order-summary mb-3">
+    <div class="sum-line sum-total">
+      <span>Gesamt (netto)</span>
+      <span class="mono" style="font-size:1.1rem;">{{ total() | number:'1.2-2' }} €</span>
+    </div>
+  </div>
+}
+
+<!-- ─── Textposition ──────────────────────────────────────────────── -->
+@if (showTextInput()) {
+  <div class="sims-card mb-3">
+    <div class="eyebrow" style="margin-bottom:0.75rem;">Textposition</div>
+    <input type="text" class="sims-input mb-2" placeholder="Beschreibung…"
+           [value]="textPositionText()" (input)="textPositionText.set($any($event.target).value)" />
+    <div style="display:flex; gap:0.75rem; align-items:center;">
+      <input type="number" class="sims-input" placeholder="Preis (€)"
+             [value]="textPositionPrice()" (input)="textPositionPrice.set(+$any($event.target).value)"
+             style="max-width:120px;" inputmode="decimal" step="0.01" min="0" />
+      <button class="btn-sims-primary" (click)="addTextPosition()" [disabled]="!textPositionText().trim() || !selectedCustomer()">
+        Hinzufügen
+      </button>
+      <button class="btn-sims-ghost" (click)="showTextInput.set(false)">Abbrechen</button>
+    </div>
+  </div>
+}
+
+<!-- ─── Annotation ────────────────────────────────────────────────── -->
+@if (slipsheet()?.annotations?.length) {
+  <div class="sims-card mb-3">
+    <div class="eyebrow" style="margin-bottom:0.75rem;">Kommissionen</div>
+    @for (ann of slipsheet()!.annotations; track ann.id) {
+      <div style="padding:0.4rem 0; border-bottom:1px solid var(--border-sub); font-size:0.875rem; color:var(--ink-2);">
+        {{ ann.text }}
+      </div>
+    }
+  </div>
+}
+
+@if (showAnnotationInput()) {
+  <div class="sims-card mb-3">
+    <div class="eyebrow" style="margin-bottom:0.75rem;">Kommission hinzufügen</div>
+    <div style="display:flex; gap:0.75rem; align-items:center;">
+      <input type="text" class="sims-input" placeholder="Kommissionstext (max. 250 Zeichen)…"
+             maxlength="250" [value]="annotationText()"
+             (input)="annotationText.set($any($event.target).value)"
+             style="flex:1;" />
+      <button class="btn-sims-primary" (click)="submitAnnotation()" [disabled]="!annotationText().trim()">
+        Hinzufügen
+      </button>
+      <button class="btn-sims-ghost" (click)="showAnnotationInput.set(false)">✕</button>
+    </div>
+  </div>
+}
+
+<!-- ─── Aktionsleiste ─────────────────────────────────────────────── -->
+<div class="order-action-bar">
+  <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+    <button class="btn-sims-outline" (click)="showTextInput.set(!showTextInput())" [disabled]="!selectedCustomer()">
+      + Textposition
+    </button>
+    @if (slipsheet()) {
+      <button class="btn-sims-outline" (click)="showAnnotationInput.set(!showAnnotationInput())">
+        + Kommission
+      </button>
+    }
+  </div>
+  <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+    @if (slipsheet()) {
+      <button class="btn-sims-primary" (click)="downloadPdf()">
+        🖨 PDF herunterladen
+      </button>
+    }
+    <button class="btn-sims-ghost" (click)="back()">Verwerfen</button>
+  </div>
 </div>

@@ -1,9 +1,9 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormControl } from '@angular/forms';
 import { Router } from '@angular/router';
-import { debounceTime, merge } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { debounceTime, startWith } from 'rxjs/operators';
 import { ArticleService } from '../../services/article.service';
 import { Article } from '../../models/article.model';
 
@@ -13,37 +13,35 @@ import { Article } from '../../models/article.model';
   imports: [CommonModule, ReactiveFormsModule],
   templateUrl: './articles.component.html',
   styleUrl: './articles.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class ArticlesComponent implements OnInit {
-  articles: Article[] = [];
-  filtered: Article[] = [];
-  loading = true;
-  searchCtrl = new FormControl('');
-  codeCtrl = new FormControl('');
+export class ArticlesComponent {
+  private articleService = inject(ArticleService);
+  private router = inject(Router);
 
-  constructor(private articleService: ArticleService, private router: Router) {}
+  readonly searchCtrl = new FormControl('');
+  readonly codeCtrl = new FormControl('');
 
-  ngOnInit() {
-    this.articleService.getAll().subscribe(data => {
-      this.articles = data;
-      this.applyFilter();
-      this.loading = false;
-    });
+  private readonly allArticles = toSignal(this.articleService.getAll(), { initialValue: [] as Article[] });
+  private readonly searchTerm = toSignal(
+    this.searchCtrl.valueChanges.pipe(debounceTime(200), startWith('')),
+    { initialValue: '' }
+  );
+  private readonly codeTerm = toSignal(
+    this.codeCtrl.valueChanges.pipe(debounceTime(200), startWith('')),
+    { initialValue: '' }
+  );
 
-    merge(
-      this.searchCtrl.valueChanges.pipe(debounceTime(200)),
-      this.codeCtrl.valueChanges.pipe(debounceTime(200))
-    ).subscribe(() => this.applyFilter());
-  }
+  readonly loading = computed(() => this.allArticles() === undefined);
 
-  applyFilter() {
-    const name = (this.searchCtrl.value || '').toLowerCase();
-    const code = (this.codeCtrl.value || '').toLowerCase();
-    this.filtered = this.articles.filter(a =>
+  readonly filtered = computed(() => {
+    const name = (this.searchTerm() ?? '').toLowerCase();
+    const code = (this.codeTerm() ?? '').toLowerCase();
+    return (this.allArticles()).filter(a =>
       a.name.toLowerCase().includes(name) &&
       a.code.toLowerCase().includes(code)
     );
-  }
+  });
 
   getBadgeClass(stock: number): string {
     if (stock <= 0)  return 'sims-badge sims-badge-error';
@@ -57,11 +55,6 @@ export class ArticlesComponent implements OnInit {
     return 'Verfügbar';
   }
 
-  goToArticle(id: number) {
-    this.router.navigate(['/articles', id]);
-  }
-
-  newArticle() {
-    this.router.navigate(['/articles', 'new']);
-  }
+  goToArticle(id: number) { this.router.navigate(['/articles', id]); }
+  newArticle() { this.router.navigate(['/articles', 'new']); }
 }

@@ -1,8 +1,8 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { BillService } from '../../services/bill.service';
-import { Bill } from '../../models/bill.model';
 
 @Component({
   selector: 'app-bills',
@@ -10,19 +10,14 @@ import { Bill } from '../../models/bill.model';
   imports: [CommonModule],
   templateUrl: './bills.component.html',
   styleUrl: './bills.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class BillsComponent implements OnInit {
-  bills: Bill[] = [];
-  loading = true;
+export class BillsComponent {
+  private billService = inject(BillService);
+  private router = inject(Router);
 
-  constructor(private billService: BillService, private router: Router) {}
-
-  ngOnInit() {
-    this.billService.getAll().subscribe({
-      next: data => { this.bills = data; this.loading = false; },
-      error: () => this.loading = false,
-    });
-  }
+  readonly bills = toSignal(this.billService.getAll(), { initialValue: [] });
+  readonly loading = computed(() => this.bills() === undefined);
 
   goTo(id: number) { this.router.navigate(['/bills', id]); }
 

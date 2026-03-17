@@ -1,8 +1,8 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { SlipsheetService } from '../../services/slipsheet.service';
-import { Slipsheet } from '../../models/bill.model';
 
 @Component({
   selector: 'app-slipsheets',
@@ -10,19 +10,14 @@ import { Slipsheet } from '../../models/bill.model';
   imports: [CommonModule],
   templateUrl: './slipsheets.component.html',
   styleUrl: './slipsheets.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class SlipsheetsComponent implements OnInit {
-  slipsheets: Slipsheet[] = [];
-  loading = true;
+export class SlipsheetsComponent {
+  private slipsheetService = inject(SlipsheetService);
+  private router = inject(Router);
 
-  constructor(private slipsheetService: SlipsheetService, private router: Router) {}
-
-  ngOnInit() {
-    this.slipsheetService.getAll().subscribe({
-      next: data => { this.slipsheets = data; this.loading = false; },
-      error: () => this.loading = false,
-    });
-  }
+  readonly slipsheets = toSignal(this.slipsheetService.getAll(), { initialValue: [] });
+  readonly loading = computed(() => this.slipsheets() === undefined);
 
   goTo(id: number) { this.router.navigate(['/slipsheets', id]); }
   newOrder() { this.router.navigate(['/order/new']); }

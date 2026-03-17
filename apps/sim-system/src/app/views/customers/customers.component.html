@@ -10,16 +10,16 @@
   <input type="search" class="sims-input" placeholder="Name oder Firma suchen…" [formControl]="searchCtrl" />
 </div>
 
-@if (loading) { <div class="sims-card skeleton" style="height:200px;"></div> }
+@if (loading()) { <div class="sims-card skeleton" style="height:200px;"></div> }
 
-@if (!loading && filtered.length === 0) {
+@if (!loading() && filtered().length === 0) {
   <div class="sims-empty-state">
     <div class="empty-icon">👤</div>
     <div class="empty-title">Keine Kunden gefunden</div>
   </div>
 }
 
-@if (!loading && filtered.length > 0) {
+@if (!loading() && filtered().length > 0) {
   <div class="sims-card-table">
     <table class="table-responsive-cards">
       <thead>
@@ -31,7 +31,7 @@
         </tr>
       </thead>
       <tbody>
-        @for (c of filtered; track c.id) {
+        @for (c of filtered(); track c.id) {
           <tr (click)="goToCustomer(c.id)">
             <td data-label="Name / Firma">{{ c.getName() }}</td>
             <td data-label="Kundennummer" class="numeric">{{ c.customerNumber }}</td>

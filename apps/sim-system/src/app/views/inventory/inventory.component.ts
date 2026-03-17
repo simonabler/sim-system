@@ -1,9 +1,9 @@
-import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, ElementRef, inject, signal, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormControl } from '@angular/forms';
-import { debounceTime } from 'rxjs/operators';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { debounceTime, switchMap, catchError, of, filter } from 'rxjs';
 import { ArticleService } from '../../services/article.service';
-import { Article } from '../../models/article.model';
 
 interface LogEntry {
   articleName: string;
@@ -19,76 +19,73 @@ interface LogEntry {
   imports: [CommonModule, ReactiveFormsModule],
   templateUrl: './inventory.component.html',
   styleUrl: './inventory.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class InventoryComponent implements OnInit {
+export class InventoryComponent {
   @ViewChild('codeInput') codeInputRef!: ElementRef<HTMLInputElement>;
 
-  codeCtrl = new FormControl('');
-  article: Article | null = null;
-  shouldVal = 0;
-  isVal = 0;
-  submitting = false;
-  recentLog: LogEntry[] = [];
+  private articleService = inject(ArticleService);
 
-  constructor(private articleService: ArticleService) {}
+  readonly codeCtrl = new FormControl('');
+  readonly isVal = signal(0);
+  readonly submitting = signal(false);
+  readonly recentLog = signal<LogEntry[]>([]);
 
-  ngOnInit() {
-    this.codeCtrl.valueChanges.pipe(debounceTime(300)).subscribe(code => {
-      if (code) this.findCode(code);
-    });
-  }
+  readonly article = toSignal(
+    this.codeCtrl.valueChanges.pipe(
+      debounceTime(300),
+      filter(code => !!code),
+      switchMap(code =>
+        this.articleService.getByCode(code!).pipe(catchError(() => of(null)))
+      )
+    ),
+    { initialValue: null }
+  );
 
-  findCode(code: string) {
-    this.articleService.getByCode(code).subscribe({
-      next: article => {
-        this.article = article;
-        this.shouldVal = article.stock || 0;
-        this.isVal = this.shouldVal; // Vorbelegen: häufigster Fall ist kein Fehler
-      },
-      error: () => {
-        this.article = null;
-        this.shouldVal = 0;
-        this.isVal = 0;
-      }
-    });
-  }
-
-  get diff(): number { return this.isVal - this.shouldVal; }
-
-  get diffClass(): string {
-    if (this.diff < 0) return 'negative';
-    if (this.diff > 0) return 'positive';
+  readonly shouldVal = computed(() => this.article()?.stock ?? 0);
+  readonly diff = computed(() => this.isVal() - this.shouldVal());
+  readonly diffClass = computed(() => {
+    const d = this.diff();
+    if (d < 0) return 'negative';
+    if (d > 0) return 'positive';
     return 'zero';
+  });
+
+  constructor() {
+    // Wenn Artikel wechselt: isVal auf Soll vorbelegen
+    effect(() => {
+      const stock = this.shouldVal();
+      this.isVal.set(stock);
+    });
   }
 
-  stepIs(delta: number) { this.isVal = Math.max(0, this.isVal + delta); }
+  stepIs(delta: number) { this.isVal.update(v => Math.max(0, v + delta)); }
 
   onIsInput(event: Event) {
     const val = +(event.target as HTMLInputElement).value;
-    this.isVal = isNaN(val) ? 0 : val;
+    this.isVal.set(isNaN(val) ? 0 : val);
   }
 
   onSubmit() {
-    if (!this.article) return;
-    this.submitting = true;
-    this.articleService.createInventory(this.article, this.isVal).subscribe({
-      next: updatedArticle => {
-        this.submitting = false;
+    const art = this.article();
+    if (!art) return;
+    this.submitting.set(true);
+    this.articleService.createInventory(art, this.isVal()).subscribe({
+      next: () => {
+        this.submitting.set(false);
         const entry: LogEntry = {
-          articleName: this.article!.name,
-          code: this.article!.code,
-          isVal: this.isVal,
-          diff: this.diff,
-          unit: this.article!.unit,
+          articleName: art.name,
+          code: art.code,
+          isVal: this.isVal(),
+          diff: this.diff(),
+          unit: art.unit,
         };
-        this.recentLog = [entry, ...this.recentLog].slice(0, 5);
-        this.article = null;
+        this.recentLog.update(log => [entry, ...log].slice(0, 5));
         this.codeCtrl.setValue('', { emitEvent: false });
-        this.shouldVal = 0;
-        this.isVal = 0;
+        this.isVal.set(0);
         setTimeout(() => this.codeInputRef?.nativeElement?.focus(), 50);
       },
-      error: () => { this.submitting = false; }
+      error: () => { this.submitting.set(false); }
     });
   }
 

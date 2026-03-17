@@ -1,23 +1,25 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, Subject } from 'rxjs';
+import { BehaviorSubject, Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { Customer, Discount } from '../models/customer.model';
 import { Slipsheet, Bill } from '../models/bill.model';
 
 @Injectable({ providedIn: 'root' })
 export class CustomerService {
-  private currentCustomerSubject = new Subject<Customer>();
-  public currentCustomer: Customer | undefined;
+  private currentCustomerSubject = new BehaviorSubject<Customer | undefined>(undefined);
+
+  get currentCustomer(): Customer | undefined {
+    return this.currentCustomerSubject.value;
+  }
 
   constructor(private http: HttpClient) {}
 
   selectCustomer(customer: Customer) {
-    this.currentCustomer = customer;
     this.currentCustomerSubject.next(customer);
   }
 
-  getCustomer(): Observable<Customer> {
+  getCustomer(): Observable<Customer | undefined> {
     return this.currentCustomerSubject.asObservable();
   }
 

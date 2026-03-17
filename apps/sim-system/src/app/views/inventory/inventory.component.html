@@ -31,34 +31,34 @@
 </div>
 
 <!-- Artikel-Info -->
-@if (article) {
+@if (article()) {
   <div class="sims-card mb-3">
     <div class="article-header">
       <div>
-        <div style="font-size:1rem; font-weight:500;">{{ article.name }}</div>
+        <div style="font-size:1rem; font-weight:500;">{{ article()!.name }}</div>
         <div style="display:flex; gap:0.5rem; align-items:center; margin-top:0.25rem;">
-          <span class="mono" style="font-size:0.75rem; color:var(--ink-3);">{{ article.artNumber }}</span>
-          @if (article.type) { <span class="sims-badge sims-badge-neutral">{{ article.type }}</span> }
+          <span class="mono" style="font-size:0.75rem; color:var(--ink-3);">{{ article()!.artNumber }}</span>
+          @if (article()!.type) { <span class="sims-badge sims-badge-neutral">{{ article()!.type }}</span> }
         </div>
       </div>
     </div>
     <table class="article-info-table" style="margin-top:1rem; width:100%;">
       <tr>
         <th>Lagerstand</th>
-        <td class="mono" style="font-size:1rem; font-weight:600;">{{ article.stock }} {{ article.unit }}</td>
+        <td class="mono" style="font-size:1rem; font-weight:600;">{{ article()!.stock }} {{ article()!.unit }}</td>
       </tr>
       <tr>
         <th>Hersteller</th>
-        <td>{{ article.supplier }}</td>
+        <td>{{ article()!.supplier }}</td>
       </tr>
       <tr>
         <th>Barcode</th>
-        <td class="mono">{{ article.code }}</td>
+        <td class="mono">{{ article()!.code }}</td>
       </tr>
-      @if (article.description) {
+      @if (article()!.description) {
         <tr>
           <th>Beschreibung</th>
-          <td>{{ article.description }}</td>
+          <td>{{ article()!.description }}</td>
         </tr>
       }
     </table>
@@ -68,7 +68,7 @@
   <div class="sims-card count-card mb-3" style="padding:0; display:flex; overflow:hidden;">
     <div class="count-half">
       <div class="eyebrow" style="margin-bottom:0.25rem;">Soll</div>
-      <div class="mono" style="font-size:1.5rem; color:var(--ink-3);">{{ shouldVal }} <small style="font-size:0.75rem;">{{ article.unit }}</small></div>
+      <div class="mono" style="font-size:1.5rem; color:var(--ink-3);">{{ shouldVal() }} <small style="font-size:0.75rem;">{{ article()!.unit }}</small></div>
     </div>
     <div class="count-half" style="border-left:1px solid var(--border);">
       <div class="eyebrow" style="margin-bottom:0.25rem;">Ist</div>
@@ -77,36 +77,36 @@
         <input
           type="number"
           class="is-input mono"
-          [value]="isVal"
+          [value]="isVal()"
           (input)="onIsInput($event)"
           (focus)="$any($event.target).select()"
           inputmode="numeric"
           min="0"
         />
         <button class="step-btn" (click)="stepIs(1)" aria-label="Mehr">+</button>
-        <small class="mono" style="color:var(--ink-3); font-size:0.75rem;">{{ article.unit }}</small>
+        <small class="mono" style="color:var(--ink-3); font-size:0.75rem;">{{ article()!.unit }}</small>
       </div>
     </div>
   </div>
 
   <!-- Differenz-Banner -->
-  <div class="diff-banner" [class]="diffClass" style="border-radius:1rem; margin-bottom:1rem; padding:0.75rem 1rem; display:flex; align-items:center; justify-content:space-between;">
+  <div class="diff-banner" [class]="diffClass()" style="border-radius:1rem; margin-bottom:1rem; padding:0.75rem 1rem; display:flex; align-items:center; justify-content:space-between;">
     <span class="eyebrow">Differenz</span>
     <span class="mono" style="font-size:1rem; font-weight:500;">
-      {{ diff > 0 ? '+' : '' }}{{ diff }} {{ article.unit }}
+      {{ diff() > 0 ? '+' : '' }}{{ diff() }} {{ article()!.unit }}
     </span>
   </div>
 
-  <button class="btn-sims-primary inv-submit" (click)="onSubmit()" [disabled]="submitting">
-    {{ submitting ? 'Wird gebucht…' : 'Inventur buchen' }}
+  <button class="btn-sims-primary inv-submit" (click)="onSubmit()" [disabled]="submitting()">
+    {{ submitting() ? 'Wird gebucht…' : 'Inventur buchen' }}
   </button>
 }
 
 <!-- Log -->
-@if (recentLog.length > 0) {
+@if (recentLog().length > 0) {
   <div style="margin-top:2rem;">
     <div class="eyebrow" style="margin-bottom:0.75rem;">Zuletzt gebucht</div>
-    @for (entry of recentLog; track entry.code) {
+    @for (entry of recentLog(); track entry.code) {
       <div class="log-item sims-card" style="margin-bottom:0.5rem; padding:0.75rem 1rem;">
         <span style="color:var(--status-success); margin-right:0.5rem;">✓</span>
         <span style="flex:1; font-size:0.875rem;">{{ entry.articleName }}</span>

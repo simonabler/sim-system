@@ -1,9 +1,9 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { switchMap, map, catchError, of } from 'rxjs';
 import { SlipsheetService } from '../../services/slipsheet.service';
-import { Slipsheet, Order } from '../../models/bill.model';
-import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-slipsheet-detail',
@@ -11,41 +11,43 @@ import { environment } from '../../../environments/environment';
   imports: [CommonModule, RouterModule],
   templateUrl: './slipsheet-detail.component.html',
   styleUrl: './slipsheet-detail.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class SlipsheetDetailComponent implements OnInit {
-  slipsheet: Slipsheet | null = null;
-  loading = true;
-  error = '';
-  apiUrl = environment.apiUrl;
+export class SlipsheetDetailComponent {
+  private route = inject(ActivatedRoute);
+  private router = inject(Router);
+  private slipsheetService = inject(SlipsheetService);
 
-  constructor(
-    private route: ActivatedRoute,
-    private router: Router,
-    private slipsheetService: SlipsheetService,
-  ) {}
+  readonly error = signal('');
 
-  ngOnInit() {
-    const id = +this.route.snapshot.paramMap.get('id')!;
-    this.slipsheetService.getById(id).subscribe({
-      next: s => { this.slipsheet = s; this.loading = false; },
-      error: () => { this.loading = false; this.error = 'Lieferschein konnte nicht geladen werden.'; }
-    });
-  }
+  readonly slipsheet = toSignal(
+    this.route.paramMap.pipe(
+      map(p => +p.get('id')!),
+      switchMap(id =>
+        this.slipsheetService.getById(id).pipe(
+          catchError(() => { this.error.set('Lieferschein konnte nicht geladen werden.'); return of(null); })
+        )
+      )
+    )
+  );
+
+  readonly loading = computed(() => this.slipsheet() === undefined && !this.error());
+
+  readonly total = computed(() =>
+    (this.slipsheet()?.orderEntries ?? []).reduce((sum, o) => sum + o.amount * o.price, 0)
+  );
 
   downloadPdf() {
-    if (!this.slipsheet) return;
-    this.slipsheetService.getPdf(this.slipsheet.id).subscribe(blob => {
+    const s = this.slipsheet();
+    if (!s) return;
+    this.slipsheetService.getPdf(s.id).subscribe(blob => {
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `lieferschein-${this.slipsheet!.slipsheetnumber}.pdf`;
+      a.download = `lieferschein-${s.slipsheetnumber}.pdf`;
       a.click();
       URL.revokeObjectURL(url);
     });
-  }
-
-  get total(): number {
-    return (this.slipsheet?.orderEntries || []).reduce((sum, o) => sum + (o.amount * o.price), 0);
   }
 
   back() { this.router.navigate(['/slipsheets']); }

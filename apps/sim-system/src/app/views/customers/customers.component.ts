@@ -1,8 +1,9 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormControl } from '@angular/forms';
 import { Router } from '@angular/router';
-import { debounceTime } from 'rxjs/operators';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { debounceTime, startWith } from 'rxjs/operators';
 import { CustomerService } from '../../services/customer.service';
 import { Customer } from '../../models/customer.model';
 
@@ -12,32 +13,30 @@ import { Customer } from '../../models/customer.model';
   imports: [CommonModule, ReactiveFormsModule],
   templateUrl: './customers.component.html',
   styleUrl: './customers.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class CustomersComponent implements OnInit {
-  customers: Customer[] = [];
-  filtered: Customer[] = [];
-  loading = true;
-  searchCtrl = new FormControl('');
+export class CustomersComponent {
+  private customerService = inject(CustomerService);
+  private router = inject(Router);
 
-  constructor(private customerService: CustomerService, private router: Router) {}
+  readonly searchCtrl = new FormControl('');
 
-  ngOnInit() {
-    this.customerService.getAll().subscribe(data => {
-      this.customers = data;
-      this.applyFilter();
-      this.loading = false;
-    });
-    this.searchCtrl.valueChanges.pipe(debounceTime(200)).subscribe(() => this.applyFilter());
-  }
+  private readonly allCustomers = toSignal(this.customerService.getAll(), { initialValue: [] as Customer[] });
+  private readonly searchTerm = toSignal(
+    this.searchCtrl.valueChanges.pipe(debounceTime(200), startWith('')),
+    { initialValue: '' }
+  );
 
-  applyFilter() {
-    const q = (this.searchCtrl.value || '').toLowerCase();
-    this.filtered = this.customers.filter(c =>
+  readonly loading = computed(() => this.allCustomers() === undefined);
+
+  readonly filtered = computed(() => {
+    const q = (this.searchTerm() ?? '').toLowerCase();
+    return (this.allCustomers()).filter(c =>
       c.companyName?.toLowerCase().startsWith(q) ||
       c.firstName?.toLowerCase().startsWith(q) ||
       c.lastName?.toLowerCase().startsWith(q)
     );
-  }
+  });
 
   goToCustomer(id: number) { this.router.navigate(['/customers', id]); }
   newCustomer() { this.router.navigate(['/customers', 'new']); }

@@ -75,13 +75,15 @@ export class SlipsheetController {
     @Query('customerId') customerId: number,
     @Query('state') state?: SlipsheetState,
   ): Promise<ReS<SlipsheetEntity[]>> {
-    if (customerId)
-      return ReS.FromData([await this.slipsheetService.findOpenForCustomer(await this.customerService.get(customerId))]);
-    else if (state)
+    if (customerId) {
+      // Nur bestehende offene/geänderte LS zurückgeben — KEIN Auto-Anlegen
+      const slips = await this.slipsheetService.findFromCustomer(+customerId);
+      const open = slips.filter(s => s.state === SlipsheetState.OPEN || s.state === SlipsheetState.CHANGED);
+      return ReS.FromData(open);
+    } else if (state)
       return ReS.FromData(await this.slipsheetService.findByState(state));
     else
-      return ReS.FromData(await this.slipsheetService.getAll(this.slipsheetService.getAllRelations(),
-      ));
+      return ReS.FromData(await this.slipsheetService.getAll(this.slipsheetService.getAllRelations()));
   }
 
   // Bug #1 fix: cast id to number with +id to avoid string being passed to getAllInformations
