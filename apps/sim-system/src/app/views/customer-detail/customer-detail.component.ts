@@ -203,6 +203,15 @@ export class CustomerDetailComponent {
 
   closeEditor() { this.editingSlipId.set(null); }
 
+  onSlipDeleted() {
+    this.activeSlipId.set(null);
+    this.editingSlipId.set(null);
+    this.selectedSlipIds.set(new Set());
+    this.preselectApplied = true;
+    this.refresh$.next();
+    this.showToast('success', 'Lieferschein wurde gelöscht.');
+  }
+
   onSlipUpdated(updated: Slipsheet) {
     // Update local slipsheets array so changes are immediately visible
     this.slipsheets.update(list => list.map(s => s.id === updated.id ? updated : s));

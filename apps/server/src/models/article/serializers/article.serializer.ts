@@ -39,6 +39,12 @@ export class ArticleEntity
   articleGroup: ArticleGroupEntity;
 
   @Expose({ groups: ['default'] })
+  description: string;
+
+  @Expose({ groups: ['default'] })
+  supplier: string;
+
+  @Expose({ groups: ['default'] })
   singlePos: boolean;
   @Expose({ groups: ['default'] })
   trackStock: boolean;

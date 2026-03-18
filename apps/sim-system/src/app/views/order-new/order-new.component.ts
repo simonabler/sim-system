@@ -80,5 +80,9 @@ export class OrderNewComponent {
     this.slipsheet.set(slip);
   }
 
+  onSlipDeleted() {
+    this.slipsheet.set(null);
+  }
+
   back() { this.router.navigate(['/slipsheets']); }
 }

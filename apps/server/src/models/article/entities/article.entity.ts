@@ -39,6 +39,12 @@ export class Article implements IArticle {
   @Column({ default: '', length: 50 })
   type: string;
 
+  @Column({ default: '', length: 250, nullable: true })
+  description: string;
+
+  @Column({ default: '', length: 100, nullable: true })
+  supplier: string;
+
   @Column({ default: '', length: 250 })
   imgPath: string;
 

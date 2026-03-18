@@ -8,6 +8,7 @@ import { ArticleCsvEntity } from './entities/article-import.csv-entity';
 import { Article } from './entities/article.entity';
 import { InventoryService } from './inventory.service';
 import { ArticleEntity } from './serializers/article.serializer';
+import { UpdateArticleDto } from './dto/update-article.dto';
 
 @Injectable()
 export class ArticleService extends BaseService<Article, ArticleEntity> {
@@ -215,6 +216,18 @@ export class ArticleService extends BaseService<Article, ArticleEntity> {
     return retValue;
   }
 
+
+  async update(id: number, inputs: UpdateArticleDto): Promise<ArticleEntity> {
+    const { articleGroup, ...rest } = inputs;
+    // TypeORM's update() expects the FK column directly for ManyToOne relations.
+    // Passing { articleGroup: { id } } as a nested object is silently ignored in
+    // some TypeORM 0.3 versions. We pass it explicitly as a relation reference.
+    const updateData: any = { ...rest };
+    if (articleGroup?.id !== undefined) {
+      updateData.articleGroup = { id: articleGroup.id };
+    }
+    return this.articleRepository.updateEntity(id, updateData);
+  }
 
   async makeInventory(article: ArticleEntity, newStock: number): Promise<ArticleEntity> {
 

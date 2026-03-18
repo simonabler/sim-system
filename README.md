@@ -1,101 +1,240 @@
-# SimSystem
+# SIMS — sims.abler.tirol
 
-<a alt="Nx logo" href="https://nx.dev" target="_blank" rel="noreferrer"><img src="https://raw.githubusercontent.com/nrwl/nx/master/images/nx-logo.png" width="45"></a>
+Inventory Management System für das **abler.tirol** Ökosystem.
+NX Monorepo mit Angular 21 Frontend und NestJS 11 Backend.
 
-✨ Your new, shiny [Nx workspace](https://nx.dev) is ready ✨.
+---
 
-[Learn more about this workspace setup and its capabilities](https://nx.dev/getting-started/tutorials/angular-monorepo-tutorial?utm_source=nx_project&amp;utm_medium=readme&amp;utm_campaign=nx_projects) or run `npx nx graph` to visually explore what was created. Now, let's get you up to speed!
+## Projektstruktur
 
-## Run tasks
+```
+sim-system/
+├── apps/
+│   ├── server/          → NestJS 11 REST API (Port 3000)
+│   └── sim-system/      → Angular 21 Frontend (Port 4200)
+├── package.json         → Root — alle Dependencies
+├── nx.json
+└── tsconfig.base.json
+```
 
-To run the dev server for your app, use:
+---
 
-```sh
+## Tech Stack
+
+| Bereich | Technologie |
+|---|---|
+| Frontend | Angular 21, Standalone Components, Signals |
+| Backend | NestJS 11, TypeORM 0.3, better-sqlite3 |
+| Monorepo | NX 22 |
+| PDF | pdfmake 0.2 |
+| API-Docs | Swagger (`GET /api/v1/doc`) |
+| Design | abler.tirol Design-System (Teal) |
+
+---
+
+## Setup
+
+### Voraussetzungen
+
+- Node.js 20+
+- `npm install` **ohne** `--ignore-scripts` (kompiliert `better-sqlite3` native binary)
+
+```bash
+npm install
+```
+
+### Umgebungsvariablen
+
+Datei `apps/server/.env` anlegen (Vorlage: `apps/server/.env.example`):
+
+```env
+NODE_ENV=development
+APP_PORT=3000
+CORS_ORIGIN=http://localhost:4200
+
+SQLITE_PATH=sim.db
+SQLITE_RUN_MIGRATION=false
+SQLITE_RUN_SYNCHRONIZE=true
+SQLITE_ENTITIES=dist/**/*.entity.js
+
+PDF_SLIP_PATH=./pdfs/slips
+PDF_BILL_PATH=./pdfs/bills
+```
+
+---
+
+## Dev-Server starten
+
+```bash
+# Backend (Port 3000)
+npx nx serve server
+
+# Frontend (Port 4200 → Proxy → 3000)
 npx nx serve sim-system
 ```
 
-To create a production bundle:
+Frontend: `http://localhost:4200`
+API-Docs: `http://localhost:3000/api/v1/doc`
 
-```sh
+---
+
+## NX-Befehle
+
+```bash
+# Builds
+npx nx build server
 npx nx build sim-system
+npx nx build sim-system --configuration=production
+
+# Tests
+npx nx test server
+npx nx test sim-system
+
+# TypeORM Migrations
+npm run migration:generate --name=MigrationName
+npm run migration:run
+npm run migration:revert
+npm run migration:show
 ```
 
-To see all available targets to run for a project, run:
+---
 
-```sh
-npx nx show project sim-system
+## API-Routen (`/api/v1/`)
+
+### Artikel
+| Method | Route | Beschreibung |
+|---|---|---|
+| GET | `/articles` | Alle Artikel |
+| GET | `/articles?code=X` | Artikel nach Barcode |
+| POST | `/articles` | Artikel anlegen |
+| PATCH | `/articles/:id` | Artikel updaten |
+| DELETE | `/articles/:id` | Artikel löschen |
+| POST | `/articles/:id/inventory` | Inventurbuchung |
+| POST | `/articles/import` | CSV-Import |
+| GET | `/articlegroups` | Artikelgruppen |
+
+### Kunden
+| Method | Route | Beschreibung |
+|---|---|---|
+| GET | `/customers` | Alle Kunden |
+| GET | `/customers/:id` | Kunde by ID |
+| POST | `/customers` | Kunde anlegen |
+| PATCH | `/customers/:id` | Kunde updaten |
+| DELETE | `/customers/:id` | Kunde löschen |
+| GET | `/customers/:id/slipsheets` | Lieferscheine des Kunden |
+| GET | `/customers/:id/bills` | Rechnungen des Kunden |
+| PUT | `/customers/:id/discounts` | Rabatt setzen |
+| DELETE | `/customers/:id/discounts/:dId` | Rabatt löschen |
+
+### Lieferscheine
+| Method | Route | Beschreibung |
+|---|---|---|
+| GET | `/slipsheets` | Alle Lieferscheine |
+| GET | `/slipsheets/:id` | Lieferschein by ID |
+| POST | `/slipsheets` | Lieferschein anlegen |
+| PUT | `/slipsheets/:id` | Lieferschein updaten |
+| POST | `/slipsheets/:id` | Order-Entry hinzufügen |
+| GET | `/slipsheets/:id/pdf` | PDF generieren |
+| POST | `/slipsheets/:id/print` | Drucken |
+
+### Rechnungen
+| Method | Route | Beschreibung |
+|---|---|---|
+| GET | `/bills` | Alle Rechnungen |
+| POST | `/bills/generate` | Rechnung aus Lieferscheinen erzeugen |
+| PUT | `/bills/:id` | Rechnung updaten |
+| POST | `/bills/:id` | Rechnung neu erstellen (recreate) |
+| GET | `/bills/:id/pdf` | PDF generieren |
+
+### Sonstiges
+| Method | Route | Beschreibung |
+|---|---|---|
+| PUT | `/order-entries/:id` | Order-Entry updaten |
+| DELETE | `/order-entries/:id` | Order-Entry löschen |
+| GET | `/dashboard/summary` | Dashboard KPIs |
+
+---
+
+## Frontend-Routing
+
+```
+/                          → /dashboard
+/dashboard                 → Dashboard (KPIs)
+/articles                  → Artikelliste
+/articles/:id              → Artikeldetail
+/inventory                 → Inventurbuchung (Mobile-optimiert)
+/customers                 → Kundenliste
+/customers/new             → Kunde anlegen
+/customers/:id             → Kundendetail + Lieferschein/Rechnungsansicht
+/customers/:id/edit        → Kunde bearbeiten
+/slipsheets                → Lieferscheinliste
+/slipsheets/:id            → Lieferscheindetail
+/order/new                 → Neue Bestellung / Lieferschein anlegen
+/bills                     → Rechnungsliste
+/bills/:id                 → Rechnungsdetail
+/login                     → Login
 ```
 
-These targets are either [inferred automatically](https://nx.dev/concepts/inferred-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) or defined in the `project.json` or `package.json` files.
+---
 
-[More about running tasks in the docs &raquo;](https://nx.dev/features/run-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+## Design-System
 
-## Add new projects
+Akzentfarben (Teal):
 
-While you could add new projects to your workspace manually, you might want to leverage [Nx plugins](https://nx.dev/concepts/nx-plugins?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) and their [code generation](https://nx.dev/features/generate-code?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) feature.
-
-Use the plugin's generator to create new projects.
-
-To generate a new application, use:
-
-```sh
-npx nx g @nx/angular:app demo
+```css
+--accent-primary:   #134e4a
+--accent-secondary: #0f3d3a
+--accent-highlight: #14b8a6
+--accent-light:     #f0fdfa
 ```
 
-To generate a new library, use:
+Fonts (geladen von `api.abler.tirol`):
+- Headlines: `DM Serif Display`
+- Interface: `Inter`
+- Code / Labels / Tags: `DM Mono`
 
-```sh
-npx nx g @nx/angular:lib mylib
+Regeln:
+- Buttons: `border-radius: 999px` (Pill-Form)
+- Cards: `border-radius: 6px`
+- Kein reines Schwarz — immer `var(--ink)`
+- Keine System-Fonts
+
+---
+
+## Bekannte offene Punkte
+
+### Bugs
+- `GET /slipsheets/:id` gibt durch falsches Array-Indexing `undefined` zurück — Workaround: Daten immer über `GET /customers/:id/slipsheets` laden
+- `GET /bills/:id/pdf` hat Side-Effects (erzeugt Rechnung bei jedem Aufruf neu)
+- `generateBill()` löscht im Fehlerfall bestehende Rechnungen
+- Nummernvergabe für Rechnungen/Lieferscheine ohne DB-Lock (Race Condition)
+- `inventoryDate` ist `@CreateDateColumn` statt normalem `@Column`
+
+### Offen
+- Auth / JWT Guards sind noch auskommentiert — API aktuell offen
+- Login-Page ist ein Stub (leitet nur weiter)
+- Docker-Setup (`docker-compose.dev.yml`) noch nicht mit Monorepo-Struktur getestet
+
+---
+
+## Wichtige Dateipfade
+
 ```
+apps/server/src/main.ts                    → NestJS Bootstrap
+apps/server/src/app/app.module.ts          → Root Module
+apps/server/src/app/models/               → Entities, Services, Controller
+apps/server/src/common/services/          → PDF-Generierung etc.
+apps/server/src/datasource.ts             → TypeORM DataSource (Migrations)
+apps/server/.env                          → Umgebungsvariablen (gitignored)
+apps/server/.env.example                  → Vorlage
 
-You can use `npx nx list` to get a list of installed plugins. Then, run `npx nx list <plugin-name>` to learn about more specific capabilities of a particular plugin. Alternatively, [install Nx Console](https://nx.dev/getting-started/editor-setup?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) to browse plugins and generators in your IDE.
-
-[Learn more about Nx plugins &raquo;](https://nx.dev/concepts/nx-plugins?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) | [Browse the plugin registry &raquo;](https://nx.dev/plugin-registry?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-
-## Set up CI!
-
-### Step 1
-
-To connect to Nx Cloud, run the following command:
-
-```sh
-npx nx connect
+apps/sim-system/src/main.ts               → Angular Bootstrap
+apps/sim-system/src/app/app.config.ts     → Provider-Konfiguration
+apps/sim-system/src/app/app.routes.ts     → Root-Routing
+apps/sim-system/src/app/services/         → Angular Services
+apps/sim-system/src/app/models/           → TypeScript Datenmodelle
+apps/sim-system/src/app/views/            → Seiten-Komponenten
+apps/sim-system/src/app/components/       → Shared Components (SlipsheetEditor)
+apps/sim-system/src/styles/               → Design-System CSS
+apps/sim-system/src/environments/         → API-URL Konfiguration
 ```
-
-Connecting to Nx Cloud ensures a [fast and scalable CI](https://nx.dev/ci/intro/why-nx-cloud?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) pipeline. It includes features such as:
-
-- [Remote caching](https://nx.dev/ci/features/remote-cache?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [Task distribution across multiple machines](https://nx.dev/ci/features/distribute-task-execution?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [Automated e2e test splitting](https://nx.dev/ci/features/split-e2e-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [Task flakiness detection and rerunning](https://nx.dev/ci/features/flaky-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-
-### Step 2
-
-Use the following command to configure a CI workflow for your workspace:
-
-```sh
-npx nx g ci-workflow
-```
-
-[Learn more about Nx on CI](https://nx.dev/ci/intro/ci-with-nx#ready-get-started-with-your-provider?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-
-## Install Nx Console
-
-Nx Console is an editor extension that enriches your developer experience. It lets you run tasks, generate code, and improves code autocompletion in your IDE. It is available for VSCode and IntelliJ.
-
-[Install Nx Console &raquo;](https://nx.dev/getting-started/editor-setup?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-
-## Useful links
-
-Learn more:
-
-- [Learn more about this workspace setup](https://nx.dev/getting-started/tutorials/angular-monorepo-tutorial?utm_source=nx_project&amp;utm_medium=readme&amp;utm_campaign=nx_projects)
-- [Learn about Nx on CI](https://nx.dev/ci/intro/ci-with-nx?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [Releasing Packages with Nx release](https://nx.dev/features/manage-releases?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [What are Nx plugins?](https://nx.dev/concepts/nx-plugins?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-
-And join the Nx community:
-- [Discord](https://go.nx.dev/community)
-- [Follow us on X](https://twitter.com/nxdevtools) or [LinkedIn](https://www.linkedin.com/company/nrwl)
-- [Our Youtube channel](https://www.youtube.com/@nxdevtools)
-- [Our blog](https://nx.dev/blog?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)

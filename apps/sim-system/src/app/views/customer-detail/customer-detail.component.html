@@ -160,6 +160,7 @@
               [slipsheet]="slip"
               [customer]="c"
               (updated)="onSlipUpdated($event)"
+              (deleted)="onSlipDeleted()"
             />
           } @else {
             <!-- Doc Body (Lesemodus) -->

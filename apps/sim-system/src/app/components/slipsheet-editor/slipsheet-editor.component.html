@@ -251,9 +251,16 @@
       </button>
     }
   </div>
-  @if (slipsheet()) {
-    <button class="btn-sims-outline" (click)="downloadPdf()">
-      PDF herunterladen
-    </button>
-  }
+  <div class="action-bar-right">
+    @if (canDelete()) {
+      <button class="btn-delete-slip" (click)="deleteSlipsheet()" [disabled]="deleting()">
+        {{ deleting() ? 'Wird gelöscht…' : 'Lieferschein löschen' }}
+      </button>
+    }
+    @if (slipsheet()) {
+      <button class="btn-sims-outline" (click)="downloadPdf()">
+        PDF herunterladen
+      </button>
+    }
+  </div>
 </div>

@@ -33,6 +33,8 @@ export class SlipsheetEditorComponent {
   // ── Output ────────────────────────────────────────────────────
   /** Emitted after every successful mutation with the updated Slipsheet */
   readonly updated = output<Slipsheet>();
+  /** Emitted when the slipsheet was deleted */
+  readonly deleted = output<void>();
 
   // ── UI State ──────────────────────────────────────────────────
   readonly codeCtrl           = new FormControl('');
@@ -46,6 +48,7 @@ export class SlipsheetEditorComponent {
   readonly textPositionAmount   = signal(1);
   readonly textPositionPrice    = signal(0);
   readonly showAnnotationInput = signal(false);
+  readonly deleting            = signal(false);
   readonly annotationText     = signal('');
 
   // ── Computed ──────────────────────────────────────────────────
@@ -53,6 +56,12 @@ export class SlipsheetEditorComponent {
   readonly isBilled = computed(() => {
     const s = this.slipsheet();
     return s != null && !s.isOpen();
+  });
+
+  /** True: offener LS ohne Positionen → Löschen erlaubt */
+  readonly canDelete = computed(() => {
+    const s = this.slipsheet();
+    return s != null && s.isOpen() && (s.orderEntries?.length ?? 0) === 0;
   });
 
   readonly total = computed(() =>
@@ -112,7 +121,7 @@ export class SlipsheetEditorComponent {
 
     const op$ = slip
       ? this.slipsheetService.addOrder(slip, order)
-      : this.slipsheetService.getOrCreate({ article: null, amount: 1, customer } as any);
+      : this.slipsheetService.getOrCreateWithText(order, customer);
 
     op$.subscribe({
       next: updated => {
@@ -190,6 +199,20 @@ export class SlipsheetEditorComponent {
       a.download = `lieferschein-${slip.slipsheetnumber || slip.id}.pdf`;
       a.click();
       URL.revokeObjectURL(url);
+    });
+  }
+
+  // ── Löschen ───────────────────────────────────────────────────
+  deleteSlipsheet() {
+    const slip = this.slipsheet();
+    if (!slip || !this.canDelete()) return;
+    this.deleting.set(true);
+    this.slipsheetService.delete(slip.id).subscribe({
+      next: () => { this.deleting.set(false); this.deleted.emit(); },
+      error: (err: { message?: string }) => {
+        this.error.set(err?.message || 'Fehler beim Löschen');
+        this.deleting.set(false);
+      },
     });
   }
 

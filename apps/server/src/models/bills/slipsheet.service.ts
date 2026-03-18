@@ -43,6 +43,14 @@ export class SlipsheetService extends BaseService<Slipsheet, SlipsheetEntity> {
     ];
   }
 
+  async deleteEmpty(id: number): Promise<void> {
+    const [slip] = await this.getAllInformations([id]);
+    if (!slip) throw new NotFoundException('Lieferschein nicht gefunden.');
+    if (slip.bill) throw new UnprocessableEntityException('Lieferschein ist bereits verrechnet und kann nicht gelöscht werden.');
+    if (slip.orderEntries?.length > 0) throw new UnprocessableEntityException('Lieferschein hat noch Positionen und kann nicht gelöscht werden.');
+    await this.slipsheetRepository.delete(id);
+  }
+
   async changed(slip: SlipsheetEntity) {
     if (slip.state !== SlipsheetState.OPEN) {
       await this.update(slip.id, { state: SlipsheetState.CHANGED });

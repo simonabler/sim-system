@@ -54,6 +54,14 @@ export class CreateArticleDto {
   @Type(() => IdDto)
   articleGroup: IdDto;
 
+  @ApiProperty({ example: 'Schraubenlieferant GmbH', description: 'Lieferant' })
+  @IsOptional()
+  supplier: string;
+
+  @ApiProperty({ example: 'Hochfeste Schraube M8', description: 'Beschreibung' })
+  @IsOptional()
+  description: string;
+
   @ApiProperty({
     example: 'true',
     description: 'Do not sum up position',

@@ -208,6 +208,16 @@ export class SlipsheetController {
     return ReS.FromData((await this.slipsheetService.getAllInformations([ret.slipsheet.id]))[0]);
   }
 
+  @Delete('/:id')
+  @ApiOperation({
+    summary: 'Leeren offenen Lieferschein löschen',
+    description: 'Löscht einen offenen Lieferschein ohne Positionen',
+  })
+  async deleteSlipsheet(@Param('id') id: number): Promise<ReS<null>> {
+    await this.slipsheetService.deleteEmpty(id);
+    return ReS.FromData(null);
+  }
+
   @Post('/:id/close')
   @ApiOperation({
     summary: 'Close slipsheet and generate PDF',

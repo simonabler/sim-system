@@ -43,6 +43,31 @@ export class SlipsheetService {
     );
   }
 
+  /**
+   * POST /slipsheets für Textpositionen ohne bestehenden Lieferschein.
+   * Das Backend-DTO verlangt price/customerRabatt/articleGroupRabatt wenn kein article
+   * vorhanden ist (@ValidateIf). getOrCreate sendet diese Felder nicht → 400.
+   */
+  getOrCreateWithText(order: Order, customer: { id: number }): Observable<Slipsheet> {
+    return this.http.post<any>('slipsheets', {
+      customer: { id: customer.id },
+      text: order.text,
+      amount: order.amount,
+      price: order.price,
+      customerRabatt: order.customerRabatt ?? 0,
+      articleGroupRabatt: order.articleGroupRabatt ?? 0,
+    }).pipe(
+      map(o => {
+        if (o.success) {
+          const slip = new Slipsheet(o.data);
+          this.currentSlipsheetSubject.next(slip);
+          return slip;
+        }
+        throw new Error(o.message);
+      })
+    );
+  }
+
   /** POST /slipsheets — GetOrCreate: findet offenen LS für Kunden oder erstellt neuen, fügt direkt erste Position hinzu */
   getOrCreate(data: { article: any; amount: number; customer: any }): Observable<Slipsheet> {
     return this.http.post<any>('slipsheets', data).pipe(
@@ -101,6 +126,12 @@ export class SlipsheetService {
         if (o.success) return true;
         throw new Error(o.message);
       })
+    );
+  }
+
+  delete(id: number): Observable<void> {
+    return this.http.delete<any>(`slipsheets/${id}`).pipe(
+      map(o => { if (!o.success) throw new Error(o.message); })
     );
   }
 

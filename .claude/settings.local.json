@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(grep -i article find apps/server/src -name \"*.controller.ts\")"
+    ]
+  }
+}

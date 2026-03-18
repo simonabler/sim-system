@@ -285,3 +285,34 @@
   gap: 0.5rem;
   flex-wrap: wrap;
 }
+
+.action-bar-right {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.btn-delete-slip {
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--status-empty, #dc2626);
+  background: transparent;
+  border: 1px solid var(--status-empty-border, #fca5a5);
+  border-radius: var(--radius-pill);
+  padding: 0.4rem 0.9rem;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+
+  &:hover {
+    background: var(--status-empty-bg, #fef2f2);
+    border-color: var(--status-empty, #dc2626);
+  }
+
+  &:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+}
