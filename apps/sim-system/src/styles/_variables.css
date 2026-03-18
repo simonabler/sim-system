@@ -1,5 +1,5 @@
 :root {
-  /* Neutrals */
+  /* Neutrals — geteilt im abler.tirol Ökosystem */
   --white:      #ffffff;
   --bg-light:   #f7f7f4;
   --bg-subtle:  #fbfbf9;
@@ -9,25 +9,39 @@
   --border:     #e2e8f0;
   --border-sub: rgba(226, 232, 240, 0.7);
 
-  /* Akzent */
-  --accent-primary:   #1e3a5f;
-  --accent-secondary: #2d5282;
-  --accent-highlight: #3b82f6;
-  --accent-light:     #eff6ff;
-  --accent-muted:     #dbeafe;
+  /* Fonts */
+  --sans:  'Inter', sans-serif;
+  --mono:  'DM Mono', monospace;
+  --serif: 'DM Serif Display', serif;
 
-  /* Status */
-  --status-success:        #059669;
-  --status-success-light:  #ecfdf5;
-  --status-success-border: #6ee7b7;
-  --status-warning:        #d97706;
-  --status-warning-light:  #fffbeb;
-  --status-warning-border: #fcd34d;
-  --status-error:          #dc2626;
-  --status-error-light:    #fef2f2;
-  --status-error-border:   #fca5a5;
-  --status-neutral:        #64748b;
-  --status-neutral-light:  #f1f5f9;
+  /* Akzent — sims.abler.tirol (Teal) */
+  --accent-primary:   #134e4a;
+  --accent-secondary: #0f3d3a;
+  --accent-highlight: #14b8a6;
+  --accent-light:     #f0fdfa;
+
+  /* Status — sims-spezifisch */
+  --status-ok:        #14b8a6;
+  --status-ok-bg:     #f0fdfa;
+  --status-ok-border: rgba(20, 184, 166, 0.25);
+  --status-low:       #f59e0b;
+  --status-low-bg:    #fffbeb;
+  --status-low-border: rgba(245, 158, 11, 0.25);
+  --status-empty:     #ef4444;
+  --status-empty-bg:  #fef2f2;
+  --status-empty-border: rgba(239, 68, 68, 0.25);
+
+  /* Radius — sims: funktional, nicht dekorativ */
+  --radius-pill: 999px;
+  --radius-md:   6px;
+  --radius-sm:   4px;
+  --radius-xs:   3px;
+
+  /* Shadows */
+  --shadow-card:  0 25px 80px -30px rgba(15, 23, 42, 0.18);
+  --shadow-md:    0 4px 16px rgba(15, 23, 42, 0.10);
+  --shadow-sm:    0 1px 3px rgba(15, 23, 42, 0.06);
+  --shadow-focus: 0 0 0 3px rgba(20, 184, 166, 0.2);
 
   /* Spacing */
   --space-1:  0.25rem;
@@ -42,6 +56,6 @@
   --text-body:  1rem;
   --text-sm:    0.9375rem;
   --text-xs:    0.875rem;
-  --text-label: 0.75rem;
+  --text-label: 0.72rem;
   --text-micro: 0.6875rem;
 }

@@ -24,6 +24,7 @@ export class Slipsheet {
   id!: number;
   slipsheetnumber!: string;
   state: string;
+  billId?: number | null;
   createdAt!: Date;
   updatedAt!: Date;
   customer: any;
@@ -35,6 +36,10 @@ export class Slipsheet {
     this.state = 'open';
     Object.assign(this, init);
     this.orderEntries = (init?.orderEntries || []).map(x => new Order(x));
+  }
+
+  isOpen(): boolean {
+    return !this.billId;
   }
 
   getStateLabel(): string {
@@ -77,6 +82,10 @@ export class Bill {
 
   getNumber(): string {
     return this.billNumber || `RE-${this.id}`;
+  }
+
+  getTotal(): number {
+    return (this.slipsheets || []).reduce((sum, s) => sum + s.getPrice(), 0);
   }
 }
 

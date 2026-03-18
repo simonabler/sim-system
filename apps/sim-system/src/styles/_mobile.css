@@ -12,7 +12,7 @@
   );
   background-size: 200% 100%;
   animation: shimmer 1.2s ease infinite;
-  border-radius: 0.5rem;
+  border-radius: var(--radius-sm);
 }
 
 /* Route-Wechsel */
@@ -28,9 +28,3 @@
   to   { transform: translateY(0); }
 }
 .bottom-sheet-enter { animation: slideUp 0.22s ease forwards; }
-
-/* Hover nur auf Pointer-Geräten */
-@media (hover: hover) {
-  .sims-card:hover        { transform: translateY(-2px); transition: transform 0.2s ease, box-shadow 0.2s ease; }
-  .btn-sims-primary:hover { transform: translateY(-1px); transition: background 0.15s, transform 0.12s; }
-}

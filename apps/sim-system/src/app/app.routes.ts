@@ -18,8 +18,17 @@ export const appRoutes: Route[] = [
     loadComponent: () => import('./views/customers/customers.component').then(m => m.CustomersComponent)
   },
   {
+    // Muss vor customers/:id stehen, damit 'new' nicht als ID gematcht wird
+    path: 'customers/new',
+    loadComponent: () => import('./views/customer-edit/customer-edit.component').then(m => m.CustomerEditComponent)
+  },
+  {
     path: 'customers/:id',
     loadComponent: () => import('./views/customer-detail/customer-detail.component').then(m => m.CustomerDetailComponent)
+  },
+  {
+    path: 'customers/:id/edit',
+    loadComponent: () => import('./views/customer-edit/customer-edit.component').then(m => m.CustomerEditComponent)
   },
   {
     path: 'slipsheets',

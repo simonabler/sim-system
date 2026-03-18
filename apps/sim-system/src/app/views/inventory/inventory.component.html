@@ -6,9 +6,9 @@
 </div>
 
 <!-- Scan-Bereich -->
-<div class="sims-card mb-4">
-  <label class="sims-label eyebrow" style="margin-bottom:0.75rem;">Barcode scannen oder eingeben</label>
-  <div style="display:flex; gap:0.75rem; align-items:center;">
+<div class="sims-card scan-card">
+  <label class="sims-label eyebrow">Barcode scannen oder eingeben</label>
+  <div class="scan-row">
     <div class="scan-input-wrap">
       <input
         #codeInput
@@ -22,7 +22,7 @@
       />
     </div>
     <button class="scan-camera-btn" title="Kamera" aria-label="Kamera öffnen">
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/>
         <circle cx="12" cy="13" r="4"/>
       </svg>
@@ -32,29 +32,38 @@
 
 <!-- Artikel-Info -->
 @if (article()) {
-  <div class="sims-card mb-3">
-    <div class="article-header">
-      <div>
-        <div style="font-size:1rem; font-weight:500;">{{ article()!.name }}</div>
-        <div style="display:flex; gap:0.5rem; align-items:center; margin-top:0.25rem;">
-          <span class="mono" style="font-size:0.75rem; color:var(--ink-3);">{{ article()!.artNumber }}</span>
-          @if (article()!.type) { <span class="sims-badge sims-badge-neutral">{{ article()!.type }}</span> }
-        </div>
+  <div class="sims-card article-card">
+
+    <!-- Kompakter Header -->
+    <div class="article-card-header">
+      <div class="article-name">{{ article()!.name }}</div>
+      <div class="article-meta">
+        <span class="mono">{{ article()!.artNumber }}</span>
+        @if (article()!.code) {
+          <span class="sep">·</span>
+          <span class="mono">{{ article()!.code }}</span>
+        }
       </div>
     </div>
-    <table class="article-info-table" style="margin-top:1rem; width:100%;">
+
+    <!-- Info-Tabelle -->
+    <table class="article-info-table">
+      @if (article()!.type) {
+        <tr>
+          <th>Typ</th>
+          <td><span class="sims-badge sims-badge-neutral badge-sm">{{ article()!.type }}</span></td>
+        </tr>
+      }
       <tr>
         <th>Lagerstand</th>
-        <td class="mono" style="font-size:1rem; font-weight:600;">{{ article()!.stock }} {{ article()!.unit }}</td>
+        <td class="mono stock-val">{{ article()!.stock }} <small>{{ article()!.unit }}</small></td>
       </tr>
-      <tr>
-        <th>Hersteller</th>
-        <td>{{ article()!.supplier }}</td>
-      </tr>
-      <tr>
-        <th>Barcode</th>
-        <td class="mono">{{ article()!.code }}</td>
-      </tr>
+      @if (article()!.supplier) {
+        <tr>
+          <th>Hersteller</th>
+          <td>{{ article()!.supplier }}</td>
+        </tr>
+      }
       @if (article()!.description) {
         <tr>
           <th>Beschreibung</th>
@@ -65,14 +74,15 @@
   </div>
 
   <!-- Soll / Ist -->
-  <div class="sims-card count-card mb-3" style="padding:0; display:flex; overflow:hidden;">
+  <div class="count-card">
     <div class="count-half">
-      <div class="eyebrow" style="margin-bottom:0.25rem;">Soll</div>
-      <div class="mono" style="font-size:1.5rem; color:var(--ink-3);">{{ shouldVal() }} <small style="font-size:0.75rem;">{{ article()!.unit }}</small></div>
+      <div class="eyebrow">Soll</div>
+      <div class="mono count-val muted">{{ shouldVal() }} <small>{{ article()!.unit }}</small></div>
     </div>
-    <div class="count-half" style="border-left:1px solid var(--border);">
-      <div class="eyebrow" style="margin-bottom:0.25rem;">Ist</div>
-      <div style="display:flex; align-items:center; gap:8px;">
+    <div class="count-divider"></div>
+    <div class="count-half">
+      <div class="eyebrow">Ist</div>
+      <div class="count-ist-row">
         <button class="step-btn" (click)="stepIs(-1)" aria-label="Weniger">−</button>
         <input
           type="number"
@@ -80,19 +90,20 @@
           [value]="isVal()"
           (input)="onIsInput($event)"
           (focus)="$any($event.target).select()"
-          inputmode="numeric"
+          inputmode="decimal"
           min="0"
+          step="0.01"
         />
         <button class="step-btn" (click)="stepIs(1)" aria-label="Mehr">+</button>
-        <small class="mono" style="color:var(--ink-3); font-size:0.75rem;">{{ article()!.unit }}</small>
+        <small class="mono unit-label">{{ article()!.unit }}</small>
       </div>
     </div>
   </div>
 
   <!-- Differenz-Banner -->
-  <div class="diff-banner" [class]="diffClass()" style="border-radius:1rem; margin-bottom:1rem; padding:0.75rem 1rem; display:flex; align-items:center; justify-content:space-between;">
+  <div class="diff-banner" [class]="diffClass()">
     <span class="eyebrow">Differenz</span>
-    <span class="mono" style="font-size:1rem; font-weight:500;">
+    <span class="mono diff-val">
       {{ diff() > 0 ? '+' : '' }}{{ diff() }} {{ article()!.unit }}
     </span>
   </div>
@@ -104,14 +115,14 @@
 
 <!-- Log -->
 @if (recentLog().length > 0) {
-  <div style="margin-top:2rem;">
-    <div class="eyebrow" style="margin-bottom:0.75rem;">Zuletzt gebucht</div>
+  <div class="log-section">
+    <div class="eyebrow">Zuletzt gebucht</div>
     @for (entry of recentLog(); track entry.code) {
-      <div class="log-item sims-card" style="margin-bottom:0.5rem; padding:0.75rem 1rem;">
-        <span style="color:var(--status-success); margin-right:0.5rem;">✓</span>
-        <span style="flex:1; font-size:0.875rem;">{{ entry.articleName }}</span>
-        <span class="mono" style="font-size:0.8rem; margin-right:0.75rem;">{{ entry.isVal }} {{ entry.unit }}</span>
-        <span class="mono" [class]="'log-diff ' + logDiffClass(entry.diff)" style="font-size:0.75rem;">
+      <div class="log-item sims-card">
+        <svg class="log-check" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+        <span class="log-name">{{ entry.articleName }}</span>
+        <span class="mono log-qty">{{ entry.isVal }} {{ entry.unit }}</span>
+        <span class="mono log-diff" [class]="logDiffClass(entry.diff)">
           {{ entry.diff > 0 ? '+' : '' }}{{ entry.diff }}
         </span>
       </div>

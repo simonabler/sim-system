@@ -1,0 +1,259 @@
+<!-- ── Verrechnet-Warnung ────────────────────────────────────────── -->
+@if (isBilled()) {
+  <div class="changed-banner">
+    <span class="changed-banner-icon">⚠</span>
+    <div>
+      <strong>Bereits verrechnet.</strong>
+      Änderungen setzen den Lieferschein auf
+      <span class="changed-state-label">Bearbeitet</span> —
+      die zugehörige Rechnung muss anschließend neu erstellt werden.
+    </div>
+  </div>
+}
+
+@if (error()) {
+  <div class="editor-error">{{ error() }}</div>
+}
+
+<!-- ── Barcode / Artikel hinzufügen ─────────────────────────────── -->
+<div class="editor-section">
+  <div class="editor-section-label">Artikel hinzufügen</div>
+
+  <div class="field-group field-group-grow">
+    <label class="field-label">Barcode</label>
+    <input
+      #codeInput
+      type="text"
+      class="sims-input"
+      [formControl]="codeCtrl"
+      placeholder="Scannen oder eingeben…"
+      autofocus
+      autocomplete="off"
+      inputmode="text"
+      (keydown.enter)="addPending()"
+    />
+  </div>
+
+  @if (pendingArticle()) {
+    <div class="article-card">
+      <div class="article-card-info">
+        <div class="article-name">{{ pendingArticle()!.name }}</div>
+        <div class="article-meta">
+          <span class="mono">{{ pendingArticle()!.artNumber }}</span>
+          @if (pendingArticle()!.type) {
+            <span class="sims-badge sims-badge-neutral">{{ pendingArticle()!.type }}</span>
+          }
+          @if (pendingArticle()!.trackStock) {
+            <span class="sims-badge"
+              [class.sims-badge-empty]="pendingArticle()!.stock <= 0"
+              [class.sims-badge-low]="pendingArticle()!.stock > 0 && pendingArticle()!.stock < 10"
+              [class.sims-badge-ok]="pendingArticle()!.stock >= 10">
+              {{ pendingArticle()!.stock }} {{ pendingArticle()!.unit }}
+            </span>
+          }
+        </div>
+      </div>
+      <div class="article-price mono">{{ fmt(pendingArticle()!.price) }} €</div>
+    </div>
+
+    <div class="add-row">
+      <div class="field-group">
+        <label class="field-label">Anzahl</label>
+        <div class="amount-input-wrap">
+          <input
+            type="number"
+            class="sims-input mono"
+            style="max-width:90px;"
+            [value]="pendingAmount()"
+            (input)="pendingAmount.set(+$any($event.target).value)"
+            inputmode="decimal"
+            step="0.01"
+            min="0.01"
+          />
+          @if (pendingArticle()!.unit) {
+            <span class="amount-unit mono">{{ pendingArticle()!.unit }}</span>
+          }
+        </div>
+      </div>
+      <button class="btn-sims-primary add-btn" (click)="addPending()" [disabled]="submitting() || !customer()">
+        {{ submitting() ? 'Wird hinzugefügt…' : 'Hinzufügen' }}
+      </button>
+    </div>
+  }
+</div>
+
+<!-- ── Textposition ───────────────────────────────────────────────── -->
+@if (showTextInput()) {
+  <div class="editor-section">
+    <div class="editor-section-label">Textposition</div>
+    <div class="text-pos-fields">
+
+      <div class="field-group field-group-grow">
+        <label class="field-label">Beschreibung</label>
+        <input
+          type="text"
+          class="sims-input"
+          placeholder="z. B. Montagearbeit, Fahrkosten…"
+          [value]="textPositionText()"
+          (input)="textPositionText.set($any($event.target).value)"
+        />
+      </div>
+
+      <div class="field-group">
+        <label class="field-label">Anzahl</label>
+        <input
+          type="number"
+          class="sims-input mono"
+          style="max-width:90px;"
+          [value]="textPositionAmount()"
+          (input)="textPositionAmount.set(+$any($event.target).value)"
+          inputmode="decimal"
+          step="0.01"
+          min="0.01"
+        />
+      </div>
+
+      <div class="field-group">
+        <label class="field-label">Preis / Stk. (€)</label>
+        <input
+          type="number"
+          class="sims-input mono"
+          placeholder="0,00"
+          [value]="textPositionPrice()"
+          (input)="textPositionPrice.set(+$any($event.target).value)"
+          style="max-width:110px;"
+          inputmode="decimal"
+          step="0.01"
+          min="0"
+        />
+      </div>
+
+    </div>
+    <div class="text-pos-actions">
+      <button class="btn-sims-primary" (click)="addTextPosition()" [disabled]="!textPositionText().trim() || !customer()">
+        Hinzufügen
+      </button>
+      <button class="btn-sims-ghost" (click)="closeTextInput()">Abbrechen</button>
+    </div>
+  </div>
+}
+
+<!-- ── Positionen-Tabelle ─────────────────────────────────────────── -->
+@if (slipsheet()?.orderEntries?.length) {
+  <div class="editor-section editor-section-table">
+    <div class="editor-section-label">Positionen</div>
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>Artikel / Text</th>
+            <th style="text-align:right;">Menge</th>
+            <th style="text-align:right;">Preis/Stk.</th>
+            <th style="text-align:right;">Gesamt</th>
+            <th class="col-entry-actions"></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (order of slipsheet()!.orderEntries; track order.id) {
+            @if (editingOrder()?.id === order.id) {
+              <!-- Inline-Edit Zeile -->
+              <tr class="row-editing">
+                <td>{{ order.article?.name || order.text }}</td>
+                <td>
+                  <input
+                    type="number"
+                    class="sims-input mono"
+                    style="max-width:80px;"
+                    [value]="editAmount()"
+                    (input)="editAmount.set(+$any($event.target).value)"
+                    inputmode="decimal"
+                    step="0.01"
+                    min="0.01"
+                  />
+                </td>
+                <td class="numeric mono">{{ fmt(order.price) }} €</td>
+                <td class="numeric mono">{{ fmt(editAmount() * order.price) }} €</td>
+                <td class="col-entry-actions" style="white-space:nowrap;">
+                  <button class="btn-sims-primary" style="padding:0.2rem 0.65rem; font-size:0.8rem;" (click)="saveEdit()" [disabled]="submitting()">✓</button>
+                  <button class="btn-sims-ghost" style="padding:0.2rem 0.5rem; font-size:0.8rem;" (click)="cancelEdit()">✕</button>
+                </td>
+              </tr>
+            } @else {
+              <tr>
+                <td>
+                  {{ order.article?.name || order.text || 'Textposition' }}
+                  @if (!order.article) {
+                    <span class="sims-badge sims-badge-neutral" style="margin-left:0.5rem; font-size:0.6rem;">TEXT</span>
+                  }
+                </td>
+                <td class="numeric mono">{{ order.amount }} {{ order.article?.unit || '' }}</td>
+                <td class="numeric mono">{{ fmt(order.price) }} €</td>
+                <td class="numeric mono" style="font-weight:500;">{{ fmt(order.getPrice()) }} €</td>
+                <td class="col-entry-actions" style="white-space:nowrap; text-align:right;">
+                  <button class="btn-icon" (click)="startEdit(order)" title="Menge ändern">✏</button>
+                  <button class="btn-icon btn-icon-del" (click)="deleteOrder(order)" title="Löschen">✕</button>
+                </td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Summe -->
+    <div class="entry-total">
+      <span class="entry-total-label">Gesamt (netto)</span>
+      <span class="entry-total-val mono">{{ fmt(total()) }} €</span>
+    </div>
+  </div>
+}
+
+<!-- ── Kommissionen ───────────────────────────────────────────────── -->
+@if (slipsheet()?.annotations?.length) {
+  <div class="editor-section">
+    <div class="editor-section-label">Kommissionen</div>
+    @for (ann of slipsheet()!.annotations; track ann.id) {
+      <div class="annotation-row">{{ ann.text }}</div>
+    }
+  </div>
+}
+
+@if (showAnnotationInput()) {
+  <div class="editor-section">
+    <div class="editor-section-label">Kommission hinzufügen</div>
+    <div class="text-pos-row">
+      <input
+        type="text"
+        class="sims-input"
+        placeholder="Kommissionstext (max. 250 Zeichen)…"
+        maxlength="250"
+        [value]="annotationText()"
+        (input)="annotationText.set($any($event.target).value)"
+        style="flex:1;"
+      />
+      <button class="btn-sims-primary" (click)="submitAnnotation()" [disabled]="!annotationText().trim()">
+        Hinzufügen
+      </button>
+      <button class="btn-sims-ghost" (click)="showAnnotationInput.set(false)">✕</button>
+    </div>
+  </div>
+}
+
+<!-- ── Aktionsleiste ─────────────────────────────────────────────── -->
+<div class="editor-action-bar">
+  <div class="action-bar-left">
+    <button class="btn-sims-outline" (click)="toggleTextInput()" [disabled]="!customer()">
+      + Textposition
+    </button>
+    @if (slipsheet()) {
+      <button class="btn-sims-outline" (click)="toggleAnnotationInput()">
+        + Kommission
+      </button>
+    }
+  </div>
+  @if (slipsheet()) {
+    <button class="btn-sims-outline" (click)="downloadPdf()">
+      PDF herunterladen
+    </button>
+  }
+</div>

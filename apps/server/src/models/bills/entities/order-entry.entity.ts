@@ -19,16 +19,16 @@ export class OrderEntry implements IOrderEntry {
   @Column({ nullable: false })
   text: string;
 
-  @Column({ nullable: false })
+  @Column({ type: 'real', nullable: false })
   amount: number;
 
-  @Column({ nullable: false })
+  @Column({ type: 'real', nullable: false })
   price: number;
 
-  @Column({ nullable: false })
+  @Column({ type: 'real', nullable: false })
   customerRabatt: number;
 
-  @Column({ nullable: false })
+  @Column({ type: 'real', nullable: false })
   articleGroupRabatt: number;
 
   @ManyToOne(() => Article, (article) => article.orderEntry, { nullable: true })

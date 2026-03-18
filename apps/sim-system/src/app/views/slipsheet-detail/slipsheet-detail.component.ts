@@ -1,14 +1,19 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy, Component, computed, DestroyRef, inject, signal,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { switchMap, map, catchError, of } from 'rxjs';
 import { SlipsheetService } from '../../services/slipsheet.service';
+import { Slipsheet } from '../../models/bill.model';
+import { Customer } from '../../models/customer.model';
+import { SlipsheetEditorComponent } from '../../components/slipsheet-editor/slipsheet-editor.component';
 
 @Component({
   selector: 'app-slipsheet-detail',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, SlipsheetEditorComponent],
   templateUrl: './slipsheet-detail.component.html',
   styleUrl: './slipsheet-detail.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -17,45 +22,48 @@ export class SlipsheetDetailComponent {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private slipsheetService = inject(SlipsheetService);
+  private destroyRef = inject(DestroyRef);
 
-  readonly error = signal('');
+  readonly slipsheet = signal<Slipsheet | null>(null);
+  readonly loading   = signal(true);
+  readonly error     = signal('');
 
-  readonly slipsheet = toSignal(
+  // Derive customer from slipsheet so the editor always has it
+  readonly customer = computed<Customer | null>(() => this.slipsheet()?.customer ?? null);
+
+  constructor() {
     this.route.paramMap.pipe(
       map(p => +p.get('id')!),
       switchMap(id =>
         this.slipsheetService.getById(id).pipe(
-          catchError(() => { this.error.set('Lieferschein konnte nicht geladen werden.'); return of(null); })
+          catchError(() => {
+            this.error.set('Lieferschein konnte nicht geladen werden.');
+            this.loading.set(false);
+            return of(null);
+          })
         )
-      )
-    )
-  );
-
-  readonly loading = computed(() => this.slipsheet() === undefined && !this.error());
-
-  readonly total = computed(() =>
-    (this.slipsheet()?.orderEntries ?? []).reduce((sum, o) => sum + o.amount * o.price, 0)
-  );
-
-  downloadPdf() {
-    const s = this.slipsheet();
-    if (!s) return;
-    this.slipsheetService.getPdf(s.id).subscribe(blob => {
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `lieferschein-${s.slipsheetnumber}.pdf`;
-      a.click();
-      URL.revokeObjectURL(url);
+      ),
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(s => {
+      this.slipsheet.set(s);
+      this.loading.set(false);
     });
   }
 
-  back() { this.router.navigate(['/slipsheets']); }
+  onSlipUpdated(updated: Slipsheet) {
+    this.slipsheet.set(updated);
+  }
+
+  back() {
+    const cId = this.slipsheet()?.customer?.id;
+    if (cId) this.router.navigate(['/customers', cId]);
+    else this.router.navigate(['/slipsheets']);
+  }
 
   badgeClass(state: string): string {
-    if (state === 'open')    return 'sims-badge sims-badge-warning';
-    if (state === 'changed') return 'sims-badge sims-badge-accent';
-    if (state === 'closed' || state === 'payed') return 'sims-badge sims-badge-success';
+    if (state === 'open')    return 'sims-badge sims-badge-low';
+    if (state === 'changed') return 'sims-badge sims-badge-empty';
+    if (state === 'closed' || state === 'payed') return 'sims-badge sims-badge-ok';
     return 'sims-badge sims-badge-neutral';
   }
 }

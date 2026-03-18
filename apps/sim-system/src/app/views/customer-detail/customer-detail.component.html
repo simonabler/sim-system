@@ -1,111 +1,284 @@
-<div class="sims-page-header">
-  <div>
-    <div class="eyebrow">Kunden</div>
-    <h1 class="page-title">{{ isNew() ? 'Neuer Kunde' : (customer()?.getName() || 'Kunde') }}</h1>
+<!-- ── Page Header ─────────────────────────────────────────────── -->
+<div class="billing-page-header">
+  <div class="billing-header-left">
+    <div class="header-breadcrumb">
+      <span>Kunden</span>
+      <span class="crumb-sep">›</span>
+      <span>Detailansicht</span>
+    </div>
+    <h1 class="billing-title">{{ customer()?.getName() || 'Kundenansicht' }}</h1>
   </div>
-  <button class="btn-sims-ghost" (click)="back()">← Zurück</button>
+  <div class="header-actions">
+    <button class="btn-sims-ghost" (click)="back()">← Kunden</button>
+    <button class="btn-sims-outline" (click)="editCustomer()">Bearbeiten</button>
+  </div>
 </div>
 
-@if (loading()) { <div class="sims-card skeleton" style="height:400px;"></div> }
-@if (error()) { <div class="sims-card mb-3" style="color:var(--status-error);">{{ error() }}</div> }
+<!-- ── Toast ─────────────────────────────────────────────────── -->
+@if (toast(); as t) {
+  <div class="inline-toast" [class.toast-success]="t.type === 'success'" [class.toast-error]="t.type === 'error'">
+    {{ t.msg }}
+  </div>
+}
 
-@if (!loading()) {
-  <form [formGroup]="form" (ngSubmit)="save()">
-    <div class="sims-card mb-3">
-      <div class="row g-3">
-        <div class="col-12 col-md-6">
-          <label class="sims-label">Vorname</label>
-          <input type="text" class="sims-input" formControlName="firstName" />
-        </div>
-        <div class="col-12 col-md-6">
-          <label class="sims-label">Nachname</label>
-          <input type="text" class="sims-input" formControlName="lastName" />
-        </div>
-        <div class="col-12">
-          <label class="sims-label">Firma</label>
-          <input type="text" class="sims-input" formControlName="companyName" />
-        </div>
-        <div class="col-12 col-md-6">
-          <label class="sims-label">E-Mail</label>
-          <input type="email" class="sims-input" formControlName="email" autocomplete="email" />
-        </div>
-        <div class="col-12 col-md-6">
-          <label class="sims-label">Kundennummer</label>
-          <input type="text" class="sims-input" formControlName="customerNumber" />
-        </div>
-        <div class="col-12 col-md-6">
-          <label class="sims-label">Tel. Firma</label>
-          <input type="tel" class="sims-input" formControlName="phoneCompany" />
-        </div>
-        <div class="col-12 col-md-6">
-          <label class="sims-label">Tel. Privat</label>
-          <input type="tel" class="sims-input" formControlName="phonePrivate" />
-        </div>
-        <div class="col-12">
-          <label class="sims-label">Adresse</label>
-          <input type="text" class="sims-input" formControlName="address" />
-        </div>
-        <div class="col-6 col-md-3">
-          <label class="sims-label">PLZ</label>
-          <input type="text" class="sims-input" formControlName="postcode" />
-        </div>
-        <div class="col-6 col-md-3">
-          <label class="sims-label">Land</label>
-          <input type="text" class="sims-input" formControlName="country" />
-        </div>
-        <div class="col-12 col-md-3">
-          <label class="sims-label">UID</label>
-          <input type="text" class="sims-input" formControlName="uid" />
-        </div>
-        <div class="col-12 col-md-3">
-          <label class="sims-label">Globalrabatt %</label>
-          <input type="number" class="sims-input" formControlName="customerDiscount" inputmode="decimal" min="0" max="100" />
-        </div>
+<!-- ── Loading / Error ───────────────────────────────────────── -->
+@if (loading()) { <div class="sims-card skeleton mb-4" style="height:100px;"></div> }
+@if (loadError()) { <div class="sims-card error-card mb-4">{{ loadError() }}</div> }
+
+<!-- ── Content ───────────────────────────────────────────────── -->
+@if (customer(); as c) {
+
+  <!-- ── Kontext-Cards ─────────────────────────────────────── -->
+  <div class="ctx-grid">
+    <div class="ctx-card ctx-slate">
+      <div class="ctx-label">Kunde</div>
+      <div class="ctx-value">{{ c.getName() }}</div>
+      <div class="ctx-meta">{{ c.postcode }} {{ c.country }}@if (c.email) { · {{ c.email }} }</div>
+    </div>
+    <div class="ctx-card ctx-teal">
+      <div class="ctx-label">Offen</div>
+      <div class="ctx-value mono">{{ openCount() }}</div>
+      <div class="ctx-meta">{{ fmt(openTotal()) }} € Volumen</div>
+    </div>
+    <div class="ctx-card ctx-amber">
+      <div class="ctx-label">Verrechnet</div>
+      <div class="ctx-value mono">{{ billedCount() }}</div>
+      <div class="ctx-meta">{{ bills().length }} Rechnung{{ bills().length !== 1 ? 'en' : '' }}</div>
+    </div>
+    <div class="ctx-card ctx-slate">
+      <div class="ctx-label">Kundenrabatt</div>
+      <div class="ctx-value mono">{{ c.customerDiscount }}%</div>
+      <div class="ctx-meta">{{ c.customerNumber || '—' }}</div>
+    </div>
+  </div>
+
+  <!-- ── Lieferscheine ─────────────────────────────────────── -->
+  <div class="section-card mb-4">
+
+    <div class="section-header">
+      <div>
+        <div class="eyebrow">Belege</div>
+        <h2 class="section-title">Lieferscheine</h2>
+      </div>
+      <div class="section-header-actions">
+        <button
+          class="btn-sims-outline filter-btn"
+          [class.filter-active]="showOnlyOpen()"
+          (click)="toggleOpenFilter()"
+        >
+          {{ showOnlyOpen() ? 'Nur unverrechnete' : 'Alle anzeigen' }}
+        </button>
+        @if (selectedCount() > 0) {
+          <span class="sel-count-chip mono">{{ selectedCount() }} ausgewählt</span>
+        }
+        <button class="btn-sims-primary" (click)="makeBill()" [disabled]="!canGenerate()">
+          {{ generatingBill() ? 'Wird erstellt…' : 'Rechnung erzeugen' }}
+        </button>
       </div>
     </div>
 
-    <div class="sticky-actions">
-      <button type="submit" class="btn-sims-primary" [disabled]="saving()">
-        {{ saving() ? 'Wird gespeichert…' : 'Speichern' }}
-      </button>
-    </div>
-  </form>
-
-  <!-- Lieferscheine -->
-  @if (!isNew() && slipsheets().length > 0) {
-    <div class="sims-card mb-3 mt-4">
-      <div class="eyebrow mb-3">Lieferscheine</div>
-      <table class="table-responsive-cards">
-        <thead><tr><th>Nr.</th><th>Datum</th><th>Status</th></tr></thead>
-        <tbody>
-          @for (s of slipsheets(); track s.id) {
-            <tr [routerLink]="['/slipsheets', s.id]">
-              <td data-label="Nr." class="numeric">{{ s.slipsheetnumber }}</td>
-              <td data-label="Datum">{{ s.createdAt | date:'dd.MM.yyyy' }}</td>
-              <td data-label="Status"><span [class]="slipsheetBadge(s.state)">{{ s.getStateLabel() }}</span></td>
+    <!-- Tabelle -->
+    @if (slipsheets().length === 0) {
+      <div class="sims-empty-state">
+        <div class="empty-icon">🚚</div>
+        <div class="empty-title">Keine Lieferscheine</div>
+      </div>
+    } @else {
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th class="col-sel"></th>
+              <th>Lieferschein-Nr.</th>
+              <th>Datum</th>
+              <th style="text-align:right;">Betrag</th>
+              <th>Status</th>
+              <th class="col-actions"></th>
             </tr>
-          }
-        </tbody>
-      </table>
-    </div>
-  }
+          </thead>
+          <tbody>
+            @for (s of filteredSlips(); track s.id) {
+              <tr
+                (click)="setActive(s)"
+                [class.row-selected]="isSelected(s.id)"
+                [class.row-active]="activeSlipId() === s.id && !isSelected(s.id)"
+                [class.row-billed]="!s.isOpen()"
+              >
+                <!-- Selektion-Indikator -->
+                <td class="col-sel">
+                  <span class="sel-indicator" [class.sel-on]="isSelected(s.id)"></span>
+                </td>
+                <td class="numeric">{{ s.slipsheetnumber }}</td>
+                <td>{{ s.createdAt | date:'dd.MM.yyyy' }}</td>
+                <td class="numeric">{{ fmt(s.getPrice()) }} €</td>
+                <td>
+                  <span [class]="slipBillBadge(s)">{{ s.isOpen() ? 'Offen' : 'Verrechnet' }}</span>
+                </td>
+                <td class="col-actions">
+                  <button
+                    class="btn-row-action"
+                    title="PDF anzeigen"
+                    [disabled]="pdfLoadingId() === s.id"
+                    (click)="openSlipPdf(s, $event)"
+                  >
+                    {{ pdfLoadingId() === s.id ? '…' : 'PDF' }}
+                  </button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
 
-  <!-- Rechnungen -->
-  @if (!isNew() && bills().length > 0) {
-    <div class="sims-card mt-3">
-      <div class="eyebrow mb-3">Rechnungen</div>
-      <table class="table-responsive-cards">
-        <thead><tr><th>Nummer</th><th>Datum</th><th>Status</th></tr></thead>
-        <tbody>
-          @for (b of bills(); track b.id) {
-            <tr [routerLink]="['/bills', b.id]">
-              <td data-label="Nummer" class="numeric">{{ b.getNumber() }}</td>
-              <td data-label="Datum">{{ b.billDate | date:'dd.MM.yyyy' }}</td>
-              <td data-label="Status"><span [class]="billBadge(b.state)">{{ b.state }}</span></td>
-            </tr>
+      <!-- ── Dokument-Detail + Editor (unterhalb der Tabelle) ── -->
+      @if (activeSlip(); as slip) {
+        <div class="doc-panel">
+          <!-- Doc Header -->
+          <div class="doc-header">
+            <div>
+              <div class="doc-eyebrow">Dokument</div>
+              <div class="doc-type">Lieferschein</div>
+            </div>
+            <div class="doc-header-meta">
+              <div class="doc-nr mono">{{ slip.slipsheetnumber }}</div>
+              <div class="doc-date">{{ slip.createdAt | date:'dd.MM.yyyy' }}</div>
+              <span [class]="slipBillBadge(slip)" style="margin-top:0.4rem;">
+                {{ slip.isOpen() ? 'Offen' : 'Verrechnet' }}
+              </span>
+            </div>
+            <!-- Bearbeiten toggle -->
+            @if (editingSlipId() !== slip.id) {
+              <button class="btn-doc-edit" (click)="editSlip(slip.id)">Bearbeiten</button>
+            } @else {
+              <button class="btn-sims-ghost btn-doc-close" (click)="closeEditor()">✕ Schließen</button>
+            }
+          </div>
+
+          <!-- Editor (wenn aktiv) -->
+          @if (editingSlipId() === slip.id) {
+            <app-slipsheet-editor
+              [slipsheet]="slip"
+              [customer]="c"
+              (updated)="onSlipUpdated($event)"
+            />
+          } @else {
+            <!-- Doc Body (Lesemodus) -->
+            <div class="doc-body">
+              <div class="doc-info-row">
+                <div>
+                  <div class="eyebrow">Kunde</div>
+                  <div class="doc-info-val">{{ c.getName() }}</div>
+                  @if (c.address) { <div class="doc-info-sub">{{ c.address }}, {{ c.postcode }} {{ c.country }}</div> }
+                </div>
+                @if (!slip.isOpen()) {
+                  <div>
+                    <div class="eyebrow">Rechnung</div>
+                    <div class="doc-info-val mono">RE-{{ slip.billId }}</div>
+                  </div>
+                }
+              </div>
+
+              <!-- Positionen -->
+              @if (slip.orderEntries.length > 0) {
+                <div class="doc-table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Art.-Nr.</th>
+                        <th>Bezeichnung</th>
+                        <th style="text-align:right;">Menge</th>
+                        <th style="text-align:right;">Betrag</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      @for (e of slip.orderEntries; track e.id) {
+                        <tr>
+                          <td class="numeric">{{ e.article?.artNumber || '—' }}</td>
+                          <td>{{ e.text || e.article?.name || '—' }}</td>
+                          <td class="numeric mono">{{ e.amount }}</td>
+                          <td class="numeric mono">{{ fmt(e.getPrice()) }} €</td>
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
+                </div>
+              } @else {
+                <div class="doc-no-entries">Keine Positionen vorhanden.</div>
+              }
+            </div>
+
+            <!-- Doc Footer -->
+            <div class="doc-footer">
+              <div class="doc-footer-label">Gesamt</div>
+              <div class="doc-footer-total mono">{{ fmt(slip.getPrice()) }} €</div>
+            </div>
           }
-        </tbody>
-      </table>
+        </div>
+      }
+    }
+  </div>
+
+  <!-- ── Rechnungen ─────────────────────────────────────────── -->
+  <div class="section-card mb-4">
+    <div class="section-header">
+      <div>
+        <div class="eyebrow">Belege</div>
+        <h2 class="section-title">Rechnungen</h2>
+      </div>
     </div>
-  }
+
+    @if (bills().length === 0) {
+      <div class="sims-empty-state" style="padding:2rem 1.5rem;">
+        <div class="empty-title">Keine Rechnungen</div>
+        <div class="empty-desc">Rechnungen entstehen aus ausgewählten Lieferscheinen.</div>
+      </div>
+    } @else {
+      <div class="table-scroll">
+        <table class="bills-table">
+          <thead>
+            <tr>
+              <th>Rechnung</th>
+              <th>Enthaltene Lieferscheine</th>
+              <th>Status</th>
+              <th style="text-align:right;">Gesamt</th>
+              <th class="col-actions"></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (b of bills(); track b.id) {
+              <tr class="bill-row-main" (click)="navigateToBill(b)">
+                <td>
+                  <div class="bill-number mono">{{ b.getNumber() }}</div>
+                  <div class="bill-date mono">{{ b.billDate | date:'dd.MM.yyyy' }}</div>
+                </td>
+                <td class="bill-slips">
+                  @for (s of b.slipsheets; track s.id) {
+                    <span class="slip-chip mono">{{ s.slipsheetnumber }}</span>
+                  }
+                  @if (!b.slipsheets?.length) {
+                    <span class="no-slips">—</span>
+                  }
+                </td>
+                <td>
+                  <span [class]="billStateBadge(b.state)">{{ billStateLabel(b.state) }}</span>
+                </td>
+                <td class="numeric mono bill-total">{{ fmt(b.getTotal()) }} €</td>
+                <td class="col-actions">
+                  <button
+                    class="btn-row-action"
+                    title="PDF anzeigen"
+                    [disabled]="billPdfLoadingId() === b.id"
+                    (click)="openBillPdf(b, $event)"
+                  >
+                    {{ billPdfLoadingId() === b.id ? '…' : 'PDF' }}
+                  </button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </div>
+
 }

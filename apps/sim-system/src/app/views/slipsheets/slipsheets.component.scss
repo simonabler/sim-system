@@ -1,1 +1,56 @@
-// keine eigenen Styles
+.header-actions {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+/* Filter-Button */
+.filter-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.875rem;
+  padding: 0.55rem 1.25rem;
+  transition: background 0.18s, border-color 0.18s, color 0.18s;
+
+  &.filter-active {
+    background: var(--accent-light);
+    border-color: var(--accent-highlight);
+    color: var(--accent-primary);
+  }
+}
+
+.filter-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.35rem;
+  height: 1.35rem;
+  background: var(--accent-highlight);
+  color: var(--white);
+  border-radius: 999px;
+  font-size: 0.65rem;
+  padding: 0 0.3rem;
+}
+
+/* Offen/Verrechnet Badge */
+.slip-badge-open {
+  background: var(--status-low-bg);
+  color: #92400e;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.slip-badge-billed {
+  background: var(--status-ok-bg);
+  color: #0f766e;
+  border: 1px solid rgba(20, 184, 166, 0.25);
+}
+
+
+/* Offene Zeilen: subtile linke Border als Kontextsignal */
+@media (min-width: 768px) {
+  tbody tr.row-slip-open td:first-child {
+    box-shadow: inset 3px 0 0 var(--accent-highlight);
+  }
+}

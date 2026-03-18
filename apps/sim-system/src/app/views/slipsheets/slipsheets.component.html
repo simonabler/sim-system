@@ -3,19 +3,53 @@
     <div class="eyebrow">Belege</div>
     <h1 class="page-title">Lieferscheine</h1>
   </div>
-  <button class="btn-sims-primary" (click)="newOrder()">+ Neue Bestellung</button>
+  <div class="header-actions">
+    <button class="btn-sims-outline filter-btn" [class.filter-active]="showOnlyOpen()" (click)="toggleFilter()">
+      @if (openCount() > 0) {
+        <span class="filter-count mono">{{ openCount() }}</span>
+      }
+      Nur unverrechnete
+    </button>
+    <button class="btn-sims-primary" (click)="newOrder()">+ Neue Bestellung</button>
+  </div>
 </div>
 
-@if (loading()) { <div class="sims-card skeleton" style="height:200px;"></div> }
-
-@if (!loading() && slipsheets().length === 0) {
-  <div class="sims-empty-state">
-    <div class="empty-icon">🚚</div>
-    <div class="empty-title">Keine Lieferscheine</div>
+@if (loading()) {
+  <div class="skel-table">
+    <div class="skel-header">
+      <div class="sk" style="width:13%;"></div>
+      <div class="sk" style="width:26%;"></div>
+      <div class="sk" style="width:12%;"></div>
+      <div class="sk" style="width:12%;"></div>
+      <div class="sk" style="width:10%;"></div>
+      <div class="sk" style="width:6%;"></div>
+    </div>
+    @for (i of [1,2,3,4,5,6]; track i) {
+      <div class="skel-row">
+        <div class="sk" style="width:12%;"></div>
+        <div class="sk" style="width:28%;"></div>
+        <div class="sk" style="width:11%;"></div>
+        <div class="sk" style="width:10%;"></div>
+        <div class="sk" style="width:9%;"></div>
+        <div class="sk" style="width:5%;"></div>
+      </div>
+    }
   </div>
 }
 
-@if (!loading() && slipsheets().length > 0) {
+@if (!loading() && filteredSlipsheets().length === 0) {
+  <div class="sims-empty-state">
+    <div class="empty-icon">🚚</div>
+    <div class="empty-title">
+      {{ showOnlyOpen() ? 'Alle Lieferscheine verrechnet' : 'Keine Lieferscheine' }}
+    </div>
+    @if (showOnlyOpen()) {
+      <div class="empty-desc">Filter zurücksetzen um alle anzuzeigen.</div>
+    }
+  </div>
+}
+
+@if (!loading() && filteredSlipsheets().length > 0) {
   <div class="sims-card-table">
     <table class="table-responsive-cards">
       <thead>
@@ -23,18 +57,24 @@
           <th>Nummer</th>
           <th>Kunde</th>
           <th>Datum</th>
+          <th>Verrechnung</th>
           <th>Status</th>
-          <th>Positionen</th>
+          <th>Pos.</th>
         </tr>
       </thead>
       <tbody>
-        @for (s of slipsheets(); track s.id) {
-          <tr (click)="goTo(s.id)">
+        @for (s of filteredSlipsheets(); track s.id) {
+          <tr (click)="goTo(s)" [class.row-slip-open]="s.isOpen()">
             <td data-label="Nummer" class="numeric">{{ s.slipsheetnumber }}</td>
-            <td data-label="Kunde">{{ s.customer?.companyName || s.customer?.lastName }}</td>
+            <td data-label="Kunde">{{ s.customer?.companyName || s.customer?.lastName || '—' }}</td>
             <td data-label="Datum">{{ s.createdAt | date:'dd.MM.yyyy' }}</td>
-            <td data-label="Status"><span [class]="badgeClass(s.state)">{{ s.getStateLabel() }}</span></td>
-            <td data-label="Positionen" class="numeric">{{ s.orderEntries.length }}</td>
+            <td data-label="Verrechnung">
+              <span [class]="billBadgeClass(s)">{{ s.isOpen() ? 'Offen' : 'Verrechnet' }}</span>
+            </td>
+            <td data-label="Status">
+              <span [class]="stateBadgeClass(s.state)">{{ s.getStateLabel() }}</span>
+            </td>
+            <td data-label="Pos." class="numeric">{{ s.orderEntries.length }}</td>
           </tr>
         }
       </tbody>

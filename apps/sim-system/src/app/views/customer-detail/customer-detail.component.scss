@@ -1,4 +1,503 @@
-.mb-3 { margin-bottom: 1rem; }
-.mt-4 { margin-top: 1.5rem; }
-.mt-3 { margin-top: 1rem; }
-.mb-3.eyebrow { margin-bottom: 1rem; }
+/* ── Page Header ──────────────────────────────────────────────── */
+.billing-page-header {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+@media (min-width: 1024px) {
+  .billing-page-header {
+    flex-direction: row;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 2rem;
+    margin-bottom: 2rem;
+  }
+}
+
+.billing-header-left { flex: 1 1 auto; }
+
+.header-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: var(--mono);
+  font-size: 0.65rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  margin-bottom: 0.5rem;
+}
+.crumb-sep { color: var(--border); }
+
+.billing-title {
+  font-family: var(--serif);
+  font-size: clamp(1.75rem, 4vw, 2.5rem);
+  font-weight: 400;
+  color: var(--ink);
+  line-height: 1.1;
+  margin: 0;
+}
+
+.header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+/* Selection count chip */
+.sel-count-chip {
+  display: inline-flex;
+  align-items: center;
+  background: var(--accent-primary);
+  color: var(--white);
+  border-radius: var(--radius-pill);
+  padding: 0.25rem 0.8rem;
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+/* ── Toast ────────────────────────────────────────────────────── */
+.inline-toast {
+  font-size: 0.9rem;
+  padding: 0.75rem 1.25rem;
+  border-radius: var(--radius-md);
+  margin-bottom: 1rem;
+  animation: fadeUp 0.25s ease forwards;
+  border-left: 3px solid transparent;
+
+  &.toast-success {
+    background: var(--status-ok-bg);
+    color: #0f766e;
+    border-color: var(--accent-highlight);
+  }
+  &.toast-error {
+    background: var(--status-empty-bg);
+    color: #b91c1c;
+    border-color: var(--status-empty);
+  }
+}
+
+.error-card {
+  color: var(--status-empty);
+  border-left: 3px solid var(--status-empty);
+}
+.mb-4 { margin-bottom: 1.5rem; }
+
+/* ── Kontext-Cards ────────────────────────────────────────────── */
+.ctx-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+@media (min-width: 768px) {
+  .ctx-grid { grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 2rem; }
+}
+
+.ctx-card {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-left-width: 3px;
+  border-radius: var(--radius-md);
+  padding: 1rem;
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow 0.18s;
+
+  &:hover { box-shadow: var(--shadow-md); }
+}
+.ctx-teal  { border-left-color: var(--accent-highlight); }
+.ctx-amber { border-left-color: var(--status-low); }
+.ctx-slate { border-left-color: var(--border); }
+
+.ctx-label {
+  font-family: var(--mono);
+  font-size: 0.65rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  margin-bottom: 0.5rem;
+}
+.ctx-value {
+  font-size: 1.6rem;
+  font-weight: 400;
+  color: var(--ink);
+  line-height: 1;
+  margin-bottom: 0.4rem;
+  &.mono { font-family: var(--mono); }
+}
+.ctx-meta { font-size: 0.8rem; color: var(--ink-3); }
+
+/* ── Section Cards ────────────────────────────────────────────── */
+.section-card {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+}
+
+.section-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.25rem 1.5rem 1rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.section-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.eyebrow {
+  font-family: var(--mono);
+  font-size: 0.65rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  margin-bottom: 0.3rem;
+}
+
+.section-title {
+  font-family: var(--serif);
+  font-size: 1.25rem;
+  font-weight: 400;
+  color: var(--ink);
+  margin: 0;
+}
+
+/* Filter Button */
+.filter-btn {
+  font-size: 0.82rem;
+  padding: 0.45rem 1rem;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+
+  &.filter-active {
+    background: var(--accent-light);
+    border-color: var(--accent-highlight);
+    color: var(--accent-primary);
+  }
+}
+
+/* ── Table ────────────────────────────────────────────────────── */
+.table-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.875rem;
+
+    thead tr {
+      border-bottom: 2px solid var(--border);
+    }
+
+    th {
+      font-family: var(--mono);
+      font-size: 0.62rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--ink-3);
+      padding: 0.6rem 0.75rem;
+      text-align: left;
+      white-space: nowrap;
+    }
+
+    td {
+      padding: 0.65rem 0.75rem;
+     /* border-bottom: 1px solid var(--border-sub);*/
+      color: var(--ink-2);
+      vertical-align: middle;
+    }
+
+    tbody tr {
+      cursor: pointer;
+      transition: background 0.12s;
+
+      &:hover td { background: var(--accent-light); }
+      &:last-child td { border-bottom: none; }
+    }
+
+    td.numeric, th.numeric { font-family: var(--mono); }
+  }
+}
+
+/* Row states */
+tbody tr.row-selected td {
+  background: var(--accent-light) !important;
+}
+
+tbody tr.row-selected td:first-child {
+  box-shadow: inset 3px 0 0 var(--accent-highlight);
+}
+
+tbody tr.row-active td {
+  background: var(--bg-subtle);
+}
+
+tbody tr.row-billed {
+  opacity: 0.65;
+  cursor: default;
+
+  &:hover td { background: transparent; }
+}
+
+/* Column sizing */
+.col-sel {
+  width: 2rem;
+  padding: 0 0 0 0.75rem !important;
+}
+
+.col-actions {
+  width: 5rem;
+  text-align: right;
+  padding-right: 0.75rem !important;
+}
+
+/* Row action button (PDF etc.) */
+.btn-row-action {
+  font-family: var(--mono);
+  font-size: 0.65rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--accent-primary);
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  padding: 0.25rem 0.65rem;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+  white-space: nowrap;
+
+  &:hover {
+    background: var(--accent-light);
+    border-color: var(--accent-highlight);
+    color: var(--accent-primary);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+.sel-indicator {
+  display: inline-block;
+  width: 0.6rem;
+  height: 0.6rem;
+  border-radius: 50%;
+  border: 1.5px solid var(--border);
+  background: var(--white);
+  transition: background 0.12s, border-color 0.12s;
+  vertical-align: middle;
+
+  &.sel-on {
+    background: var(--accent-highlight);
+    border-color: var(--accent-highlight);
+  }
+}
+
+/* ── Document Panel (below table) ────────────────────────────── */
+.doc-panel {
+  border-top: 2px solid var(--border);
+  animation: fadeUp 0.2s ease forwards;
+}
+
+.doc-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  background: var(--accent-secondary);
+  padding: 1.25rem 1.5rem;
+  color: var(--white);
+}
+
+/* Bearbeiten button inside the teal doc-header */
+.btn-doc-edit {
+  font-family: var(--mono);
+  font-size: 0.65rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: var(--radius-pill);
+  padding: 0.35rem 0.9rem;
+  cursor: pointer;
+  align-self: flex-start;
+  transition: background 0.15s, border-color 0.15s;
+  white-space: nowrap;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.5);
+  }
+}
+
+.btn-doc-close {
+  align-self: flex-start;
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.7);
+  background: transparent;
+  border-color: rgba(255, 255, 255, 0.25);
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--white);
+  }
+}
+
+.doc-eyebrow {
+  font-family: var(--mono);
+  font-size: 0.6rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.45);
+  margin-bottom: 0.2rem;
+}
+
+.doc-type {
+  font-family: var(--serif);
+  font-size: 1.75rem;
+  font-weight: 400;
+  color: var(--white);
+  margin: 0;
+}
+
+.doc-header-meta { text-align: right; }
+
+.doc-nr {
+  font-size: 1.1rem;
+  color: var(--accent-highlight);
+}
+
+.doc-date {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.5);
+  margin-top: 0.2rem;
+}
+
+.doc-body { padding: 1.25rem 1.5rem; }
+
+.doc-info-row {
+  display: flex;
+  gap: 2rem;
+  flex-wrap: wrap;
+  margin-bottom: 1.25rem;
+}
+
+.doc-info-val {
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--ink);
+  margin-top: 0.25rem;
+}
+
+.doc-info-sub {
+  font-size: 0.82rem;
+  color: var(--ink-3);
+}
+
+.doc-table-wrap {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.doc-no-entries {
+  font-size: 0.875rem;
+  color: var(--ink-3);
+  padding: 0.75rem 0;
+}
+
+.doc-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.5rem;
+  background: var(--bg-subtle);
+  border-top: 1px solid var(--border);
+}
+
+.doc-footer-label {
+  font-family: var(--mono);
+  font-size: 0.65rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+.doc-footer-total {
+  font-size: 1.35rem;
+  color: var(--ink);
+}
+
+/* ── Empty State ─────────────────────────────────────────────── */
+.sims-empty-state {
+  padding: 2.5rem 1.5rem;
+  text-align: center;
+}
+
+/* ── Bills table ─────────────────────────────────────────────── */
+
+/* Bill rows */
+.bill-row-main {
+  cursor: pointer;
+  &:hover td { background: var(--accent-light); }
+}
+
+.bill-number {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--ink);
+  white-space: nowrap;
+}
+
+.bill-date {
+  font-size: 0.72rem;
+  color: var(--ink-3);
+  letter-spacing: 0.04em;
+  margin-top: 0.2rem;
+}
+
+.bill-total {
+  font-size: 0.9rem;
+  color: var(--ink);
+}
+
+/* Slipsheet number chips inside bill row */
+.bill-slips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  align-items: center;
+}
+
+.slip-chip {
+  display: inline-block;
+  background: var(--bg-subtle);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 0.1rem 0.45rem;
+  font-size: 0.68rem;
+  letter-spacing: 0.04em;
+  color: var(--ink-2);
+  white-space: nowrap;
+}
+
+.no-slips {
+  font-size: 0.8rem;
+  color: var(--ink-3);
+}

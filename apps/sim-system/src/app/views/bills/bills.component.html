@@ -5,7 +5,26 @@
   </div>
 </div>
 
-@if (loading()) { <div class="sims-card skeleton" style="height:200px;"></div> }
+@if (loading()) {
+  <div class="skel-table">
+    <div class="skel-header">
+      <div class="sk" style="width:18%;"></div>
+      <div class="sk" style="width:13%;"></div>
+      <div class="sk" style="width:26%;"></div>
+      <div class="sk" style="width:10%;"></div>
+      <div class="sk" style="width:12%;"></div>
+    </div>
+    @for (i of [1,2,3,4,5]; track i) {
+      <div class="skel-row">
+        <div class="sk" style="width:16%;"></div>
+        <div class="sk" style="width:12%;"></div>
+        <div class="sk" style="width:30%;"></div>
+        <div class="sk" style="width:8%;"></div>
+        <div class="sk" style="width:10%;"></div>
+      </div>
+    }
+  </div>
+}
 
 @if (!loading() && bills().length === 0) {
   <div class="sims-empty-state">

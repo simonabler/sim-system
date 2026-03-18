@@ -17,8 +17,8 @@
           "apps/server/src/assets",
           {
             "glob": "**/*",
-            "input": "apps/server/src/common/pdfAnnotation/fonts",
-            "output": "src/common/pdfAnnotation/fonts"
+            "input": "apps/server/src/common/pdfAnnotation",
+            "output": "src/common/pdfAnnotation"
           }
         ]
       },
