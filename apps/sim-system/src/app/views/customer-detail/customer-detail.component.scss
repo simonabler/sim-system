@@ -253,6 +253,12 @@ tbody tr.row-billed {
   &:hover td { background: transparent; }
 }
 
+tbody tr.row-not-billable {
+  .sel-indicator {
+    opacity: 0.55;
+  }
+}
+
 /* Column sizing */
 .col-sel {
   width: 2rem;
@@ -305,6 +311,11 @@ tbody tr.row-billed {
   &.sel-on {
     background: var(--accent-highlight);
     border-color: var(--accent-highlight);
+  }
+
+  &.sel-disabled {
+    background: var(--bg-subtle);
+    border-color: var(--border);
   }
 }
 

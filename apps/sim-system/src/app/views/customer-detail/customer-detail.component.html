@@ -103,16 +103,21 @@
                 [class.row-selected]="isSelected(s.id)"
                 [class.row-active]="activeSlipId() === s.id && !isSelected(s.id)"
                 [class.row-billed]="!s.isOpen()"
+                [class.row-not-billable]="slipNeedsGeneration(s)"
               >
                 <!-- Selektion-Indikator -->
                 <td class="col-sel">
-                  <span class="sel-indicator" [class.sel-on]="isSelected(s.id)"></span>
+                  <span
+                    class="sel-indicator"
+                    [class.sel-on]="isSelected(s.id)"
+                    [class.sel-disabled]="slipNeedsGeneration(s)"
+                  ></span>
                 </td>
                 <td class="numeric">{{ s.slipsheetnumber }}</td>
                 <td>{{ s.createdAt | date:'dd.MM.yyyy' }}</td>
                 <td class="numeric">{{ fmt(s.getPrice()) }} €</td>
                 <td>
-                  <span [class]="slipBillBadge(s)">{{ s.isOpen() ? 'Offen' : 'Verrechnet' }}</span>
+                  <span [class]="slipBillBadge(s)">{{ slipBillLabel(s) }}</span>
                 </td>
                 <td class="col-actions">
                   <button
@@ -174,7 +179,7 @@
                 @if (!slip.isOpen()) {
                   <div>
                     <div class="eyebrow">Rechnung</div>
-                    <div class="doc-info-val mono">RE-{{ slip.billId }}</div>
+                    <div class="doc-info-val mono">RE-{{ slip.bill?.id }}</div>
                   </div>
                 }
               </div>

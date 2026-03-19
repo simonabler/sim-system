@@ -25,6 +25,7 @@ export class Slipsheet {
   slipsheetnumber!: string;
   state: string;
   billId?: number | null;
+  bill?: { id?: number | null } | null;
   createdAt!: Date;
   updatedAt!: Date;
   customer: any;
@@ -35,11 +36,21 @@ export class Slipsheet {
   constructor(init?: Partial<Slipsheet>) {
     this.state = 'open';
     Object.assign(this, init);
+    this.bill = init?.bill ?? null;
+    this.billId = init?.billId ?? init?.bill?.id ?? null;
     this.orderEntries = (init?.orderEntries || []).map(x => new Order(x));
   }
 
+  hasBill(): boolean {
+    return !!(this.bill?.id ?? this.billId);
+  }
+
+  isCompleted(): boolean {
+    return this.state === 'closed' && this.hasBill();
+  }
+
   isOpen(): boolean {
-    return !this.billId;
+    return !this.isCompleted();
   }
 
   getStateLabel(): string {

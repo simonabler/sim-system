@@ -192,13 +192,21 @@ export class SlipsheetEditorComponent {
   downloadPdf() {
     const slip = this.slipsheet();
     if (!slip) return;
-    this.slipsheetService.getPdf(slip.id).subscribe(blob => {
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `lieferschein-${slip.slipsheetnumber || slip.id}.pdf`;
-      a.click();
-      URL.revokeObjectURL(url);
+    this.slipsheetService.getPdf(slip.id).subscribe({
+      next: blob => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `lieferschein-${slip.slipsheetnumber || slip.id}.pdf`;
+        a.click();
+        URL.revokeObjectURL(url);
+
+        this.slipsheetService.getById(slip.id).subscribe({
+          next: updated => this.updated.emit(updated),
+          error: () => this.error.set('Lieferschein konnte nach PDF-Erzeugung nicht aktualisiert werden.'),
+        });
+      },
+      error: () => this.error.set('PDF konnte nicht geladen werden.'),
     });
   }
 

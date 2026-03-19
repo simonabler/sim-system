@@ -1,885 +1,1705 @@
-weitere promts:
+# SIMS — Agent-Anleitung: CompanySettings Feature
 
-scalteon ladevorschau fehlt bei rechungen und lieferscheine
+> Dieses Dokument ist eine vollständige Schritt-für-Schritt-Anleitung für einen Coding-Agent.
+> Jede Phase ist in sich abgeschlossen und testbar. Gib dem Agent immer **eine Phase auf einmal**.
 
-Die Lieferschein tabelle für die details. hier fehlt das komplette bearbeiten der lieverscheine. hinzufügen löschen ändern. 
-Lieferscheinen bearbeiten: Lieferscheine können bearbeitet werden. Offene: hier können einfach alle sachen gemacht werden wie bei einer neuen bestellung, Freitext, Kommision, Artikel hinzufügen. nur eben als bearbeiten, kann hier die componente wiederverwendet werden?
-Geschlossene Lieferscheine können auch bearbeitet werden, dadurch geht die Rechnung und ach der Lieferschein aauf Bearbeitet "Rote Farbe" anschließen muss man den Lieferschein und die Rechnung neu generieren. Die Bearbeitungsfunktionen sind gleich in der Lieferschein ansicht slippsheet und bei deiner neuen bestellung. sollte man hier eine componente machen und die an allen stellen einsetzten?
+---
 
-Handyansicht Inventur verbessern: paddings und abstände kleiner machen. Artikel Card ist unübersichtlich muss klarer werden, der badge mit dem type ist zu groß das soll auch runter in die tabelle
+## Kontext (vor jeder Phase mitgeben)
 
+```
+Repository: github.com/simonabler/sim-system
+Branch: first-init
+Stack:
+  Backend:  NestJS + TypeORM + SQLite (better-sqlite3), Monorepo unter apps/server/
+  Frontend: Angular (standalone components, signals, ReactiveFormsModule), unter apps/sim-system/
+  PDF-Generierung: pdfmake im Backend, PdfMakerService in apps/server/src/common/services/pdfmaker.service.ts
 
-die Kundenansicht und lieferscheine müss angepasst werden: bei den Lieferscheinen ist es wichtig diese zu finden die noch nicht verrechnet worden sind. also noch keine
-rechnungs eintrag billId haben. beim click auf den lieferschein soll man in eine ansicht kommen wo alle liefereine und rechnungen vom kunden angezeigt werden. 
-hier können anschließend mehrere lieferscheine ausgewählt werden und eine Rechnung erstellt.  mittels bill/generate 
+Ziel dieser Arbeit:
+  Alle hardcoded Firmendaten (Adresse, Kontakt, Bankdaten, Logo-Pfade, MwSt-Satz, Ausstellungsort)
+  aus dem PdfMakerService in eine konfigurierbare Datenbank-Entity auslagern.
+  Eine Angular-Seite /settings ermöglicht die Verwaltung dieser Daten inkl. Logo-Upload.
+```
 
+---
 
+## Phase 1 — Backend: CompanySettings Entity + Module
 
-Rechnungs Kundenansicht Template:
-import React, { useMemo, useState } from "react";
-import { motion } from "framer-motion";
+**Prompt für den Agent:**
+
+```
+Arbeite im Repository sim-system, Branch first-init.
+Erstelle das CompanySettings-Feature im Backend (apps/server/src/).
+
+Orientiere dich beim Code-Stil an den bestehenden Modulen — insbesondere UsersModule und CustomerModule.
+Das Muster ist immer: Entity → Interface → Repository → Service → Controller → Module → AppModule.
+
+SCHRITT 1 — Interface
+Erstelle die Datei:
+  apps/server/src/models/settings/interfaces/company-settings.interface.ts
+
+Inhalt:
+export interface ICompanySettings {
+  id: number;
+  companyName: string | null;
+  street: string | null;
+  zip: string | null;
+  city: string | null;
+  country: string | null;
+  phone: string | null;
+  email: string | null;
+  website: string | null;
+  firmenbuchnummer: string | null;
+  vatId: string | null;
+  issueCity: string | null;
+  vatRate: number;
+  paymentTermDays: number;
+  paymentFooterText: string | null;
+  bankAccounts: Array<{ name: string; iban: string; bic: string }>;
+  logoPath: string | null;
+  badge1Path: string | null;
+  badge2Path: string | null;
+  updatedAt: Date;
+}
+
+---
+
+SCHRITT 2 — Entity
+Erstelle die Datei:
+  apps/server/src/models/settings/entities/company-settings.entity.ts
+
+Inhalt:
 import {
-  ArrowLeft,
-  CheckCircle2,
-  ChevronRight,
-  CreditCard,
-  FileSpreadsheet,
-  FileText,
-  Filter,
-  LayoutGrid,
-  Package,
-  Search,
-  UserRound,
-} from "lucide-react";
+  Entity,
+  Column,
+  UpdateDateColumn,
+  PrimaryColumn,
+} from 'typeorm';
+import { ICompanySettings } from '../interfaces/company-settings.interface';
 
-const initialCustomer = {
-  id: 7,
-  name: "Musterfirma GmbH",
-  contact: "Einkauf · Anna Gruber",
-  city: "6020 Innsbruck",
-  email: "office@musterfirma.at",
-  discount: 8,
-};
+@Entity({ name: 'company_settings' })
+export class CompanySettings implements ICompanySettings {
+  @PrimaryColumn({ default: 1 })
+  id: number;
 
-const initialSlips = [
-  {
-    id: 1042,
-    number: "LS-2026-0042",
-    date: "17.03.2026",
-    deliveryDate: "17.03.2026",
-    amount: 1230.0,
-    status: "Offen",
-    billId: null,
-    items: 4,
-  },
-  {
-    id: 1043,
-    number: "LS-2026-0043",
-    date: "16.03.2026",
-    deliveryDate: "16.03.2026",
-    amount: 820.5,
-    status: "Offen",
-    billId: null,
-    items: 3,
-  },
-  {
-    id: 1035,
-    number: "LS-2026-0035",
-    date: "10.03.2026",
-    deliveryDate: "10.03.2026",
-    amount: 650.0,
-    status: "Verrechnet",
-    billId: 3008,
-    items: 2,
-  },
-  {
-    id: 1029,
-    number: "LS-2026-0029",
-    date: "03.03.2026",
-    deliveryDate: "03.03.2026",
-    amount: 1480.0,
-    status: "Verrechnet",
-    billId: 3004,
-    items: 6,
-  },
-  {
-    id: 1024,
-    number: "LS-2026-0024",
-    date: "28.02.2026",
-    deliveryDate: "28.02.2026",
-    amount: 430.0,
-    status: "Offen",
-    billId: null,
-    items: 1,
-  },
-];
+  @Column({ nullable: true, default: null })
+  companyName: string | null;
 
-const initialBills = [
-  {
-    id: 3008,
-    number: "RE-2026-0008",
-    date: "11.03.2026",
-    amount: 650.0,
-    slipNumbers: ["LS-2026-0035"],
-  },
-  {
-    id: 3004,
-    number: "RE-2026-0004",
-    date: "04.03.2026",
-    amount: 1480.0,
-    slipNumbers: ["LS-2026-0029"],
-  },
-];
+  @Column({ nullable: true, default: null })
+  street: string | null;
 
-const money = (value: number) =>
-  new Intl.NumberFormat("de-AT", {
-    style: "currency",
-    currency: "EUR",
-  }).format(value);
+  @Column({ nullable: true, default: null })
+  zip: string | null;
 
-const fadeUp = {
-  hidden: { opacity: 0, y: 12 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.4, ease: "easeOut" } },
-};
+  @Column({ nullable: true, default: null })
+  city: string | null;
 
-const stagger = {
-  hidden: {},
-  show: { transition: { staggerChildren: 0.07 } },
-};
+  @Column({ nullable: true, default: 'Österreich' })
+  country: string | null;
 
-function StatusBadge({ open, children }: { open: boolean; children: React.ReactNode }) {
-  return (
-    <span
-      className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] uppercase tracking-[0.12em] ${
-        open
-          ? "bg-teal-50 text-teal-800 border border-teal-200"
-          : "bg-slate-100 text-slate-700 border border-slate-200"
-      }`}
-      style={{ fontFamily: "DM Mono, monospace" }}
-    >
-      <span
-        className={`inline-block h-1.5 w-1.5 rounded-full ${open ? "bg-teal-500" : "bg-slate-400"}`}
-      />
-      {children}
-    </span>
-  );
+  @Column({ nullable: true, default: null })
+  phone: string | null;
+
+  @Column({ nullable: true, default: null })
+  email: string | null;
+
+  @Column({ nullable: true, default: null })
+  website: string | null;
+
+  @Column({ nullable: true, default: null })
+  firmenbuchnummer: string | null;
+
+  @Column({ nullable: true, default: null })
+  vatId: string | null;
+
+  @Column({ nullable: true, default: null })
+  issueCity: string | null;
+
+  @Column({ default: 20 })
+  vatRate: number;
+
+  @Column({ default: 14 })
+  paymentTermDays: number;
+
+  @Column({ nullable: true, default: null, type: 'text' })
+  paymentFooterText: string | null;
+
+  @Column({ type: 'simple-json', nullable: true, default: '[]' })
+  bankAccounts: Array<{ name: string; iban: string; bic: string }>;
+
+  @Column({ nullable: true, default: null })
+  logoPath: string | null;
+
+  @Column({ nullable: true, default: null })
+  badge1Path: string | null;
+
+  @Column({ nullable: true, default: null })
+  badge2Path: string | null;
+
+  @UpdateDateColumn({ name: 'updated_at' })
+  updatedAt: Date;
 }
 
-function MiniLabel({ children }: { children: React.ReactNode }) {
-  return (
-    <div
-      className="text-[11px] uppercase tracking-[0.1em] text-slate-400"
-      style={{ fontFamily: "DM Mono, monospace" }}
-    >
-      {children}
-    </div>
-  );
+---
+
+SCHRITT 3 — Serializer
+Erstelle die Datei:
+  apps/server/src/models/settings/serializers/company-settings.serializer.ts
+
+Inhalt:
+import { Expose } from 'class-transformer';
+import { ModelEntity } from '../../../common/serializers/model.serializer';
+import { ICompanySettings } from '../interfaces/company-settings.interface';
+
+export const defaultSettingsGroupsForSerializing: string[] = ['default', 'settings.default'];
+
+export class CompanySettingsEntity extends ModelEntity implements ICompanySettings {
+  @Expose({ groups: ['default'] }) companyName: string | null;
+  @Expose({ groups: ['default'] }) street: string | null;
+  @Expose({ groups: ['default'] }) zip: string | null;
+  @Expose({ groups: ['default'] }) city: string | null;
+  @Expose({ groups: ['default'] }) country: string | null;
+  @Expose({ groups: ['default'] }) phone: string | null;
+  @Expose({ groups: ['default'] }) email: string | null;
+  @Expose({ groups: ['default'] }) website: string | null;
+  @Expose({ groups: ['default'] }) firmenbuchnummer: string | null;
+  @Expose({ groups: ['default'] }) vatId: string | null;
+  @Expose({ groups: ['default'] }) issueCity: string | null;
+  @Expose({ groups: ['default'] }) vatRate: number;
+  @Expose({ groups: ['default'] }) paymentTermDays: number;
+  @Expose({ groups: ['default'] }) paymentFooterText: string | null;
+  @Expose({ groups: ['default'] }) bankAccounts: Array<{ name: string; iban: string; bic: string }>;
+  @Expose({ groups: ['default'] }) logoPath: string | null;
+  @Expose({ groups: ['default'] }) badge1Path: string | null;
+  @Expose({ groups: ['default'] }) badge2Path: string | null;
+  @Expose({ groups: ['default'] }) updatedAt: Date;
 }
 
-function ActionButton({
-  children,
-  onClick,
-  disabled,
-  tone = "primary",
-}: {
-  children: React.ReactNode;
-  onClick?: () => void;
-  disabled?: boolean;
-  tone?: "primary" | "secondary";
-}) {
-  const styles =
-    tone === "primary"
-      ? "bg-[#134e4a] text-white hover:bg-[#0f3d3a]"
-      : "border border-slate-200 bg-white text-slate-700 hover:border-teal-400 hover:text-teal-900";
+---
 
-  return (
-    <button
-      onClick={onClick}
-      disabled={disabled}
-      className={`inline-flex items-center gap-2 rounded-full px-5 py-[0.55rem] text-sm font-medium transition focus:outline-none focus-visible:ring-4 focus-visible:ring-teal-200 disabled:cursor-not-allowed disabled:opacity-50 ${styles}`}
-    >
-      {children}
-    </button>
-  );
+SCHRITT 4 — DTOs
+Erstelle die Datei:
+  apps/server/src/models/settings/dto/update-settings.dto.ts
+
+Inhalt:
+import { ApiProperty } from '@nestjs/swagger';
+import { IsOptional, IsString, IsNumber, IsArray, ValidateNested, Min, Max } from 'class-validator';
+import { Type } from 'class-transformer';
+
+export class BankAccountDto {
+  @IsString() name: string;
+  @IsString() iban: string;
+  @IsString() bic: string;
 }
 
-function ContextCard({
-  label,
-  value,
-  meta,
-  tone = "teal",
-}: {
-  label: string;
-  value: string;
-  meta: string;
-  tone?: "teal" | "amber" | "slate";
-}) {
-  const toneClass = {
-    teal: "border-l-teal-500",
-    amber: "border-l-amber-500",
-    slate: "border-l-slate-300",
-  }[tone];
-
-  return (
-    <motion.div
-      variants={fadeUp}
-      className={`rounded-md border border-slate-200 border-l-[3px] ${toneClass} bg-white p-4 shadow-sm transition hover:shadow-md`}
-    >
-      <MiniLabel>{label}</MiniLabel>
-      <div className="mt-2 text-2xl text-slate-900" style={{ fontFamily: "DM Mono, monospace" }}>
-        {value}
-      </div>
-      <div className="mt-2 text-sm text-slate-500">{meta}</div>
-    </motion.div>
-  );
+export class UpdateSettingsDto {
+  @IsOptional() @IsString() companyName?: string;
+  @IsOptional() @IsString() street?: string;
+  @IsOptional() @IsString() zip?: string;
+  @IsOptional() @IsString() city?: string;
+  @IsOptional() @IsString() country?: string;
+  @IsOptional() @IsString() phone?: string;
+  @IsOptional() @IsString() email?: string;
+  @IsOptional() @IsString() website?: string;
+  @IsOptional() @IsString() firmenbuchnummer?: string;
+  @IsOptional() @IsString() vatId?: string;
+  @IsOptional() @IsString() issueCity?: string;
+  @IsOptional() @IsNumber() @Min(0) @Max(100) vatRate?: number;
+  @IsOptional() @IsNumber() @Min(0) paymentTermDays?: number;
+  @IsOptional() @IsString() paymentFooterText?: string;
+  @IsOptional() @IsArray() @ValidateNested({ each: true }) @Type(() => BankAccountDto)
+  bankAccounts?: BankAccountDto[];
 }
 
-export default function CustomerBillingPreview() {
-  const [customer] = useState(initialCustomer);
-  const [slips, setSlips] = useState(initialSlips);
-  const [bills, setBills] = useState(initialBills);
-  const [activeSlipId, setActiveSlipId] = useState(1042);
-  const [selectedSlipIds, setSelectedSlipIds] = useState<number[]>([1042]);
-  const [onlyUnbilled, setOnlyUnbilled] = useState(true);
-  const [query, setQuery] = useState("");
-  const [flash, setFlash] = useState<string>("");
+---
 
-  const activeSlip = slips.find((slip) => slip.id === activeSlipId) ?? slips[0];
+SCHRITT 5 — Repository
+Erstelle die Datei:
+  apps/server/src/models/settings/company-settings.repository.ts
 
-  const filteredSlips = useMemo(() => {
-    return slips.filter((slip) => {
-      const matchesQuery = `${slip.number} ${slip.date}`.toLowerCase().includes(query.toLowerCase());
-      const matchesState = onlyUnbilled ? !slip.billId : true;
-      return matchesQuery && matchesState;
+Inhalt:
+import { Injectable } from '@nestjs/common';
+import { DataSource } from 'typeorm';
+import { instanceToPlain, plainToInstance } from 'class-transformer';
+import { ModelRepository } from '../model.repository';
+import { CompanySettings } from './entities/company-settings.entity';
+import {
+  CompanySettingsEntity,
+  defaultSettingsGroupsForSerializing,
+} from './serializers/company-settings.serializer';
+
+@Injectable()
+export class CompanySettingsRepository extends ModelRepository<CompanySettings, CompanySettingsEntity> {
+  constructor(private dataSource: DataSource) {
+    super(CompanySettings, dataSource.createEntityManager());
+  }
+
+  transform(model: CompanySettings): CompanySettingsEntity {
+    const transformOptions = { groups: defaultSettingsGroupsForSerializing };
+    return plainToInstance(
+      CompanySettingsEntity,
+      instanceToPlain(model, transformOptions),
+      transformOptions,
+    );
+  }
+
+  transformMany(models: CompanySettings[]): CompanySettingsEntity[] {
+    return models.map((m) => this.transform(m));
+  }
+}
+
+---
+
+SCHRITT 6 — Service
+Erstelle die Datei:
+  apps/server/src/models/settings/company-settings.service.ts
+
+Inhalt:
+import { Injectable } from '@nestjs/common';
+import { CompanySettingsRepository } from './company-settings.repository';
+import { CompanySettingsEntity } from './serializers/company-settings.serializer';
+import { UpdateSettingsDto } from './dto/update-settings.dto';
+import { CompanySettings } from './entities/company-settings.entity';
+
+@Injectable()
+export class CompanySettingsService {
+  constructor(private readonly repo: CompanySettingsRepository) {}
+
+  async get(): Promise<CompanySettingsEntity | null> {
+    return this.repo.get(1, [], false);
+  }
+
+  async upsert(dto: UpdateSettingsDto): Promise<CompanySettingsEntity> {
+    const existing = await this.repo.findOne({ where: { id: 1 } });
+    if (existing) {
+      return this.repo.updateEntity(1, dto as any);
+    }
+    const created = await this.repo.save({ id: 1, ...dto } as CompanySettings);
+    return this.repo.transform(created);
+  }
+
+  async updateLogoPath(field: 'logoPath' | 'badge1Path' | 'badge2Path', path: string): Promise<CompanySettingsEntity> {
+    const existing = await this.repo.findOne({ where: { id: 1 } });
+    if (existing) {
+      return this.repo.updateEntity(1, { [field]: path } as any);
+    }
+    const created = await this.repo.save({ id: 1, [field]: path } as CompanySettings);
+    return this.repo.transform(created);
+  }
+}
+
+---
+
+SCHRITT 7 — Controller
+Erstelle die Datei:
+  apps/server/src/models/settings/company-settings.controller.ts
+
+Inhalt:
+import {
+  Get, Put, Post, Body, Controller,
+  UseInterceptors, SerializeOptions, ClassSerializerInterceptor,
+  ValidationPipe, UsePipes, UploadedFile,
+} from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { diskStorage } from 'multer';
+import { extname, join } from 'path';
+import { ApiBearerAuth, ApiConsumes, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { CompanySettingsService } from './company-settings.service';
+import {
+  CompanySettingsEntity,
+  defaultSettingsGroupsForSerializing,
+} from './serializers/company-settings.serializer';
+import { UpdateSettingsDto } from './dto/update-settings.dto';
+import { ReS } from '../../common/res.model';
+
+const UPLOAD_DEST = join(process.cwd(), 'uploads', 'settings');
+
+function storageConfig(fieldName: string) {
+  return diskStorage({
+    destination: UPLOAD_DEST,
+    filename: (_req, file, cb) => {
+      cb(null, `${fieldName}${extname(file.originalname)}`);
+    },
+  });
+}
+
+@ApiBearerAuth()
+@Controller('settings')
+@ApiTags('settings')
+@UseInterceptors(ClassSerializerInterceptor)
+@SerializeOptions({ groups: defaultSettingsGroupsForSerializing, excludeExtraneousValues: true })
+export class CompanySettingsController {
+  constructor(private readonly settingsService: CompanySettingsService) {}
+
+  @Get('/')
+  @ApiOperation({ summary: 'Einstellungen laden' })
+  async get(): Promise<ReS<CompanySettingsEntity>> {
+    return ReS.FromData(await this.settingsService.get());
+  }
+
+  @Put('/')
+  @UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
+  @ApiOperation({ summary: 'Einstellungen speichern' })
+  async upsert(@Body() dto: UpdateSettingsDto): Promise<ReS<CompanySettingsEntity>> {
+    return ReS.FromData(await this.settingsService.upsert(dto));
+  }
+
+  @Post('/logo')
+  @ApiConsumes('multipart/form-data')
+  @ApiOperation({ summary: 'Logo hochladen (SVG oder PNG)' })
+  @UseInterceptors(FileInterceptor('file', { storage: storageConfig('logo') }))
+  async uploadLogo(@UploadedFile() file: Express.Multer.File): Promise<ReS<CompanySettingsEntity>> {
+    const relativePath = join('uploads', 'settings', file.filename);
+    return ReS.FromData(await this.settingsService.updateLogoPath('logoPath', relativePath));
+  }
+
+  @Post('/badge1')
+  @ApiConsumes('multipart/form-data')
+  @ApiOperation({ summary: 'Badge links hochladen' })
+  @UseInterceptors(FileInterceptor('file', { storage: storageConfig('badge1') }))
+  async uploadBadge1(@UploadedFile() file: Express.Multer.File): Promise<ReS<CompanySettingsEntity>> {
+    const relativePath = join('uploads', 'settings', file.filename);
+    return ReS.FromData(await this.settingsService.updateLogoPath('badge1Path', relativePath));
+  }
+
+  @Post('/badge2')
+  @ApiConsumes('multipart/form-data')
+  @ApiOperation({ summary: 'Badge rechts hochladen' })
+  @UseInterceptors(FileInterceptor('file', { storage: storageConfig('badge2') }))
+  async uploadBadge2(@UploadedFile() file: Express.Multer.File): Promise<ReS<CompanySettingsEntity>> {
+    const relativePath = join('uploads', 'settings', file.filename);
+    return ReS.FromData(await this.settingsService.updateLogoPath('badge2Path', relativePath));
+  }
+}
+
+---
+
+SCHRITT 8 — Module
+Erstelle die Datei:
+  apps/server/src/models/settings/company-settings.module.ts
+
+Inhalt:
+import { Module } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { CompanySettings } from './entities/company-settings.entity';
+import { CompanySettingsRepository } from './company-settings.repository';
+import { CompanySettingsService } from './company-settings.service';
+import { CompanySettingsController } from './company-settings.controller';
+import { MulterModule } from '@nestjs/platform-express';
+import { join } from 'path';
+
+@Module({
+  imports: [
+    TypeOrmModule.forFeature([CompanySettings]),
+    MulterModule.register({ dest: join(process.cwd(), 'uploads', 'settings') }),
+  ],
+  controllers: [CompanySettingsController],
+  providers: [CompanySettingsRepository, CompanySettingsService],
+  exports: [CompanySettingsService],
+})
+export class CompanySettingsModule {}
+
+---
+
+SCHRITT 9 — AppModule registrieren
+Bearbeite die Datei:
+  apps/server/src/app.module.ts
+
+Füge den Import von CompanySettingsModule hinzu:
+  import { CompanySettingsModule } from './models/settings/company-settings.module';
+
+Und in der imports-Array in @Module:
+  CompanySettingsModule,
+
+---
+
+SCHRITT 10 — Static File Serving für Uploads
+Bearbeite die Datei:
+  apps/server/src/main.ts
+
+Füge nach dem import-Block hinzu:
+  import { NestExpressApplication } from '@nestjs/platform-express';
+  import { join } from 'path';
+
+Ändere NestFactory.create zu:
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
+
+Füge nach app.enableCors(...) hinzu:
+  app.useStaticAssets(join(process.cwd(), 'uploads'), { prefix: '/uploads' });
+
+---
+
+SCHRITT 11 — Verzeichnis sicherstellen
+Erstelle die Datei:
+  apps/server/uploads/settings/.gitkeep
+
+(Leere Datei, damit das Verzeichnis im Git landet)
+
+Füge in apps/server/.gitignore (falls vorhanden) hinzu:
+  uploads/settings/*
+  !uploads/settings/.gitkeep
+
+---
+
+ABSCHLIESSEND: Prüfe ob @nestjs/platform-express und multer als Dependencies vorhanden sind:
+  package.json im Root prüfen.
+  Falls nicht vorhanden: Hinweis ausgeben dass folgendes installiert werden muss:
+    npm install @nestjs/platform-express multer
+    npm install --save-dev @types/multer
+```
+
+---
+
+## Phase 2 — Backend: PdfMakerService auf Settings umstellen
+
+**Prompt für den Agent:**
+
+```
+Arbeite im Repository sim-system, Branch first-init.
+Stelle den PdfMakerService auf dynamische CompanySettings um.
+Phase 1 (CompanySettingsModule) ist bereits abgeschlossen.
+
+Ziel: Alle hardcoded Firmendaten aus apps/server/src/common/services/pdfmaker.service.ts
+entfernen und durch Werte aus CompanySettingsService ersetzen.
+
+---
+
+SCHRITT 1 — SharedModule erweitern
+Bearbeite die Datei:
+  apps/server/src/common/shared.module.ts
+
+Das Modul muss CompanySettingsModule importieren, damit PdfMakerService auf
+CompanySettingsService zugreifen kann.
+
+Füge hinzu:
+  import { CompanySettingsModule } from '../models/settings/company-settings.module';
+
+In @Module:
+  imports: [AppConfigModule, CompanySettingsModule],
+
+Das ist korrekt weil CompanySettingsModule den CompanySettingsService exportiert.
+
+---
+
+SCHRITT 2 — PdfMakerService komplett ersetzen
+
+Ersetze den gesamten Inhalt von:
+  apps/server/src/common/services/pdfmaker.service.ts
+
+Durch folgenden Code:
+
+import { Injectable } from '@nestjs/common';
+const PdfPrinter = require('pdfmake');
+import { Content, ContentTable, TDocumentDefinitions } from 'pdfmake/interfaces';
+import { SlipsheetEntity } from '../../models/bills/serializers/slipsheet.serializer';
+import { createWriteStream, existsSync, readFileSync } from 'fs';
+import { join } from 'path';
+import moment from 'moment';
+import { BillEntity } from '../../models/bills/serializers/bill.serializer';
+import { OrderEntryEntity } from '../../models/bills/serializers/order-entry.serializer';
+import { AnnotationEntity } from '../../models/bills/serializers/annotation.serializer';
+import { CompanySettingsService } from '../../models/settings/company-settings.service';
+import { CompanySettingsEntity } from '../../models/settings/serializers/company-settings.serializer';
+
+// Fallback-Pfade auf die bestehenden hardcoded Dateien
+const FALLBACK_LOGO   = join(__dirname, '..', 'pdfAnnotation', 'logo.svg');
+const FALLBACK_BADGE1 = join(__dirname, '..', 'pdfAnnotation', 'adler.svg');
+const FALLBACK_BADGE2 = join(__dirname, '..', 'pdfAnnotation', 'gdfort.jpg');
+
+@Injectable()
+export class PdfMakerService {
+
+  private readonly fonts = {
+    Courier: {
+      normal: 'Courier', bold: 'Courier-Bold',
+      italics: 'Courier-Oblique', bolditalics: 'Courier-BoldOblique',
+    },
+    Helvetica: {
+      normal: 'Helvetica', bold: 'Helvetica-Bold',
+      italics: 'Helvetica-Oblique', bolditalics: 'Helvetica-BoldOblique',
+    },
+    Times: {
+      normal: 'Times-Roman', bold: 'Times-Bold',
+      italics: 'Times-Italic', bolditalics: 'Times-BoldItalic',
+    },
+    Arial: {
+      normal:       join(__dirname, '..', 'pdfAnnotation', 'fonts', 'arial.ttf'),
+      bold:         join(__dirname, '..', 'pdfAnnotation', 'fonts', 'arialbd.ttf'),
+      italics:      join(__dirname, '..', 'pdfAnnotation', 'fonts', 'ariali.ttf'),
+      bolditalics:  join(__dirname, '..', 'pdfAnnotation', 'fonts', 'arialbi.ttf'),
+    },
+    Symbol:       { normal: 'Symbol' },
+    ZapfDingbats: { normal: 'ZapfDingbats' },
+  };
+
+  private readonly _printer;
+
+  constructor(private readonly settingsService: CompanySettingsService) {
+    this._printer = new PdfPrinter(this.fonts);
+  }
+
+  // ─── Public API ────────────────────────────────────────────────────────────
+
+  public async generateDeliverySlip(slip: SlipsheetEntity): Promise<PDFKit.PDFDocument> {
+    const settings = await this.getSettings();
+    const docDefinition = await this.buildDocDefinition(settings);
+    const content: Array<Content> = [];
+    content.push(this.buildHead(slip, slip.printDate, settings));
+    content.push({ text: 'Lieferschein #' + slip.slipsheetnumber, style: 'header' });
+    const annotation = this.buildSlipAnnotations(slip);
+    if (annotation) content.push(annotation);
+    content.push(this.buildOrdersDelivery(slip));
+    docDefinition.content = content;
+    return this._printer.createPdfKitDocument(docDefinition);
+  }
+
+  public async generateBill(bill: BillEntity): Promise<PDFKit.PDFDocument> {
+    const settings = await this.getSettings();
+    const docDefinition = await this.buildDocDefinition(settings);
+    const content: Array<Content> = [];
+    content.push(this.buildHead(bill.slipsheets[0], bill.billDate, settings));
+    content.push({ text: 'Rechnung #' + bill.billNumber, style: 'header' });
+    content.push(this.buildOrders(bill, settings));
+    docDefinition.content = content;
+    return this._printer.createPdfKitDocument(docDefinition);
+  }
+
+  public savePDFToFileSystem(doc: PDFKit.PDFDocument, filepath: string): Promise<string> {
+    return new Promise((resolve, reject) => {
+      if (!this.saveStreamtoFileSystem(doc, filepath, (_err, _pages, path) => resolve(path))) {
+        reject(new Error('PDF konnte nicht gespeichert werden'));
+      }
     });
-  }, [slips, query, onlyUnbilled]);
+  }
 
-  const selectableSlips = useMemo(() => slips.filter((slip) => !slip.billId), [slips]);
-  const selectedSlips = useMemo(() => slips.filter((slip) => selectedSlipIds.includes(slip.id)), [selectedSlipIds, slips]);
+  public saveStreamtoFileSystem(
+    doc: PDFKit.PDFDocument,
+    filepath: string,
+    cb: Function,
+  ): boolean {
+    try {
+      if (filepath) {
+        doc.pipe(createWriteStream(filepath));
+        doc.on('end', () => cb(null, null, [filepath]));
+        doc.end();
+        return true;
+      }
+    } catch (error) {
+      console.error('PdfMakerService.saveStreamtoFileSystem:', error);
+    }
+    return false;
+  }
 
-  const openTotal = selectableSlips.reduce((sum, slip) => sum + slip.amount, 0);
+  // ─── Private Helpers ───────────────────────────────────────────────────────
 
-  const toggleSelected = (id: number) => {
-    const slip = slips.find((entry) => entry.id === id);
-    if (!slip || slip.billId) return;
+  private async getSettings(): Promise<CompanySettingsEntity | null> {
+    try {
+      return await this.settingsService.get();
+    } catch {
+      return null;
+    }
+  }
 
-    setSelectedSlipIds((current) =>
-      current.includes(id) ? current.filter((entry) => entry !== id) : [...current, id]
-    );
-  };
+  private readFileSafe(filePath: string | null | undefined, fallback: string): string {
+    try {
+      if (filePath && existsSync(filePath)) return readFileSync(filePath).toString();
+    } catch { /* fall through */ }
+    return readFileSync(fallback).toString();
+  }
 
-  const generateBill = () => {
-    if (!selectedSlips.length) return;
+  private readFileBuffer(filePath: string | null | undefined, fallback: string): Buffer {
+    try {
+      if (filePath && existsSync(filePath)) return readFileSync(filePath);
+    } catch { /* fall through */ }
+    return readFileSync(fallback);
+  }
 
-    const nextId = Math.max(...bills.map((bill) => bill.id), 3000) + 1;
-    const nextNumber = `RE-2026-${String(bills.length + 9).padStart(4, "0")}`;
-    const total = selectedSlips.reduce((sum, slip) => sum + slip.amount, 0);
+  private isSvg(path: string | null | undefined): boolean {
+    return (path ?? '').toLowerCase().endsWith('.svg');
+  }
 
-    setBills((current) => [
-      {
-        id: nextId,
-        number: nextNumber,
-        date: "17.03.2026",
-        amount: total,
-        slipNumbers: selectedSlips.map((slip) => slip.number),
+  private buildLogoContent(settings: CompanySettingsEntity | null) {
+    const logoPath = settings?.logoPath ?? null;
+    const usePath  = (logoPath && existsSync(logoPath)) ? logoPath : FALLBACK_LOGO;
+    const svg      = readFileSync(usePath).toString();
+    return { svg, fit: [170, 170], margin: [60, 30, 0, 0] };
+  }
+
+  private buildFooterBadge1(settings: CompanySettingsEntity | null): Content {
+    const p = settings?.badge1Path;
+    const usePath = (p && existsSync(p)) ? p : FALLBACK_BADGE1;
+    const isSvg   = usePath.toLowerCase().endsWith('.svg');
+    const base: any = { alignment: 'right', width: 40, margin: [0, 0, 15, 0], color: '#e9582a' };
+    return isSvg
+      ? { ...base, svg: readFileSync(usePath).toString() }
+      : { ...base, image: usePath };
+  }
+
+  private buildFooterBadge2(settings: CompanySettingsEntity | null): Content {
+    const p = settings?.badge2Path;
+    const usePath = (p && existsSync(p)) ? p : FALLBACK_BADGE2;
+    return { image: usePath, width: 40, margin: [25, 0, 0, 0], color: '#e9582a' };
+  }
+
+  private buildFooterText(settings: CompanySettingsEntity | null): string {
+    const paymentText = settings?.paymentFooterText
+      ?? `Zahlung innerhalb von ${settings?.paymentTermDays ?? 14} Tagen netto Kassa`;
+
+    const bankLines = (settings?.bankAccounts ?? [])
+      .map(b => `${b.name} · IBAN: ${b.iban} · BIC: ${b.bic}`)
+      .join(' · ');
+
+    const city = settings?.issueCity ?? 'Landeck';
+    const base = `Zahlbar und klagbar in ${city}`;
+
+    return [paymentText, base, bankLines].filter(Boolean).join(' · ');
+  }
+
+  private buildHeaderStack(settings: CompanySettingsEntity | null): Content[] {
+    const s = settings;
+    const lines: Content[] = [];
+
+    if (s?.street)            lines.push({ text: s.street,                        style: 'header' });
+    if (s?.zip || s?.city)    lines.push({ text: `${s.zip ?? ''} ${s.city ?? ''}`.trim(), style: 'header' });
+    if (s?.phone)             lines.push({ text: ` `, style: 'subheader' },
+                                          { text: `Mobile ${s.phone}`,            style: 'subheader' });
+    if (s?.email)             lines.push({ text: `E-Mail: ${s.email}`,            style: 'subheader' });
+    if (s?.website)           lines.push({ text: s.website,                       style: 'subheader' });
+    if (s?.firmenbuchnummer)  lines.push({ text: s.firmenbuchnummer,              style: 'subheader' });
+
+    // Fallback wenn noch keine Einstellungen gesetzt
+    if (lines.length === 0) {
+      lines.push(
+        { text: 'Fliesserau 384 b',            style: 'header' },
+        { text: '6500 Landeck',                style: 'header' },
+        { text: ' ',                            style: 'subheader' },
+        { text: 'Mobile +43 699 10 63 63 45',  style: 'subheader' },
+        { text: 'E-Mail: office@holz-abler.com', style: 'subheader' },
+        { text: 'www.holz-abler.com',           style: 'subheader' },
+        { text: 'FN.: 303902s, ATU63848368',   style: 'subheader' },
+      );
+    }
+    return lines;
+  }
+
+  private async buildDocDefinition(
+    settings: CompanySettingsEntity | null,
+  ): Promise<TDocumentDefinitions> {
+    const self = this;
+
+    return {
+      pageOrientation: 'portrait',
+      pageMargins: [60, 150, 60, 100],
+
+      header: () => [{
+        columns: [
+          self.buildLogoContent(settings),
+          {
+            alignment: 'right',
+            margin:    [0, 25, 70, 0],
+            stack:     self.buildHeaderStack(settings),
+          },
+        ],
+      }, {
+        canvas: [{ type: 'line', x1: 50, y1: 5, x2: 595 - 50, y2: 5, lineWidth: 1 }],
+      }],
+
+      footer: () => [{
+        canvas: [{ type: 'line', x1: 50, y1: 0, x2: 595 - 50, y2: 0, lineWidth: 1 }],
+        margin: [0, 30, 0, 5],
+      }, {
+        table: {
+          widths: [120, '*', 120],
+          body: [[
+            self.buildFooterBadge1(settings),
+            { text: self.buildFooterText(settings), style: 'footerText' },
+            self.buildFooterBadge2(settings),
+          ]],
+        },
+        layout: 'noBorders',
+      }],
+
+      content: [],
+      styles:  this.buildStyles(),
+      defaultStyle: { font: 'Arial', fontSize: 12 },
+    };
+  }
+
+  private buildStyles() {
+    return {
+      header:      { fontSize: 12, color: 'black' },
+      subheader:   { fontSize: 9,  color: 'black' },
+      footerText:  { fontSize: 8,  margin: [0, 10, 0, 0], alignment: 'center', color: 'black' },
+      tableExample:   { margin: [0, 5, 0, 15] },
+      tableHeader:    { bold: true, fontSize: 7, color: '#e9582a' },
+      tableSum:       { color: 'black', bold: true },
+      tableSumHeader: { bold: true, fontSize: 10, color: 'black' },
+      tableCell:      { fontSize: 7 },
+      slipCell:       { color: '#e9582a' },
+      slipAnnotation: { fontSize: 9, color: 'black' },
+    };
+  }
+
+  private buildHead(
+    slip: SlipsheetEntity,
+    date: Date | undefined,
+    settings: CompanySettingsEntity | null,
+  ): Content {
+    const city = settings?.issueCity ?? 'Landeck';
+    return {
+      alignment: 'justify',
+      margin: [0, 10, 10, 40],
+      columns: [
+        {
+          width: 'auto',
+          text: [
+            'An\n',
+            (slip.customer.companyName || '') + '\n',
+            slip.customer.lastName + ' ' + slip.customer.firstName + '\n',
+            slip.customer.address + '\n',
+            slip.customer.postcode + ' ' + slip.customer.country + '\n',
+          ],
+        },
+        {
+          alignment: 'right',
+          margin: [0, 60, 0, 0],
+          text:
+            `${city}, am ${moment(date ?? new Date()).format('DD.MM.YYYY')}` +
+            (slip.customer.customerNumber ? '\nKunde: ' + slip.customer.customerNumber : '\n') +
+            (slip.customer.uid ? '\nIhre UID: ' + slip.customer.uid : '\nIhre UID:\n'),
+        },
+      ],
+    };
+  }
+
+  private buildSlipAnnotations(slip: SlipsheetEntity): Content | null {
+    const items: Content[] = [];
+    slip?.annotations?.forEach((element: AnnotationEntity) => {
+      items.push({ text: element.text, style: 'slipAnnotation' });
+    });
+    return items.length === 0 ? null : items;
+  }
+
+  private buildOrders(bill: BillEntity, settings: CompanySettingsEntity | null): Content {
+    const vatRate = settings?.vatRate ?? 20;
+
+    const isDiscount        = bill.slipsheets.some(c => c.orderEntries.some(o => o.articleGroupRabatt && o.articleGroupRabatt !== 0));
+    const isDiscountSpecial = bill.slipsheets.some(c => c.orderEntries.some(o => o.customerRabatt    && o.customerRabatt    !== 0));
+
+    const table: any = {
+      style: 'tableExample',
+      table: {
+        headerRows: 1,
+        widths: [60, 'auto', '*', 'auto', 'auto', 'auto', 'auto', 'auto'],
+        body: [[
+          { text: 'Pos',                                     style: 'tableHeader', margin: [0, 0, 5, 0] },
+          { text: 'Art.Num.',                                style: 'tableHeader' },
+          { text: 'Artikel',                                 style: 'tableHeader' },
+          { text: 'Menge',                                   style: 'tableHeader' },
+          { text: 'Preis',                                   style: 'tableHeader' },
+          { text: isDiscount        ? 'Rabatt'       : '',   style: 'tableHeader' },
+          { text: isDiscountSpecial ? 'Sonder\nRabatt' : '', style: 'tableHeader' },
+          { text: 'Gesamt',                                  style: 'tableHeader' },
+        ]],
       },
-      ...current,
-    ]);
+      layout: this.getTableDefaultLayout(),
+    };
 
-    setSlips((current) =>
-      current.map((slip) =>
-        selectedSlipIds.includes(slip.id)
-          ? { ...slip, billId: nextId, status: "Verrechnet" }
-          : slip
-      )
+    let sum = 0;
+
+    for (const slip of bill.slipsheets) {
+      table.table.body.push([
+        '',
+        { text: 'Lieferschein von ' + moment(slip.createdAt).format('DD.MM.YYYY') + ' L' + slip.slipsheetnumber, colSpan: 6, style: 'slipCell' },
+        '', '', '', '', '', '',
+      ]);
+
+      const annotation = this.buildSlipAnnotations(slip);
+      if (annotation) {
+        const annotationCell = { ...annotation, colSpan: 6 };
+        table.table.body.push(['', annotationCell, '', '', '', '', '', '']);
+      }
+
+      for (let i = 0; i < slip.orderEntries.length; i++) {
+        const el: OrderEntryEntity = slip.orderEntries[i];
+        const amount          = el.amountCounted || el.amount;
+        const discount        = el.articleGroupRabatt ?? 0;
+        const discountSpecial = el.customerRabatt     ?? 0;
+        const total           = amount * el.price * (100 - discount) / 100 * (100 - discountSpecial) / 100;
+        sum += total;
+
+        table.table.body.push([
+          { text: i + 1,                                              style: 'tableCell' },
+          { text: el.article?.artNumber ?? '',                        style: 'tableCell' },
+          { text: el.text,                                            style: 'tableCell' },
+          { text: amount,                                             style: 'tableCell', alignment: 'right' },
+          { text: '€' + el.price.toFixed(2),                         style: 'tableCell', alignment: 'right' },
+          { text: isDiscount        ? discount.toFixed(0)        + '%' : '', style: 'tableCell', alignment: 'right' },
+          { text: isDiscountSpecial ? discountSpecial.toFixed(0) + '%' : '', style: 'tableCell', alignment: 'right' },
+          { text: '€' + total.toFixed(2),                            style: 'tableCell', alignment: 'right' },
+        ]);
+      }
+    }
+
+    const vatLabel = `${vatRate}% MwSt.`;
+    const empty = { text: '', border: [0, 0, 0, 0] };
+
+    table.table.body.push(
+      [empty, empty, empty, empty, { text: 'Summe',    colSpan: 2, style: 'tableCell', alignment: 'right' }, '', '', { text: '€' + sum.toFixed(2),                style: 'tableCell', alignment: 'right' }],
+      [empty, empty, empty, empty, { text: vatLabel,   colSpan: 2, style: 'tableCell', alignment: 'right' }, '', '', { text: '€' + (sum * vatRate / 100).toFixed(2), style: 'tableCell', alignment: 'right' }],
+      [empty, empty, empty, empty, { text: 'Gesamt',   colSpan: 2, style: 'tableSumHeader', alignment: 'right' }, '', '', { text: '€' + (sum * (1 + vatRate / 100)).toFixed(2), style: 'tableSumHeader', alignment: 'right' }],
     );
 
-    setFlash(`${nextNumber} wurde aus ${selectedSlips.length} Lieferschein(en) erzeugt.`);
-    setSelectedSlipIds([]);
-  };
+    return table;
+  }
 
-  const openCount = slips.filter((slip) => !slip.billId).length;
-  const billedCount = slips.filter((slip) => !!slip.billId).length;
+  private buildOrdersDelivery(slip: SlipsheetEntity): Content {
+    const table: ContentTable = {
+      style: 'tableExample',
+      table: {
+        headerRows: 1,
+        widths: [100, '*', '*', 'auto'],
+        body: [[
+          { text: 'Pos',     style: 'tableHeader', margin: [0, 0, 5, 0] },
+          { text: 'Artikel', style: 'tableHeader' },
+          { text: 'Typ',     style: 'tableHeader' },
+          { text: 'Menge',   style: 'tableHeader' },
+        ]],
+      },
+      layout: this.getSlipTableLayout(),
+    };
 
-  return (
-    <div
-      className="min-h-screen bg-[#f7f7f4] text-slate-900"
-      style={{ fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif" }}
-    >
-      <div className="flex min-h-screen">
-        <aside className="hidden w-[250px] shrink-0 flex-col bg-[#0f3d3a] p-5 text-white lg:flex">
-          <div className="mb-8 text-[12px] uppercase tracking-[0.28em] text-teal-400" style={{ fontFamily: "DM Mono, monospace" }}>
-            sims<span className="text-white/70">.abler.tirol</span>
-          </div>
+    for (let i = 0; i < slip.orderEntries.length; i++) {
+      const el = slip.orderEntries[i];
+      table.table.body.push([
+        { text: i + 1,                   style: 'tableCell' },
+        { text: el.text,                 style: 'tableCell' },
+        { text: el.article?.artNumber ?? '', style: 'tableCell' },
+        { text: el.amount,               style: 'tableCell' },
+      ]);
+    }
+    table.table.body.push(['', '', '', '']);
+    return table;
+  }
 
-          <div className="mb-3 px-2 text-[10px] uppercase tracking-[0.2em] text-white/20" style={{ fontFamily: "DM Mono, monospace" }}>
-            Stammdaten
-          </div>
-          <nav className="space-y-1 text-sm text-white/65">
-            <button className="flex w-full items-center gap-3 rounded px-3 py-2 text-left transition hover:bg-white/10 hover:text-white focus:outline-none focus-visible:ring-4 focus-visible:ring-teal-200/30">
-              <Package size={16} /> Artikel
-            </button>
-            <button className="flex w-full items-center gap-3 rounded px-3 py-2 text-left transition hover:bg-white/10 hover:text-white focus:outline-none focus-visible:ring-4 focus-visible:ring-teal-200/30">
-              <UserRound size={16} /> Kunden
-            </button>
-          </nav>
+  private getTableDefaultLayout() {
+    return {
+      hLineWidth: (i: number, node: any) => {
+        if (i === 0) return 0;
+        if (i === node.table.body.length)     return 2;
+        if (i === node.table.body.length - 1) return 1;
+        return 1;
+      },
+      vLineWidth: () => 0,
+      hLineColor: (i: number, node: any) => {
+        if (i === node.table.body.length - 3) return 'black';
+        return (i === 1 || i === node.table.body.length - 1 || i === node.table.body.length) ? 'black' : '#aaa';
+      },
+      paddingLeft:   (i: number) => (i <= 1 ? 0 : 5),
+      paddingRight:  (i: number, node: any) => (i === node.table.widths.length - 1 ? 0 : 5),
+      paddingTop:    () => 4,
+      paddingBottom: () => 4,
+      fillColor:     () => null,
+    };
+  }
 
-          <div className="mb-3 mt-8 px-2 text-[10px] uppercase tracking-[0.2em] text-white/20" style={{ fontFamily: "DM Mono, monospace" }}>
-            Belege
-          </div>
-          <nav className="space-y-1 text-sm text-white/65">
-            <button className="flex w-full items-center gap-3 rounded bg-[rgba(20,184,166,0.15)] px-3 py-2 text-left text-teal-300 focus:outline-none">
-              <FileText size={16} /> Lieferscheine
-            </button>
-            <button className="flex w-full items-center gap-3 rounded px-3 py-2 text-left transition hover:bg-white/10 hover:text-white focus:outline-none focus-visible:ring-4 focus-visible:ring-teal-200/30">
-              <CreditCard size={16} /> Rechnungen
-            </button>
-          </nav>
-        </aside>
-
-        <main className="flex-1">
-          <div className="border-b border-slate-200 bg-white px-5 py-4 lg:px-8">
-            <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-              <div>
-                <div className="mb-2 flex items-center gap-2 text-[11px] uppercase tracking-[0.2em] text-slate-400" style={{ fontFamily: "DM Mono, monospace" }}>
-                  <span>Admin</span>
-                  <ChevronRight size={12} />
-                  <span>Kunden</span>
-                  <ChevronRight size={12} />
-                  <span>Detailansicht</span>
-                </div>
-                <h1 className="text-4xl text-slate-900" style={{ fontFamily: '"DM Serif Display", serif' }}>
-                  Kundenansicht & Rechnungsfreigabe
-                </h1>
-                <p className="mt-2 max-w-3xl text-sm text-slate-500">
-                  Fokus auf unverrechnete Lieferscheine ohne <span style={{ fontFamily: "DM Mono, monospace" }}>billId</span>. Klick auf einen Lieferschein öffnet die Kundenansicht mit allen Lieferscheinen und Rechnungen, inklusive Mehrfachauswahl für <span style={{ fontFamily: "DM Mono, monospace" }}>POST /bills/generate</span>.
-                </p>
-              </div>
-
-              <div className="flex items-center gap-3">
-                <ActionButton tone="secondary">
-                  <ArrowLeft size={16} /> Zur Kundenliste
-                </ActionButton>
-                <ActionButton onClick={generateBill} disabled={!selectedSlipIds.length}>
-                  <CreditCard size={16} /> Rechnung aus Auswahl erzeugen
-                </ActionButton>
-              </div>
-            </div>
-          </div>
-
-          <motion.div variants={stagger} initial="hidden" animate="show" className="px-5 py-6 lg:px-8">
-            {flash ? (
-              <motion.div
-                variants={fadeUp}
-                className="mb-5 flex items-center gap-3 rounded-md border border-teal-200 border-l-[3px] border-l-teal-500 bg-teal-50 px-4 py-3 text-sm text-teal-900"
-              >
-                <CheckCircle2 size={18} />
-                {flash}
-              </motion.div>
-            ) : null}
-
-            <section className="mb-6 grid gap-4 xl:grid-cols-4">
-              <ContextCard label="Kunde" value={customer.name} meta={`${customer.city} · ${customer.contact}`} tone="slate" />
-              <ContextCard label="Offene Lieferscheine" value={String(openCount)} meta={`Offenes Volumen ${money(openTotal)}`} tone="teal" />
-              <ContextCard label="Verrechnet" value={String(billedCount)} meta={`${bills.length} Rechnungen vorhanden`} tone="amber" />
-              <ContextCard label="Kundenrabatt" value={`${customer.discount}%`} meta={customer.email} tone="slate" />
-            </section>
-
-            <div className="grid gap-6 xl:grid-cols-[340px_minmax(0,1fr)]">
-              <motion.section variants={fadeUp} className="rounded-md border border-slate-200 border-l-[3px] border-l-teal-500 bg-white p-4 shadow-sm hover:shadow-md">
-                <div className="mb-4 flex items-start justify-between gap-3">
-                  <div>
-                    <MiniLabel>Schnellzugriff</MiniLabel>
-                    <h2 className="mt-1 text-2xl text-slate-900" style={{ fontFamily: '"DM Serif Display", serif' }}>
-                      Unverrechnete Lieferscheine
-                    </h2>
-                  </div>
-                  <StatusBadge open={true}>billId = null</StatusBadge>
-                </div>
-
-                <div className="mb-4 space-y-3">
-                  <label className="block">
-                    <MiniLabel>Schnellsuche</MiniLabel>
-                    <div className="relative mt-2">
-                      <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                      <input
-                        value={query}
-                        onChange={(e) => setQuery(e.target.value)}
-                        placeholder="Artikel-Nr. / Lieferschein / Bezeichnung"
-                        className="w-full rounded-md border border-slate-200 bg-[#fbfbf9] py-2.5 pl-10 pr-4 text-sm outline-none transition focus:border-teal-400 focus:ring-4 focus:ring-teal-100"
-                      />
-                    </div>
-                  </label>
-
-                  <ActionButton tone="secondary" onClick={() => setOnlyUnbilled((current) => !current)}>
-                    <Filter size={15} /> {onlyUnbilled ? "Nur unverrechnete" : "Alle anzeigen"}
-                  </ActionButton>
-                </div>
-
-                <div className="space-y-3">
-                  {filteredSlips.map((slip) => {
-                    const isActive = slip.id === activeSlipId;
-                    const isSelected = selectedSlipIds.includes(slip.id);
-                    const isOpen = !slip.billId;
-
-                    return (
-                      <button
-                        key={slip.id}
-                        onClick={() => {
-                          setActiveSlipId(slip.id);
-                          if (isOpen && !isSelected) setSelectedSlipIds((current) => [...current, slip.id]);
-                        }}
-                        className={`w-full rounded-md border border-l-[3px] p-4 text-left transition focus:outline-none focus-visible:ring-4 focus-visible:ring-teal-100 ${
-                          isActive
-                            ? "border-teal-300 border-l-teal-500 bg-teal-50 shadow-md"
-                            : "border-slate-200 border-l-slate-300 bg-white hover:shadow-md"
-                        }`}
-                      >
-                        <div className="mb-3 flex items-start justify-between gap-3">
-                          <div>
-                            <div className="text-sm font-semibold text-slate-900" style={{ fontFamily: "DM Mono, monospace" }}>
-                              {slip.number}
-                            </div>
-                            <div className="mt-1 text-xs text-slate-500">Lieferdatum {slip.deliveryDate}</div>
-                          </div>
-                          <StatusBadge open={isOpen}>{isOpen ? "Offen" : "Verrechnet"}</StatusBadge>
-                        </div>
-                        <div className="flex items-center justify-between text-sm text-slate-600">
-                          <span>{slip.items} Positionen</span>
-                          <span style={{ fontFamily: "DM Mono, monospace" }}>{money(slip.amount)}</span>
-                        </div>
-                        <div className="mt-3 flex items-center justify-between border-t border-slate-100 pt-3">
-                          <span className="text-xs text-slate-500">Klick öffnet Kundenansicht</span>
-                          <span
-                            className={`rounded-full px-2.5 py-1 text-[11px] uppercase tracking-[0.12em] ${
-                              isSelected ? "bg-[#134e4a] text-white" : "bg-slate-100 text-slate-500"
-                            }`}
-                            style={{ fontFamily: "DM Mono, monospace" }}
-                          >
-                            {isSelected ? "ausgewählt" : "nicht gewählt"}
-                          </span>
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
-              </motion.section>
-
-              <section className="space-y-6">
-                <motion.div
-                  key={activeSlip.id}
-                  variants={fadeUp}
-                  className="rounded-md border border-slate-200 border-l-[3px] border-l-slate-300 bg-white p-5 shadow-sm hover:shadow-md"
-                >
-                  <div className="mb-5 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-                    <div>
-                      <MiniLabel>Kunden-Detailansicht</MiniLabel>
-                      <h2 className="mt-1 text-3xl text-slate-900" style={{ fontFamily: '"DM Serif Display", serif' }}>
-                        {customer.name}
-                      </h2>
-                      <p className="mt-2 max-w-2xl text-sm text-slate-500">
-                        Nach Klick auf einen Lieferschein sieht der Benutzer alle Lieferscheine und Rechnungen dieses Kunden in einem gemeinsamen Rechnungs-Kontext.
-                      </p>
-                    </div>
-                    <div className="flex flex-wrap items-center gap-2">
-                      <StatusBadge open={true}>{activeSlip.number}</StatusBadge>
-                      <StatusBadge open={!activeSlip.billId}>{activeSlip.billId ? `billId ${activeSlip.billId}` : "ohne billId"}</StatusBadge>
-                    </div>
-                  </div>
-
-                  <div className="grid gap-6 lg:grid-cols-[minmax(0,1.15fr)_minmax(320px,0.85fr)]">
-                    <div className="overflow-hidden rounded-md border border-slate-200">
-                      <div className="flex items-center justify-between border-b border-slate-200 bg-[#0f3d3a] px-5 py-4 text-white">
-                        <div>
-                          <MiniLabel>Dokument</MiniLabel>
-                          <div className="text-3xl text-white" style={{ fontFamily: '"DM Serif Display", serif' }}>
-                            Lieferschein
-                          </div>
-                        </div>
-                        <div className="text-right">
-                          <div className="text-lg text-teal-300" style={{ fontFamily: "DM Mono, monospace" }}>
-                            {activeSlip.number}
-                          </div>
-                          <div className="text-sm text-white/60">{activeSlip.date}</div>
-                        </div>
-                      </div>
-
-                      <div className="p-5">
-                        <div className="mb-5 grid gap-4 sm:grid-cols-2">
-                          <div>
-                            <MiniLabel>Kunde</MiniLabel>
-                            <div className="mt-1 font-medium text-slate-900">{customer.name}</div>
-                            <div className="text-sm text-slate-500">{customer.city}</div>
-                          </div>
-                          <div>
-                            <MiniLabel>Lieferdatum</MiniLabel>
-                            <div className="mt-1 text-slate-900" style={{ fontFamily: "DM Mono, monospace" }}>
-                              {activeSlip.deliveryDate}
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="overflow-x-auto rounded-md border border-slate-200">
-                          <table className="min-w-full text-sm">
-                            <thead className="bg-[#fbfbf9] text-left text-[11px] uppercase tracking-[0.1em] text-slate-400" style={{ fontFamily: "DM Mono, monospace" }}>
-                              <tr>
-                                <th className="px-4 py-3">Art.-Nr.</th>
-                                <th className="px-4 py-3">Bezeichnung</th>
-                                <th className="px-4 py-3 text-right">Menge</th>
-                                <th className="px-4 py-3 text-right">Betrag</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              <tr className="border-t border-slate-100 hover:bg-teal-50/70">
-                                <td className="px-4 py-3" style={{ fontFamily: "DM Mono, monospace" }}>ART-1002</td>
-                                <td className="px-4 py-3">Montagesatz</td>
-                                <td className="px-4 py-3 text-right" style={{ fontFamily: "DM Mono, monospace" }}>2</td>
-                                <td className="px-4 py-3 text-right" style={{ fontFamily: "DM Mono, monospace" }}>{money(540)}</td>
-                              </tr>
-                              <tr className="border-t border-slate-100 hover:bg-teal-50/70">
-                                <td className="px-4 py-3" style={{ fontFamily: "DM Mono, monospace" }}>ART-2033</td>
-                                <td className="px-4 py-3">Schaltereinheit</td>
-                                <td className="px-4 py-3 text-right" style={{ fontFamily: "DM Mono, monospace" }}>1</td>
-                                <td className="px-4 py-3 text-right" style={{ fontFamily: "DM Mono, monospace" }}>{money(380.5)}</td>
-                              </tr>
-                              <tr className="border-t border-slate-100 hover:bg-teal-50/70">
-                                <td className="px-4 py-3" style={{ fontFamily: "DM Mono, monospace" }}>ART-4510</td>
-                                <td className="px-4 py-3">Kabelsatz</td>
-                                <td className="px-4 py-3 text-right" style={{ fontFamily: "DM Mono, monospace" }}>1</td>
-                                <td className="px-4 py-3 text-right" style={{ fontFamily: "DM Mono, monospace" }}>{money(activeSlip.amount - 920.5)}</td>
-                              </tr>
-                            </tbody>
-                          </table>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center justify-between border-t border-slate-200 bg-[#fbfbf9] px-5 py-4">
-                        <div>
-                          <MiniLabel>Rechnungsstatus</MiniLabel>
-                          <div className="mt-1 text-sm text-slate-600">
-                            {activeSlip.billId ? `Bereits mit billId ${activeSlip.billId} verrechnet` : "Noch offen und für Sammelrechnung auswählbar"}
-                          </div>
-                        </div>
-                        <div className="text-2xl text-slate-900" style={{ fontFamily: "DM Mono, monospace" }}>
-                          {money(activeSlip.amount)}
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="rounded-md border border-slate-200 border-l-[3px] border-l-amber-500 bg-[#fbfbf9] p-4 shadow-sm hover:shadow-md">
-                      <div className="mb-4 flex items-center justify-between">
-                        <div>
-                          <MiniLabel>Auswahl</MiniLabel>
-                          <div className="mt-1 text-xl text-slate-900" style={{ fontFamily: '"DM Serif Display", serif' }}>
-                            Rechnung aus mehreren Lieferscheinen
-                          </div>
-                        </div>
-                        <FileSpreadsheet className="text-teal-600" size={18} />
-                      </div>
-
-                      <div className="space-y-2">
-                        {selectableSlips.map((slip) => {
-                          const checked = selectedSlipIds.includes(slip.id);
-                          return (
-                            <label
-                              key={slip.id}
-                              className={`flex cursor-pointer items-center justify-between rounded-md border px-4 py-3 transition ${
-                                checked ? "border-teal-300 bg-white shadow-sm" : "border-slate-200 bg-white/80 hover:shadow-sm"
-                              }`}
-                            >
-                              <div className="flex items-center gap-3">
-                                <input
-                                  type="checkbox"
-                                  checked={checked}
-                                  onChange={() => toggleSelected(slip.id)}
-                                  className="h-4 w-4 rounded border-slate-300"
-                                />
-                                <div>
-                                  <div className="text-sm font-medium text-slate-900" style={{ fontFamily: "DM Mono, monospace" }}>
-                                    {slip.number}
-                                  </div>
-                                  <div className="text-xs text-slate-500">{slip.deliveryDate}</div>
-                                </div>
-                              </div>
-                              <div className="text-sm text-slate-700" style={{ fontFamily: "DM Mono, monospace" }}>
-                                {money(slip.amount)}
-                              </div>
-                            </label>
-                          );
-                        })}
-                      </div>
-
-                      <div className="mt-4 rounded-md border border-teal-200 bg-white p-4">
-                        <div className="mb-3 flex items-center justify-between text-sm text-slate-500">
-                          <span>Aktuelle Auswahl</span>
-                          <span>{selectedSlipIds.length} markiert</span>
-                        </div>
-                        <div className="mb-4 space-y-2 text-sm text-slate-600">
-                          {selectedSlips.length ? (
-                            selectedSlips.map((slip) => (
-                              <div key={slip.id} className="flex items-center justify-between">
-                                <span>{slip.number}</span>
-                                <span style={{ fontFamily: "DM Mono, monospace" }}>{money(slip.amount)}</span>
-                              </div>
-                            ))
-                          ) : (
-                            <div>Keine Lieferscheine ausgewählt.</div>
-                          )}
-                        </div>
-                        <div className="flex items-center justify-between border-t border-slate-100 pt-3">
-                          <span className="text-[11px] uppercase tracking-[0.1em] text-slate-400" style={{ fontFamily: "DM Mono, monospace" }}>
-                            bill/generate
-                          </span>
-                          <span className="text-xl text-slate-900" style={{ fontFamily: "DM Mono, monospace" }}>
-                            {money(selectedSlips.reduce((sum, slip) => sum + slip.amount, 0))}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </motion.div>
-
-                <div className="grid gap-6 2xl:grid-cols-2">
-                  <motion.div variants={fadeUp} className="rounded-md border border-slate-200 border-l-[3px] border-l-teal-500 bg-white p-5 shadow-sm hover:shadow-md">
-                    <div className="mb-4 flex items-center justify-between">
-                      <div>
-                        <MiniLabel>Alle Lieferscheine</MiniLabel>
-                        <h3 className="mt-1 text-2xl text-slate-900" style={{ fontFamily: '"DM Serif Display", serif' }}>
-                          Kundenhistorie
-                        </h3>
-                      </div>
-                      <LayoutGrid className="text-slate-400" size={18} />
-                    </div>
-                    <div className="overflow-x-auto rounded-md border border-slate-200">
-                      <table className="min-w-full text-sm">
-                        <thead className="bg-[#fbfbf9] text-left text-[11px] uppercase tracking-[0.1em] text-slate-400" style={{ fontFamily: "DM Mono, monospace" }}>
-                          <tr>
-                            <th className="px-4 py-3">Auswahl</th>
-                            <th className="px-4 py-3">Lieferschein</th>
-                            <th className="px-4 py-3">Status</th>
-                            <th className="px-4 py-3 text-right">Betrag</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {slips.map((slip) => {
-                            const selectable = !slip.billId;
-                            return (
-                              <tr key={slip.id} className="border-t border-slate-100 hover:bg-teal-50/70">
-                                <td className="px-4 py-3">
-                                  <input
-                                    type="checkbox"
-                                    disabled={!selectable}
-                                    checked={selectedSlipIds.includes(slip.id)}
-                                    onChange={() => toggleSelected(slip.id)}
-                                  />
-                                </td>
-                                <td className="px-4 py-3">
-                                  <button onClick={() => setActiveSlipId(slip.id)} className="font-medium text-slate-900 hover:text-teal-800">
-                                    <span style={{ fontFamily: "DM Mono, monospace" }}>{slip.number}</span>
-                                  </button>
-                                  <div className="text-xs text-slate-500">{slip.date}</div>
-                                </td>
-                                <td className="px-4 py-3">
-                                  <StatusBadge open={!slip.billId}>{slip.billId ? `billId ${slip.billId}` : "Offen"}</StatusBadge>
-                                </td>
-                                <td className="px-4 py-3 text-right" style={{ fontFamily: "DM Mono, monospace" }}>
-                                  {money(slip.amount)}
-                                </td>
-                              </tr>
-                            );
-                          })}
-                        </tbody>
-                      </table>
-                    </div>
-                  </motion.div>
-
-                  <motion.div variants={fadeUp} className="rounded-md border border-slate-200 border-l-[3px] border-l-amber-500 bg-white p-5 shadow-sm hover:shadow-md">
-                    <div className="mb-4 flex items-center justify-between">
-                      <div>
-                        <MiniLabel>Rechnungen</MiniLabel>
-                        <h3 className="mt-1 text-2xl text-slate-900" style={{ fontFamily: '"DM Serif Display", serif' }}>
-                          Bereits erzeugte Rechnungen
-                        </h3>
-                      </div>
-                      <CreditCard className="text-slate-400" size={18} />
-                    </div>
-                    <div className="space-y-3">
-                      {bills.map((bill) => (
-                        <div key={bill.id} className="rounded-md border border-slate-200 border-l-[3px] border-l-amber-500 bg-[#fbfbf9] p-4 shadow-sm hover:shadow-md">
-                          <div className="mb-2 flex items-start justify-between gap-3">
-                            <div>
-                              <div className="text-sm font-semibold text-slate-900" style={{ fontFamily: "DM Mono, monospace" }}>
-                                {bill.number}
-                              </div>
-                              <div className="mt-1 text-xs text-slate-500">Erstellt am {bill.date}</div>
-                            </div>
-                            <StatusBadge open={true}>{bill.slipNumbers.length} Lieferscheine</StatusBadge>
-                          </div>
-                          <div className="mb-3 text-xs text-slate-500">Enthalten: {bill.slipNumbers.join(", ")}</div>
-                          <div className="flex items-center justify-between border-t border-slate-200 pt-3">
-                            <span className="text-[11px] uppercase tracking-[0.1em] text-slate-400" style={{ fontFamily: "DM Mono, monospace" }}>
-                              Gesamt
-                            </span>
-                            <span className="text-lg text-slate-900" style={{ fontFamily: "DM Mono, monospace" }}>
-                              {money(bill.amount)}
-                            </span>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </motion.div>
-                </div>
-              </section>
-            </div>
-          </motion.div>
-        </main>
-      </div>
-    </div>
-  );
+  private getSlipTableLayout() {
+    return {
+      hLineWidth: (i: number, node: any) => {
+        if (i === 0) return 0;
+        if (i === node.table.body.length)     return 2;
+        if (i === node.table.body.length - 1) return 1;
+        return 1;
+      },
+      vLineWidth: () => 0,
+      hLineColor: (i: number, node: any) =>
+        (i === 1 || i === node.table.body.length - 1 || i === node.table.body.length) ? 'black' : '#aaa',
+      paddingLeft:   (i: number) => (i <= 1 ? 0 : 5),
+      paddingRight:  (i: number, node: any) => (i === node.table.widths.length - 1 ? 0 : 5),
+      paddingTop:    () => 4,
+      paddingBottom: () => 4,
+      fillColor:     () => null,
+    };
+  }
 }
-Du arbeitest im Repository `sim-system` auf Branch `first-init`.
 
-Ziel:
-Erweitere das Angular-20-Frontend so, dass die Kundenansicht und die Lieferschein-Ansicht den folgenden Rechnungs-Workflow unterstützen:
+---
 
-1. In der Lieferschein-Liste müssen unverrechnete Lieferscheine klar auffindbar sein.
-2. Unverrechnet bedeutet: der Lieferschein hat noch keinen Rechnungsbezug, also keine `billId`.
-3. Beim Klick auf einen Lieferschein soll in die Kunden-Detailansicht navigiert werden.
-4. In dieser Kunden-Detailansicht müssen alle Lieferscheine und alle Rechnungen dieses Kunden gemeinsam angezeigt werden.
-5. In dieser Ansicht sollen mehrere unverrechnete Lieferscheine auswählbar sein.
-6. Aus der Auswahl soll eine Rechnung erzeugt werden über `POST /bills/generate`.
+WICHTIG nach dem Ersetzen:
+Die Methoden generateDeliverySlip und generateBill sind jetzt async (geben Promise zurück).
+Prüfe alle Aufrufer dieser Methoden:
+  - apps/server/src/models/bills/bill.service.ts    → Methode generateBill
+  - apps/server/src/models/bills/slipsheet.service.ts → Methode generateSlipsheet
 
-Technischer Kontext:
-- Frontend: Angular 20 mit Standalone Components, `provideRouter`, `bootstrapApplication`
-- Bestehende Route: `/admin/customer/detail/:id`
-- Relevante Services: `CustomerService`, `BillService`, evtl. `ShoppingcartService`
-- Verfügbare API-Endpunkte:
-  - `GET /customers/:id`
-  - `GET /customers/:id/slipsheets`
-  - `GET /customers/:id/bills`
-  - `GET /slipsheets`
-  - `GET /slipsheets/:id`
-  - `POST /bills/generate`
-- Bereits vorhanden:
-  - `CustomerDetailComponent`
-  - Checkbox-Selektion `selectedSlipIds`
-  - `makeBill(selectedSlipIds)` ruft bereits `billService.generate(ids)` auf
-- Bekannter Backend-Bug:
-  - `GET /slipsheets/:id` kann aktuell `undefined` zurückgeben. Verwende diesen Endpoint defensiv oder lade die Detaildaten bevorzugt über den Kundenkontext, falls das stabiler ist.
+In bill.service.ts:
+  Suche nach:    const retpdf = this.pdfMakerService.generateBill(firstBillEntity);
+  Ändere zu:     const retpdf = await this.pdfMakerService.generateBill(firstBillEntity);
 
-Fachliche Anforderungen:
-- In der Lieferschein-Liste soll ein sichtbarer Filter „nur unverrechnete“ vorhanden sein.
-- Ein Lieferschein gilt als offen, wenn `billId` leer, `null` oder `undefined` ist.
-- Offene Lieferscheine visuell hervorheben.
-- Klick auf einen Lieferschein:
-  - ermittelt den zugehörigen Kunden
-  - navigiert in `/admin/customer/detail/:id`
-  - markiert idealerweise den angeklickten offenen Lieferschein bereits vor
-- In der Kunden-Detailansicht:
-  - Bereich „Kunde“
-  - Bereich „Lieferscheine“
-  - Bereich „Rechnungen“
-  - offene Lieferscheine per Checkbox auswählbar
-  - bereits verrechnete Lieferscheine nicht auswählbar
-  - CTA „Rechnung erstellen“ / „Rechnung aus Auswahl erzeugen“
-- Nach erfolgreichem `POST /bills/generate`:
-  - Success-Toast anzeigen
-  - Auswahl zurücksetzen
-  - Kunden-Lieferscheine und Rechnungen neu laden
-  - neue Rechnung sofort sichtbar machen
-  - vormals offene Lieferscheine dürfen nicht mehr auswählbar sein
-- Bei Fehler:
-  - Error-Toast anzeigen
-  - keine bestehende UI-Auswahl stillschweigend verlieren
+  Suche nach:    const retpdf = this.pdfMakerService.generateBill(bill);   (in regenerateBillPdf)
+  Ändere zu:     const retpdf = await this.pdfMakerService.generateBill(bill);
 
-Verbindliche UI-/Designregeln:
-Nutze strikt das aktuelle Design-System und setze die Seite im `abler.tirol` Stil um.
+In slipsheet.service.ts:
+  Suche nach:    const retpdf = this.pdfMakerService.generateDeliverySlip(slip);
+  Ändere zu:     const retpdf = await this.pdfMakerService.generateDeliverySlip(slip);
 
-Schriften:
-- Headlines / Dokumenttitel: `DM Serif Display`
-- Fließtext / UI: `Inter`
-- Technische Werte, Nummern, Mengen, Beträge, Labels, Tabellenheader: `DM Mono`
+  Stelle sicher, dass die umgebenden Methoden (generateSlipsheet etc.) ebenfalls async sind.
+```
 
-Navigation / Sidebar:
-- Hintergrund: `--accent-secondary` / `#0f3d3a`
-- Aktiver Eintrag: `background: rgba(20,184,166,0.15)`, Textfarbe `--accent-highlight`
-- Sektionslabels: `DM Mono`, uppercase, `rgba(255,255,255,0.2)`
-- Sidebar-Items: `border-radius: 4px`
+---
 
-Tabellen:
-- Immer responsive mit `overflow-x: auto`
-- Keine Spalten verstecken
-- Header: `DM Mono`, uppercase, `letter-spacing: 0.1em`, `--ink-3`
-- Zeilenhover: `background: var(--accent-light)`
-- Artikelnummern, Mengen, Beträge immer `DM Mono`
-- Tabellen-Wrapper: `border-radius: 6px`
+## Phase 3 — Frontend: SettingsService
 
-Cards:
-- `border-radius: 6px`
-- Hover nur über Shadow, kein `translateY`
-- Kontextsignal über `border-left: 3px solid`
-- Kein dekorativer Gradient-Top
-- Kontextfarben über Teal / Amber / Rot je nach Bedeutung
+**Prompt für den Agent:**
 
-Buttons:
-- Immer Pill-Form (`border-radius: 999px`)
-- Kompaktes Padding: `0.55rem 1.25rem`
-- Hover nur Farbwechsel, kein `translateY`
-- Focus: Teal-Focus-Ring / Shadow, `outline: none`
+```
+Arbeite im Repository sim-system, Branch first-init.
+Erstelle den Angular-Service für die Settings-API.
+Phase 1 und 2 (Backend) sind abgeschlossen.
 
-Status-Badges:
-- `DM Mono`, ca. `0.7rem`
-- Dot-Indikator vor dem Label
-- Für diesen Flow sinnvolle Statuswerte wie:
-  - „Offen“
-  - „Verrechnet“
-  - optional technische Anzeige wie `billId 1234`
+Orientiere dich am Stil von apps/sim-system/src/app/services/customer.service.ts.
 
-Formulare:
-- Inputs/Selects mit `border-radius: 6px`
-- Labels in `DM Mono`, uppercase, `letter-spacing: 0.1em`
-- Nummern-/Mengenfelder in Mono
-- Schnellsuche prominent platzieren
+---
 
-Animationen:
-- Kein Hover-Lift
-- Page Load mit `fadeUp`, `0.4s ease`
-- Stagger `0.07s`
-- Focus über Teal-Ring
+SCHRITT 1 — Model
+Erstelle die Datei:
+  apps/sim-system/src/app/models/settings.model.ts
 
-Dokument-Layout (Lieferschein / Rechnung):
-- Header mit `--accent-secondary` Hintergrund
-- Dokumenttyp in `DM Serif Display`
-- Dokumentnummer in `DM Mono` und `--accent-highlight`
-- Positionen als echte Tabelle nach Standard-Tabellenregeln
-- Footer mit Gesamtbetrag rechtsbündig in `DM Mono`
+Inhalt:
+export interface BankAccount {
+  name: string;
+  iban: string;
+  bic: string;
+}
 
-Wichtige UX-Entscheidung:
-Die Seite soll dokumentenorientiert, klar und administrativ wirken — nicht marketinghaft, nicht verspielt, nicht „cardy“ im alten Sinne. Die Dokumenttabelle und die Auswahl-/Rechnungslogik stehen im Vordergrund.
+export class CompanySettings {
+  id?: number;
+  companyName: string = '';
+  street: string = '';
+  zip: string = '';
+  city: string = '';
+  country: string = 'Österreich';
+  phone: string = '';
+  email: string = '';
+  website: string = '';
+  firmenbuchnummer: string = '';
+  vatId: string = '';
+  issueCity: string = '';
+  vatRate: number = 20;
+  paymentTermDays: number = 14;
+  paymentFooterText: string = '';
+  bankAccounts: BankAccount[] = [];
+  logoPath: string | null = null;
+  badge1Path: string | null = null;
+  badge2Path: string | null = null;
+  updatedAt?: Date;
 
-Implementierungsaufgaben:
-1. Analysiere die bestehenden Komponenten:
-   - `apps/sims/src/app/views/admin/customer-detail/customer-detail.component.*`
-   - die Lieferschein-/Kundenlistenansichten
-   - relevante Services für Kunden, Lieferscheine und Bills
-2. Ergänze die Lieferschein-Liste um:
-   - Filter „nur unverrechnete“
-   - Status-Badge für offen/verrechnet
-   - Klick-Navigation in die Kunden-Detailansicht
-3. Erweitere `CustomerDetailComponent` so, dass:
-   - alle Lieferscheine des Kunden geladen werden
-   - alle Rechnungen des Kunden geladen werden
-   - offene Lieferscheine selektierbar sind
-   - `makeBill(selectedSlipIds)` sauber an die UI angebunden ist
-   - Loading-, Empty- und Error-States sauber dargestellt werden
-4. Stelle sicher, dass `billService.generate(...)` das Backend korrekt mit den ausgewählten Lieferschein-IDs anspricht.
-5. Ergänze nach Erstellung einer Rechnung das Refresh-Verhalten.
-6. Räume das Template visuell entsprechend der neuen Regeln auf:
-   - klare Header-Zone
-   - kompakte Info-/Kontext-Cards
-   - tabellarische Lieferschein- und Rechnungsbereiche
-   - Dokumentansicht für den aktiven Lieferschein
-   - prominenter Action-Bereich für „Rechnung erzeugen“
+  constructor(init?: Partial<CompanySettings>) {
+    Object.assign(this, init);
+  }
+}
 
-Erwartetes Ergebnis:
-- Vollständiger Code, kein Pseudocode
-- Anpassung der betroffenen Angular-Komponenten, Services und Templates
-- Bestehende Patterns des Projekts beibehalten
-- Keine unnötige neue Architektur einführen
-- Saubere TypeScript-Typen
-- Keine Breaking Changes außerhalb des betroffenen Flows
+---
 
-Liefere am Ende:
-1. eine kurze Zusammenfassung der geänderten Dateien
-2. die umgesetzte Benutzerführung
-3. offene Risiken oder Backend-Abhängigkeiten
+SCHRITT 2 — Service
+Erstelle die Datei:
+  apps/sim-system/src/app/services/settings.service.ts
 
+Inhalt:
+import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
+import { CompanySettings } from '../models/settings.model';
 
+@Injectable({ providedIn: 'root' })
+export class SettingsService {
+  constructor(private http: HttpClient) {}
 
-Offene Risiken / Backend-Abhängigkeiten
-Risiko	Details
-billId im Response	Backend muss billId in GET /customers/:id/slipsheets mitsenden. TypeORM gibt FK-Spalten standardmäßig mit — falls nicht, @Column() in der Entity prüfen.
-GET /slipsheets/:id Bug	Bewusst nicht verwendet. Alle Daten kommen über den Kunden-Kontext (/customers/:id/slipsheets).
-POST /bills/generate Body	BillService.generate() sendet slipsheetIds als Array number[] direkt als Body — Backend muss das so erwarten.
-Race Condition Nummernvergabe	Bekannter P1-Bug aus CLAUDE.md — kein DB-Lock auf SELECT MAX(number)+1. Kein Frontend-Fix möglich.
-generateBill() löscht bei Fehler	Bekannter P0-Bug aus CLAUDE.md — der Error-Toast verhindert Silent-Loss der Auswahl, aber der Datenverlust im Backend bleibt ein Risiko.
+  get(): Observable<CompanySettings> {
+    return this.http.get<any>('settings').pipe(
+      map(o => o.success ? new CompanySettings(o.data ?? {}) : new CompanySettings()),
+    );
+  }
+
+  save(settings: Partial<CompanySettings>): Observable<CompanySettings> {
+    return this.http.put<any>('settings', settings).pipe(
+      map(o => {
+        if (o.success) return new CompanySettings(o.data);
+        throw new Error(o.message || 'Fehler beim Speichern');
+      }),
+    );
+  }
+
+  uploadLogo(file: File): Observable<CompanySettings> {
+    return this._upload('settings/logo', file);
+  }
+
+  uploadBadge1(file: File): Observable<CompanySettings> {
+    return this._upload('settings/badge1', file);
+  }
+
+  uploadBadge2(file: File): Observable<CompanySettings> {
+    return this._upload('settings/badge2', file);
+  }
+
+  private _upload(endpoint: string, file: File): Observable<CompanySettings> {
+    const fd = new FormData();
+    fd.append('file', file);
+    return this.http.post<any>(endpoint, fd).pipe(
+      map(o => {
+        if (o.success) return new CompanySettings(o.data);
+        throw new Error(o.message || 'Upload fehlgeschlagen');
+      }),
+    );
+  }
+}
+```
+
+---
+
+## Phase 4 — Frontend: Settings-Komponente
+
+**Prompt für den Agent:**
+
+```
+Arbeite im Repository sim-system, Branch first-init.
+Erstelle die Angular Settings-Seite unter /settings.
+Phase 1–3 sind abgeschlossen.
+
+Orientiere dich beim Stil exakt an apps/sim-system/src/app/views/customer-edit/.
+Verwende standalone components, signals, ReactiveFormsModule, ChangeDetectionStrategy.OnPush.
+CSS-Klassen: sims-card, sims-label, sims-input, btn-sims-primary, btn-sims-ghost,
+             sims-page-header, eyebrow, page-title — genau wie in anderen Views.
+
+---
+
+SCHRITT 1 — Komponente TypeScript
+Erstelle die Datei:
+  apps/sim-system/src/app/views/settings/settings.component.ts
+
+Inhalt:
+import {
+  ChangeDetectionStrategy, Component, inject, signal, OnInit,
+} from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { ReactiveFormsModule, FormGroup, FormControl, FormArray } from '@angular/forms';
+import { SettingsService } from '../../services/settings.service';
+import { CompanySettings } from '../../models/settings.model';
+
+@Component({
+  selector: 'app-settings',
+  standalone: true,
+  imports: [CommonModule, ReactiveFormsModule],
+  templateUrl: './settings.component.html',
+  styleUrl: './settings.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush,
+})
+export class SettingsComponent implements OnInit {
+  private settingsService = inject(SettingsService);
+
+  readonly activeTab   = signal<'firma' | 'zahlung' | 'logos'>('firma');
+  readonly saving      = signal(false);
+  readonly loading     = signal(true);
+  readonly error       = signal('');
+  readonly saveSuccess = signal(false);
+
+  readonly logoPreviewUrl    = signal<string | null>(null);
+  readonly badge1PreviewUrl  = signal<string | null>(null);
+  readonly badge2PreviewUrl  = signal<string | null>(null);
+
+  readonly form = new FormGroup({
+    // Tab 1 — Firma
+    companyName:      new FormControl(''),
+    street:           new FormControl(''),
+    zip:              new FormControl(''),
+    city:             new FormControl(''),
+    country:          new FormControl('Österreich'),
+    phone:            new FormControl(''),
+    email:            new FormControl(''),
+    website:          new FormControl(''),
+    firmenbuchnummer: new FormControl(''),
+    vatId:            new FormControl(''),
+    issueCity:        new FormControl(''),
+    // Tab 2 — Zahlung
+    vatRate:           new FormControl<number>(20),
+    paymentTermDays:   new FormControl<number>(14),
+    paymentFooterText: new FormControl(''),
+    bankAccounts:      new FormArray<FormGroup>([]),
+  });
+
+  get bankAccountsArray(): FormArray<FormGroup> {
+    return this.form.get('bankAccounts') as FormArray<FormGroup>;
+  }
+
+  ngOnInit() {
+    this.settingsService.get().subscribe({
+      next: (s) => {
+        this.patchForm(s);
+        this.loading.set(false);
+      },
+      error: () => {
+        this.loading.set(false);
+      },
+    });
+  }
+
+  private patchForm(s: CompanySettings) {
+    this.form.patchValue({
+      companyName:      s.companyName,
+      street:           s.street,
+      zip:              s.zip,
+      city:             s.city,
+      country:          s.country,
+      phone:            s.phone,
+      email:            s.email,
+      website:          s.website,
+      firmenbuchnummer: s.firmenbuchnummer,
+      vatId:            s.vatId,
+      issueCity:        s.issueCity,
+      vatRate:          s.vatRate,
+      paymentTermDays:  s.paymentTermDays,
+      paymentFooterText: s.paymentFooterText,
+    });
+    this.bankAccountsArray.clear();
+    (s.bankAccounts ?? []).forEach(b => this.bankAccountsArray.push(this.newBankGroup(b)));
+    if (s.logoPath)   this.logoPreviewUrl.set('/uploads/' + s.logoPath.split('uploads/').pop());
+    if (s.badge1Path) this.badge1PreviewUrl.set('/uploads/' + s.badge1Path.split('uploads/').pop());
+    if (s.badge2Path) this.badge2PreviewUrl.set('/uploads/' + s.badge2Path.split('uploads/').pop());
+  }
+
+  private newBankGroup(init?: { name: string; iban: string; bic: string }): FormGroup {
+    return new FormGroup({
+      name: new FormControl(init?.name ?? ''),
+      iban: new FormControl(init?.iban ?? ''),
+      bic:  new FormControl(init?.bic  ?? ''),
+    });
+  }
+
+  addBank() { this.bankAccountsArray.push(this.newBankGroup()); }
+  removeBank(i: number) { this.bankAccountsArray.removeAt(i); }
+
+  save() {
+    if (this.form.invalid) { this.form.markAllAsTouched(); return; }
+    this.saving.set(true);
+    this.error.set('');
+    this.settingsService.save(this.form.getRawValue() as any).subscribe({
+      next: (s) => {
+        this.saving.set(false);
+        this.saveSuccess.set(true);
+        setTimeout(() => this.saveSuccess.set(false), 3000);
+      },
+      error: (err) => {
+        this.saving.set(false);
+        this.error.set(err.message || 'Fehler beim Speichern');
+      },
+    });
+  }
+
+  onFileChange(event: Event, field: 'logo' | 'badge1' | 'badge2') {
+    const input = event.target as HTMLInputElement;
+    const file  = input.files?.[0];
+    if (!file) return;
+
+    const upload$ =
+      field === 'logo'   ? this.settingsService.uploadLogo(file)   :
+      field === 'badge1' ? this.settingsService.uploadBadge1(file) :
+                           this.settingsService.uploadBadge2(file);
+
+    upload$.subscribe({
+      next: (s) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const url = e.target?.result as string;
+          if (field === 'logo')   this.logoPreviewUrl.set(url);
+          if (field === 'badge1') this.badge1PreviewUrl.set(url);
+          if (field === 'badge2') this.badge2PreviewUrl.set(url);
+        };
+        reader.readAsDataURL(file);
+      },
+      error: (err) => this.error.set(err.message || 'Upload fehlgeschlagen'),
+    });
+  }
+
+  setTab(tab: 'firma' | 'zahlung' | 'logos') { this.activeTab.set(tab); }
+}
+
+---
+
+SCHRITT 2 — Template HTML
+Erstelle die Datei:
+  apps/sim-system/src/app/views/settings/settings.component.html
+
+Inhalt:
+<div class="sims-page-header">
+  <div>
+    <div class="eyebrow">System</div>
+    <h1 class="page-title">Einstellungen</h1>
+  </div>
+</div>
+
+@if (error()) {
+  <div class="sims-card error-card mb-3">{{ error() }}</div>
+}
+@if (saveSuccess()) {
+  <div class="sims-card success-card mb-3">✓ Einstellungen gespeichert</div>
+}
+
+<!-- TAB NAV -->
+<div class="settings-tabs mb-3">
+  <button class="settings-tab" [class.active]="activeTab() === 'firma'"   (click)="setTab('firma')">Firmendaten</button>
+  <button class="settings-tab" [class.active]="activeTab() === 'zahlung'" (click)="setTab('zahlung')">Zahlungskonditionen</button>
+  <button class="settings-tab" [class.active]="activeTab() === 'logos'"   (click)="setTab('logos')">Logos & Uploads</button>
+</div>
+
+@if (loading()) {
+  <div class="sims-card skeleton" style="height:400px;"></div>
+}
+
+@if (!loading()) {
+  <form [formGroup]="form" (ngSubmit)="save()">
+
+    <!-- TAB 1: FIRMA -->
+    @if (activeTab() === 'firma') {
+      <div class="sims-card mb-3">
+        <div class="form-eyebrow">Firmenstammdaten</div>
+        <div class="row g-3">
+          <div class="col-12 col-md-6">
+            <label class="sims-label">Firmenname</label>
+            <input type="text" class="sims-input" formControlName="companyName" />
+          </div>
+          <div class="col-12 col-md-6">
+            <label class="sims-label">Ausstellungsort (für Rechnungen)</label>
+            <input type="text" class="sims-input" formControlName="issueCity" placeholder="z.B. Landeck" />
+          </div>
+          <div class="col-12">
+            <label class="sims-label">Straße</label>
+            <input type="text" class="sims-input" formControlName="street" />
+          </div>
+          <div class="col-6 col-md-3">
+            <label class="sims-label">PLZ</label>
+            <input type="text" class="sims-input sims-input-mono" formControlName="zip" />
+          </div>
+          <div class="col-6 col-md-3">
+            <label class="sims-label">Ort</label>
+            <input type="text" class="sims-input" formControlName="city" />
+          </div>
+          <div class="col-12 col-md-6">
+            <label class="sims-label">Land</label>
+            <input type="text" class="sims-input" formControlName="country" />
+          </div>
+          <div class="col-12 col-md-6">
+            <label class="sims-label">Telefon / Mobil</label>
+            <input type="tel" class="sims-input" formControlName="phone" />
+          </div>
+          <div class="col-12 col-md-6">
+            <label class="sims-label">E-Mail</label>
+            <input type="email" class="sims-input" formControlName="email" />
+          </div>
+          <div class="col-12 col-md-6">
+            <label class="sims-label">Website</label>
+            <input type="url" class="sims-input" formControlName="website" placeholder="www.meinefirma.at" />
+          </div>
+          <div class="col-12 col-md-6">
+            <label class="sims-label">FN + UID</label>
+            <input type="text" class="sims-input sims-input-mono" formControlName="firmenbuchnummer" placeholder="FN.: 000000x, ATU00000000" />
+          </div>
+          <div class="col-12 col-md-6">
+            <label class="sims-label">UID-Nummer (separat)</label>
+            <input type="text" class="sims-input sims-input-mono" formControlName="vatId" placeholder="ATU00000000" />
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- TAB 2: ZAHLUNG -->
+    @if (activeTab() === 'zahlung') {
+      <div class="sims-card mb-3">
+        <div class="form-eyebrow">Zahlungskonditionen</div>
+        <div class="row g-3">
+          <div class="col-6 col-md-3">
+            <label class="sims-label">Zahlungsfrist (Tage)</label>
+            <input type="number" class="sims-input sims-input-mono" formControlName="paymentTermDays" min="0" />
+          </div>
+          <div class="col-6 col-md-3">
+            <label class="sims-label">MwSt.-Satz (%)</label>
+            <input type="number" class="sims-input sims-input-mono" formControlName="vatRate" min="0" max="100" />
+          </div>
+          <div class="col-12">
+            <label class="sims-label">Zahlungstext (PDF-Footer)</label>
+            <textarea class="sims-input" formControlName="paymentFooterText" rows="3"
+              placeholder="Zahlung innerhalb von 14 Tagen netto Kassa · Zahlbar und klagbar in …"></textarea>
+          </div>
+        </div>
+      </div>
+
+      <div class="sims-card mb-3">
+        <div class="form-eyebrow">Bankverbindungen</div>
+
+        <div formArrayName="bankAccounts">
+          @for (bank of bankAccountsArray.controls; track $index) {
+            <div [formGroupName]="$index" class="bank-entry mb-2">
+              <div class="bank-entry-header">
+                <span class="bank-label">Bank {{ $index + 1 }}</span>
+                <button type="button" class="btn-sims-ghost btn-sm" (click)="removeBank($index)">Entfernen</button>
+              </div>
+              <div class="row g-3">
+                <div class="col-12 col-md-4">
+                  <label class="sims-label">Bankname</label>
+                  <input type="text" class="sims-input" formControlName="name" />
+                </div>
+                <div class="col-12 col-md-4">
+                  <label class="sims-label">IBAN</label>
+                  <input type="text" class="sims-input sims-input-mono" formControlName="iban" />
+                </div>
+                <div class="col-12 col-md-4">
+                  <label class="sims-label">BIC</label>
+                  <input type="text" class="sims-input sims-input-mono" formControlName="bic" />
+                </div>
+              </div>
+            </div>
+          }
+        </div>
+
+        <button type="button" class="btn-sims-ghost mt-2" (click)="addBank()">+ Bankverbindung hinzufügen</button>
+      </div>
+    }
+
+    <!-- TAB 3: LOGOS -->
+    @if (activeTab() === 'logos') {
+      <div class="sims-card mb-3">
+        <div class="form-eyebrow">Uploads</div>
+        <div class="uploads-grid">
+
+          <div class="upload-item">
+            <label class="sims-label">Firmenlogo (SVG oder PNG)</label>
+            <div class="upload-zone" (click)="logoInput.click()">
+              @if (logoPreviewUrl()) {
+                <img [src]="logoPreviewUrl()" alt="Logo" class="upload-preview" />
+              } @else {
+                <div class="upload-placeholder">
+                  <span class="upload-icon">🏷️</span>
+                  <span>Logo hochladen</span>
+                  <small>SVG bevorzugt · max. 1 MB</small>
+                </div>
+              }
+            </div>
+            <input #logoInput type="file" accept=".svg,.png,.jpg" style="display:none"
+              (change)="onFileChange($event, 'logo')" />
+          </div>
+
+          <div class="upload-item">
+            <label class="sims-label">Badge links (optional)</label>
+            <div class="upload-zone" (click)="badge1Input.click()">
+              @if (badge1PreviewUrl()) {
+                <img [src]="badge1PreviewUrl()" alt="Badge 1" class="upload-preview" />
+              } @else {
+                <div class="upload-placeholder">
+                  <span class="upload-icon">🦅</span>
+                  <span>Badge hochladen</span>
+                  <small>SVG oder PNG</small>
+                </div>
+              }
+            </div>
+            <input #badge1Input type="file" accept=".svg,.png" style="display:none"
+              (change)="onFileChange($event, 'badge1')" />
+          </div>
+
+          <div class="upload-item">
+            <label class="sims-label">Badge rechts (optional)</label>
+            <div class="upload-zone" (click)="badge2Input.click()">
+              @if (badge2PreviewUrl()) {
+                <img [src]="badge2PreviewUrl()" alt="Badge 2" class="upload-preview" />
+              } @else {
+                <div class="upload-placeholder">
+                  <span class="upload-icon">🏅</span>
+                  <span>Badge hochladen</span>
+                  <small>PNG · max. 500 KB</small>
+                </div>
+              }
+            </div>
+            <input #badge2Input type="file" accept=".svg,.png,.jpg" style="display:none"
+              (change)="onFileChange($event, 'badge2')" />
+          </div>
+
+        </div>
+        <p class="upload-hint-text">Uploads werden sofort gespeichert. Das Logo wird beim nächsten PDF-Erstellen verwendet.</p>
+      </div>
+    }
+
+    <!-- STICKY SAVE -->
+    <div class="sticky-actions">
+      <button type="submit" class="btn-sims-primary" [disabled]="saving()">
+        {{ saving() ? 'Wird gespeichert…' : 'Einstellungen speichern' }}
+      </button>
+    </div>
+
+  </form>
+}
+
+---
+
+SCHRITT 3 — SCSS
+Erstelle die Datei:
+  apps/sim-system/src/app/views/settings/settings.component.scss
+
+Inhalt:
+.mb-2 { margin-bottom: 0.5rem; }
+.mb-3 { margin-bottom: 1rem; }
+.mt-2 { margin-top: 0.75rem; }
+
+.error-card {
+  color: var(--status-empty);
+  border-left: 3px solid var(--status-empty);
+}
+.success-card {
+  color: var(--status-ok);
+  border-left: 3px solid var(--status-ok);
+}
+
+.form-eyebrow {
+  font-family: var(--mono);
+  font-size: 0.6rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  margin-bottom: 1.25rem;
+}
+
+/* TABS */
+.settings-tabs {
+  display: flex;
+  gap: 2px;
+  background: var(--border);
+  padding: 2px;
+  border-radius: var(--radius-md);
+  width: fit-content;
+}
+.settings-tab {
+  font-family: var(--sans);
+  font-size: 0.85rem;
+  padding: 0.45rem 1rem;
+  border: none;
+  border-radius: calc(var(--radius-md) - 2px);
+  background: transparent;
+  color: var(--ink-3);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  white-space: nowrap;
+}
+.settings-tab.active {
+  background: white;
+  color: var(--ink);
+  box-shadow: 0 1px 3px rgba(15,23,42,0.08);
+}
+.settings-tab:hover:not(.active) {
+  color: var(--ink-2);
+}
+
+/* BANK */
+.bank-entry {
+  background: var(--bg-subtle);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 1rem;
+}
+.bank-entry-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+.bank-label {
+  font-weight: 600;
+  font-size: 0.88rem;
+  color: var(--ink);
+}
+.btn-sm {
+  font-size: 0.78rem;
+  padding: 0.25rem 0.7rem;
+}
+
+/* UPLOADS */
+.uploads-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1.25rem;
+  margin-bottom: 1rem;
+}
+.upload-item { display: flex; flex-direction: column; gap: 0.3rem; }
+.upload-zone {
+  border: 2px dashed var(--border);
+  border-radius: var(--radius-md);
+  background: var(--bg-subtle);
+  min-height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+  overflow: hidden;
+}
+.upload-zone:hover {
+  border-color: var(--accent-highlight);
+  background: var(--accent-light);
+}
+.upload-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  color: var(--ink-3);
+  font-size: 0.85rem;
+  text-align: center;
+  padding: 1rem;
+}
+.upload-icon { font-size: 1.75rem; }
+.upload-preview {
+  max-width: 100%;
+  max-height: 120px;
+  object-fit: contain;
+  padding: 0.5rem;
+}
+.upload-hint-text {
+  font-size: 0.8rem;
+  color: var(--ink-3);
+  margin-bottom: 0;
+}
+
+/* STICKY */
+.sticky-actions {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
+  position: sticky;
+  bottom: 1rem;
+  padding: 0.75rem 0;
+}
+
+/* GRID HELPERS */
+.row { display: flex; flex-wrap: wrap; margin: -0.375rem; }
+.row.g-3 > * { padding: 0.375rem; }
+[class^="col-"] { width: 100%; }
+@media (min-width: 768px) {
+  .col-md-3 { width: 25%; }
+  .col-md-4 { width: 33.333%; }
+  .col-md-6 { width: 50%; }
+}
+.col-6  { width: 50%; }
+.col-12 { width: 100%; }
+```
+
+---
+
+## Phase 5 — Frontend: Route + Navigation verdrahten
+
+**Prompt für den Agent:**
+
+```
+Arbeite im Repository sim-system, Branch first-init.
+Verdrahte die Settings-Komponente mit dem Router und der Sidebar-Navigation.
+Phasen 1–4 sind abgeschlossen.
+
+---
+
+SCHRITT 1 — Route hinzufügen
+Bearbeite die Datei:
+  apps/sim-system/src/app/app.routes.ts
+
+Füge vor der Wildcard-Route (path: '**') folgenden Eintrag hinzu:
+
+  {
+    path: 'settings',
+    loadComponent: () =>
+      import('./views/settings/settings.component').then(m => m.SettingsComponent)
+  },
+
+---
+
+SCHRITT 2 — Navigation erweitern
+Bearbeite die Datei:
+  apps/sim-system/src/app/app.ts
+
+In der navItems-Array gibt es eine Sektion 'Werkzeuge'. Füge dort einen Settings-Eintrag hinzu:
+
+Suche den Block:
+  { label: 'Werkzeuge', children: [
+    { label: 'Inventur', route: '/inventory', icon: 'inventory' },
+  ]},
+
+Ändere ihn zu:
+  { label: 'Werkzeuge', children: [
+    { label: 'Inventur',      route: '/inventory', icon: 'inventory' },
+    { label: 'Einstellungen', route: '/settings',  icon: 'settings'  },
+  ]},
+
+---
+
+SCHRITT 3 — Settings-Icon definieren
+In derselben Datei (apps/sim-system/src/app/app.ts) gibt es das ICONS-Objekt.
+Füge folgenden Eintrag hinzu:
+
+  settings: `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="12" cy="12" r="3"/>
+    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+  </svg>`,
+
+---
+
+SCHRITT 4 — Prüfen
+Stelle sicher, dass in apps/sim-system/src/app/app.ts die bottomNavItems-Array
+NICHT um Settings erweitert wird — die mobile Bottom-Navigation soll nur die 5
+wichtigsten Einträge zeigen (Dashboard, Artikel, Kunden, Belege, Inventur).
+```
+
+---
+
+## Abschluss-Check (nach allen Phasen)
+
+**Prompt für den Agent:**
+
+```
+Führe nach Abschluss aller Phasen folgende Prüfungen durch:
+
+1. BACKEND KOMPILIERUNG
+   Führe aus: cd apps/server && npx tsc --noEmit
+   Erwartetes Ergebnis: Keine Fehler.
+   Häufige Fehler:
+   - "Object is possibly null" bei settings?.field → mit ?? '' oder ?? 0 absichern
+   - "Property does not exist" → CompanySettingsEntity-Felder prüfen
+   - Async-Fehler bei generateBill/generateDeliverySlip → await in allen Aufrufern prüfen
+
+2. CIRCULAR DEPENDENCY CHECK
+   Prüfe manuell: Importiert CompanySettingsModule irgendwo SharedModule?
+   Das wäre eine Circular Dependency. Es darf nur in eine Richtung gehen:
+   SharedModule → CompanySettingsModule → (keine Rückimporte)
+
+3. FRONTEND KOMPILIERUNG
+   Führe aus: cd apps/sim-system && npx ng build --configuration=development 2>&1 | head -50
+   Erwartetes Ergebnis: Keine Fehler.
+
+4. UPLOADS-VERZEICHNIS
+   Stelle sicher dass apps/server/uploads/settings/.gitkeep existiert.
+
+5. MULTER DEPENDENCY
+   Prüfe in package.json (Root) ob vorhanden:
+   - @nestjs/platform-express
+   - multer
+   - @types/multer (devDependencies)
+   Falls nicht: Ausgabe mit Installationsbefehl.
+
+6. FALLBACK-VERHALTEN
+   Überprüfe in pdfmaker.service.ts:
+   - FALLBACK_LOGO zeigt auf den existierenden Pfad apps/server/src/common/pdfAnnotation/logo.svg
+   - Der join-Pfad nutzt __dirname korrekt (relativ zum dist-Verzeichnis nach Kompilierung)
+   - Empfehlung: Pfad-Konstanten am Service-Anfang klar dokumentieren
+```
+
+---
+
+## Hinweise für den Agent
+
+- **Reihenfolge einhalten**: Phase 1 → 2 → 3 → 4 → 5. Phase 2 baut auf Phase 1 auf.
+- **Bestehenden Code nicht löschen**: Die Dateien in `pdfAnnotation/` bleiben als Fallback erhalten.
+- **SQLite synchronize**: Da `SQLITE_RUN_SYNCHRONIZE=true` in der `.env` gesetzt ist, erstellt TypeORM die neue Tabelle `company_settings` automatisch beim nächsten Start.
+- **Keine Migrations nötig**: Nur für Produktionsumgebungen relevant, nicht für den aktuellen Stand.
+- **Pfadtrenner**: Der bestehende Code nutzt `\\` (Windows-Pfade). Phase 2 verwendet `join()` aus `path` — das ist korrekt und cross-platform.

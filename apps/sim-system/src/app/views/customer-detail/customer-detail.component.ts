@@ -98,7 +98,7 @@ export class CustomerDetailComponent {
   });
 
   readonly selectedSlips = computed(() =>
-    this.slipsheets().filter(s => this.selectedSlipIds().has(s.id))
+    this.slipsheets().filter(s => this.selectedSlipIds().has(s.id) && this.isBillableSlip(s))
   );
   readonly selectedTotal = computed(() =>
     this.selectedSlips().reduce((s, x) => s + x.getPrice(), 0)
@@ -120,6 +120,7 @@ export class CustomerDetailComponent {
       takeUntilDestroyed(this.destroyRef)
     ).subscribe(ss => {
       this.slipsheets.set(ss);
+      this.syncSelectedSlipIds(ss);
 
       // Preselect-Logik: einmalig nach erstem Laden
       if (!this.preselectApplied) {
@@ -129,7 +130,9 @@ export class CustomerDetailComponent {
           const found = ss.find(s => s.id === +preId && s.isOpen());
           if (found) {
             this.activeSlipId.set(found.id);
-            this.selectedSlipIds.set(new Set([found.id]));
+            if (this.isBillableSlip(found)) {
+              this.selectedSlipIds.set(new Set([found.id]));
+            }
             return;
           }
         }
@@ -160,7 +163,7 @@ export class CustomerDetailComponent {
   /** Klick auf Zeile: zeigt Dokument + togglet Selection für offene Lieferscheine */
   setActive(slip: Slipsheet) {
     this.activeSlipId.set(slip.id);
-    if (!slip.isOpen()) return;
+    if (!this.isBillableSlip(slip)) return;
     const next = new Set(this.selectedSlipIds());
     if (next.has(slip.id)) next.delete(slip.id);
     else next.add(slip.id);
@@ -215,8 +218,8 @@ export class CustomerDetailComponent {
   onSlipUpdated(updated: Slipsheet) {
     // Update local slipsheets array so changes are immediately visible
     this.slipsheets.update(list => list.map(s => s.id === updated.id ? updated : s));
-    // If the active slip is now billed (billId set), deselect it
-    if (!updated.isOpen()) {
+    // Remove the slip from the selection if it is no longer billable.
+    if (!this.isBillableSlip(updated)) {
       const next = new Set(this.selectedSlipIds());
       next.delete(updated.id);
       this.selectedSlipIds.set(next);
@@ -232,10 +235,19 @@ export class CustomerDetailComponent {
     this.pdfLoadingId.set(slip.id);
     this.slipsheetService.getPdf(slip.id).subscribe({
       next: blob => {
-        this.pdfLoadingId.set(null);
         const url = URL.createObjectURL(blob);
         window.open(url, '_blank');
         setTimeout(() => URL.revokeObjectURL(url), 10000);
+        this.slipsheetService.getById(slip.id).subscribe({
+          next: updated => {
+            this.onSlipUpdated(updated);
+            this.pdfLoadingId.set(null);
+          },
+          error: () => {
+            this.pdfLoadingId.set(null);
+            this.showToast('error', 'Lieferschein konnte nach PDF-Erzeugung nicht aktualisiert werden.');
+          },
+        });
       },
       error: () => {
         this.pdfLoadingId.set(null);
@@ -281,8 +293,26 @@ export class CustomerDetailComponent {
   }
 
   // ── Badge helpers ─────────────────────────────────────────────
+  isBillableSlip(s: Slipsheet): boolean {
+    return s.state === 'closed' && !s.hasBill();
+  }
+
+  slipNeedsGeneration(s: Slipsheet): boolean {
+    return !s.hasBill() && s.state !== 'closed';
+  }
+
+  slipBillLabel(s: Slipsheet): string {
+    if (s.isCompleted()) return 'Verrechnet';
+    if (this.isBillableSlip(s)) return 'Bereit';
+    if (s.hasBill()) return 'Bearbeitet';
+    return 'Noch nicht erzeugt';
+  }
+
   slipBillBadge(s: Slipsheet): string {
-    return s.isOpen() ? 'sims-badge sims-badge-low' : 'sims-badge sims-badge-ok';
+    if (s.isCompleted()) return 'sims-badge sims-badge-ok';
+    if (this.isBillableSlip(s)) return 'sims-badge sims-badge-accent';
+    if (s.hasBill()) return 'sims-badge sims-badge-warning';
+    return 'sims-badge sims-badge-low';
   }
 
   billStateBadge(state: string): string {
@@ -294,5 +324,13 @@ export class CustomerDetailComponent {
   // ── Formatter ────────────────────────────────────────────────
   fmt(value: number): string {
     return new Intl.NumberFormat('de-AT', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value);
+  }
+
+  private syncSelectedSlipIds(slips: Slipsheet[]) {
+    const billableIds = new Set(slips.filter(s => this.isBillableSlip(s)).map(s => s.id));
+    const next = new Set([...this.selectedSlipIds()].filter(id => billableIds.has(id)));
+    if (next.size !== this.selectedSlipIds().size) {
+      this.selectedSlipIds.set(next);
+    }
   }
 }

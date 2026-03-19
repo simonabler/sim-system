@@ -38,7 +38,7 @@
           @if (s.isOpen()) {
             <span class="sims-badge sims-badge-low">Offen</span>
           } @else {
-            <span class="sims-badge sims-badge-ok">Verrechnet · RE-{{ s.billId }}</span>
+            <span class="sims-badge sims-badge-ok">Verrechnet · RE-{{ s.bill?.id }}</span>
           }
         </div>
       </div>
