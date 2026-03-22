@@ -22,7 +22,7 @@ export class Bill implements IBill {
   @Column({ nullable: false, default: BillState.OPEN, length: 20 })
   state: BillState;
 
-  @CreateDateColumn({ nullable: false })
+  @Column({ type: 'datetime', nullable: false, default: () => 'CURRENT_TIMESTAMP' })
   billDate: Date;
 
   @Column({ nullable: true, length: 256 })

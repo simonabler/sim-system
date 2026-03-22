@@ -1,6 +1,6 @@
 # Kontext zum Repo
 
-Stand: 2026-03-19
+Stand: 2026-03-22
 Basis: statische Codeanalyse des aktuellen Worktrees, danach Abgleich mit `CLAUDE.md`
 Hinweis: keine Tests oder Dev-Server ausgefuehrt
 
@@ -69,6 +69,23 @@ Hinweis: keine Tests oder Dev-Server ausgefuehrt
   - Artikel ohne `trackStock` werden abgelehnt
   - Inventory-Log-Fehler werden absichtlich geschluckt, der Artikelbestand wird trotzdem aktualisiert
 - Root-Endpoint `/` gibt aktuell `"V1"` zurueck, nicht `{ message: 'Hello API' }`
+
+### 4a. Fachlicher Status-Workflow fuer Lieferscheine und Rechnungen
+
+- Lieferschein:
+  - `offen`: neuer oder noch nicht finalisierter Lieferschein
+  - PDF drucken / Lieferschein erzeugen: Status wechselt auf `geschlossen`
+  - Artikel oder Positionen nachtraeglich bearbeiten: Status wechselt auf `bearbeitet`
+- Rechnung:
+  - nur geschlossene Lieferscheine werden zur Rechnung hinzugefuegt
+  - Rechnung erstellen und drucken: Rechnung ist `geschlossen`
+  - Rechnungsdatum bearbeiten oder einen bereits verrechneten Lieferschein bearbeiten:
+    - der betroffene Lieferschein geht auf `bearbeitet`
+    - die zugehoerige Rechnung geht fachlich ebenfalls auf `bearbeitet`
+- Fachliche Kette damit zusammengefasst:
+  - Lieferschein `offen` -> PDF drucken -> `geschlossen` -> Artikel bearbeiten -> `bearbeitet`
+  - geschlossene Lieferscheine auswaehlen -> Rechnung erzeugen und drucken -> Rechnung `geschlossen`
+  - Rechnungsdatum aendern oder verrechneten Lieferschein bearbeiten -> Lieferschein und Rechnung `bearbeitet`
 
 ### 5. Frontend-Ist-Zustand
 

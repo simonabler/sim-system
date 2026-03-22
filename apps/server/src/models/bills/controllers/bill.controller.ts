@@ -7,7 +7,6 @@ import {
   SerializeOptions,
   ClassSerializerInterceptor,
   Param,
-  Patch,
   Response,
   Delete,
   NotFoundException,
@@ -140,12 +139,12 @@ export class BillController {
     @Body()
     inputs: UpdateBillDto,
   ): Promise<ReS<BillEntity>> {
-    return ReS.FromData(await this.billService.update(id, inputs));
+    return ReS.FromData(await this.billService.updateBill(id, inputs));
   }
 
   @Delete('/:id')
   async delete(@Param('id') id: number): Promise<ReS<null>> {
-    await this.billService.delete(id, true);
+    await this.billService.releaseBill(id);
     return ReS.FromData(null);
   }
 }

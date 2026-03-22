@@ -14,7 +14,37 @@
 
 @if (!loading()) {
   <form [formGroup]="form" (ngSubmit)="save()">
-    <div class="sims-card mb-3">
+    @if (!isNew() && inventoryArticle(); as article) {
+      <div class="inventory-summary mb-3">
+        <div class="inventory-summary-copy">
+          <div class="eyebrow">Inventur</div>
+          <h2 class="inventory-summary-title">Lagerstand wird nur über Inventur gepflegt</h2>
+          <p class="inventory-summary-text">
+            Bestand und Inventurdatum sind schreibgeschützt und werden ausschliesslich in der Inventurfunktion aktualisiert.
+          </p>
+          <div class="inventory-summary-meta">
+            <span class="inventory-pill">
+              Lagerstand
+              <strong>{{ article.stock }} {{ article.unit }}</strong>
+            </span>
+            <span class="inventory-pill">
+              Letzte Inventur
+              <strong>{{ article.inventoryDate ? (article.inventoryDate | date:'dd.MM.yyyy') : '-' }}</strong>
+            </span>
+          </div>
+        </div>
+        <button
+          type="button"
+          class="btn-sims-outline inventory-link"
+          (click)="goToInventory()"
+          [disabled]="!canGoToInventory()"
+        >
+          Inventur buchen
+        </button>
+      </div>
+    }
+
+    <div class="sims-card article-form-card mb-3">
       <div class="row g-3">
         <div class="col-12 col-md-6">
           <label class="sims-label">Bezeichnung *</label>
@@ -44,18 +74,10 @@
           <label class="sims-label">Einheit *</label>
           <input type="text" class="sims-input" formControlName="unit" />
         </div>
-        <div class="col-6 col-md-3">
-          <label class="sims-label">Lagerstand</label>
-          <input type="number" class="sims-input" formControlName="stock" inputmode="numeric" />
-        </div>
-        <div class="col-6 col-md-3">
-          <label class="sims-label">Inventurdatum</label>
-          <input type="date" class="sims-input" formControlName="inventoryDate" />
-        </div>
         <div class="col-12 col-md-6">
           <label class="sims-label">Artikelgruppe</label>
           <select class="sims-select" formControlName="articleGroup">
-            <option [value]="null">— keine —</option>
+            <option [value]="null">- keine -</option>
             @for (g of articleGroups(); track g.id) {
               <option [value]="g.id">{{ g.name }}</option>
             }
@@ -66,15 +88,30 @@
           <textarea class="sims-textarea" formControlName="description" rows="3"></textarea>
         </div>
         <div class="col-12">
-          <div style="display:flex; gap:1.5rem; flex-wrap:wrap;">
-            <label style="display:flex; align-items:center; gap:0.5rem; cursor:pointer;">
-              <input type="checkbox" formControlName="trackStock" /> Bestandsführung
+          <div class="checkbox-grid">
+            <label class="checkbox-card">
+              <input type="checkbox" formControlName="trackStock" />
+              <span class="checkbox-indicator"></span>
+              <span class="checkbox-copy">
+                <strong>Bestandsführung</strong>
+                <small>Der Artikel wird ueber Inventur und Lagerbewegungen nachgeführt.</small>
+              </span>
             </label>
-            <label style="display:flex; align-items:center; gap:0.5rem; cursor:pointer;">
-              <input type="checkbox" formControlName="singlePos" /> Einzelposition
+            <label class="checkbox-card">
+              <input type="checkbox" formControlName="singlePos" />
+              <span class="checkbox-indicator"></span>
+              <span class="checkbox-copy">
+                <strong>Einzelposition</strong>
+                <small>Jede Buchung erzeugt eine eigene Position statt eine bestehende zu erhoehen.</small>
+              </span>
             </label>
-            <label style="display:flex; align-items:center; gap:0.5rem; cursor:pointer;">
-              <input type="checkbox" formControlName="noDiscount" /> Kein Rabatt
+            <label class="checkbox-card">
+              <input type="checkbox" formControlName="noDiscount" />
+              <span class="checkbox-indicator"></span>
+              <span class="checkbox-copy">
+                <strong>Kein Rabatt</strong>
+                <small>Kunden- und Artikelgruppenrabatte werden fuer diesen Artikel ignoriert.</small>
+              </span>
             </label>
           </div>
         </div>
@@ -85,7 +122,7 @@
       <div class="row g-2">
         <div class="col-12 col-md-auto">
           <button type="submit" class="btn-sims-primary" [disabled]="saving()">
-            {{ saving() ? 'Wird gespeichert…' : 'Speichern' }}
+            {{ saving() ? 'Wird gespeichert...' : 'Speichern' }}
           </button>
         </div>
         @if (!isNew()) {

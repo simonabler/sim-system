@@ -19,6 +19,8 @@ import { PdfMakerService } from '../../common/services/pdfmaker.service';
 import { join } from 'path';
 import { AppConfigService } from '../../config/app/config.service';
 import { Slipsheet } from './entities/slipsheet.entity';
+import { existsSync } from 'fs';
+import { unlink } from 'fs/promises';
 
 @Injectable()
 export class BillService extends BaseService<Bill, BillEntity> {
@@ -88,11 +90,7 @@ export class BillService extends BaseService<Bill, BillEntity> {
 
       firstBillEntity = await this.getAllInformations(firstBillEntity.id);
 
-      const retpdf = this.pdfMakerService.generateBill(firstBillEntity);
-      await this.pdfMakerService.savePDFToFileSystem(
-        retpdf,
-        join(this.appConfigService.pdf_bill_path, firstBillEntity.path),
-      );
+      await this.writeBillPdf(firstBillEntity);
 
       return firstBillEntity;
 
@@ -125,12 +123,57 @@ export class BillService extends BaseService<Bill, BillEntity> {
       state: bill.state,
     });
 
-    const retpdf = this.pdfMakerService.generateBill(bill);
-    await this.pdfMakerService.savePDFToFileSystem(
-      retpdf,
-      join(this.appConfigService.pdf_bill_path, bill.path),
-    );
+    await this.writeBillPdf(bill);
     return this.getAllInformations(id);
+  }
+
+  async updateBill(id: number, inputs: UpdateBillDto): Promise<BillEntity> {
+    const existingBill = await this.getAllInformations(id);
+    if (!existingBill) {
+      throw new NotFoundException('Rechnung nicht gefunden');
+    }
+
+    const nextBillNumber = inputs.billNumber?.trim() || existingBill.billNumber;
+    const previousPath = existingBill.path;
+
+    await this.billRepository.updateEntity(existingBill.id, {
+      billNumber: nextBillNumber,
+      billDate: this.normalizeBillDate(inputs.billDate),
+      path: this.getPathName({
+        ...existingBill,
+        billNumber: nextBillNumber,
+      } as BillEntity),
+    });
+
+    const updatedBill = await this.regenerateBillPdf(id);
+
+    if (previousPath && previousPath !== updatedBill.path) {
+      await this.deletePdfFile(previousPath);
+    }
+
+    return updatedBill;
+  }
+
+  async releaseBill(id: number): Promise<void> {
+    const bill = await this.getAllInformations(id);
+    if (!bill) {
+      throw new NotFoundException('Rechnung nicht gefunden');
+    }
+
+    const slipsheetIds = (bill.slipsheets || []).map((slipsheet) => slipsheet.id);
+
+    await this.billRepository.manager.transaction(async (entityManager) => {
+      if (slipsheetIds.length) {
+        await entityManager.update(Slipsheet, slipsheetIds, {
+          billId: null,
+          state: SlipsheetState.CLOSED,
+        });
+      }
+
+      await entityManager.delete(Bill, bill.id);
+    });
+
+    await this.deletePdfFile(bill.path);
   }
 
   getAllInformations(id: number): Promise<BillEntity> {
@@ -260,6 +303,44 @@ export class BillService extends BaseService<Bill, BillEntity> {
       code === '23505' ||
       message.includes('unique constraint')
     );
+  }
+
+  private normalizeBillDate(value: string | Date): Date {
+    if (value instanceof Date) {
+      return value;
+    }
+
+    const [year, month, day] = `${value || ''}`.split('-').map((part) => +part);
+    if (year && month && day) {
+      return new Date(year, month - 1, day, 12, 0, 0, 0);
+    }
+
+    return new Date(value);
+  }
+
+  private async writeBillPdf(bill: BillEntity): Promise<void> {
+    const retpdf = this.pdfMakerService.generateBill(bill);
+    await this.pdfMakerService.savePDFToFileSystem(
+      retpdf,
+      join(this.appConfigService.pdf_bill_path, bill.path),
+    );
+  }
+
+  private async deletePdfFile(path?: string | null): Promise<void> {
+    if (!path) {
+      return;
+    }
+
+    const filepath = join(this.appConfigService.pdf_bill_path, path);
+    if (!existsSync(filepath)) {
+      return;
+    }
+
+    try {
+      await unlink(filepath);
+    } catch (error) {
+      console.error('Delete bill PDF failed', error);
+    }
   }
 
 }

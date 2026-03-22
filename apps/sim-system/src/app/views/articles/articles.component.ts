@@ -1,8 +1,9 @@
-import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormControl } from '@angular/forms';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
+import { map } from 'rxjs';
 import { debounceTime, startWith } from 'rxjs/operators';
 import { ArticleService } from '../../services/article.service';
 import { Article } from '../../models/article.model';
@@ -18,11 +19,16 @@ import { Article } from '../../models/article.model';
 export class ArticlesComponent {
   private articleService = inject(ArticleService);
   private router = inject(Router);
+  private route = inject(ActivatedRoute);
 
   readonly searchCtrl = new FormControl('');
   readonly codeCtrl = new FormControl('');
 
   private readonly allArticles = toSignal(this.articleService.getAll(), { initialValue: [] as Article[] });
+  private readonly routeCode = toSignal(
+    this.route.queryParamMap.pipe(map(params => params.get('code') ?? '')),
+    { initialValue: '' }
+  );
   private readonly searchTerm = toSignal(
     this.searchCtrl.valueChanges.pipe(debounceTime(200), startWith('')),
     { initialValue: '' }
@@ -33,6 +39,15 @@ export class ArticlesComponent {
   );
 
   readonly loading = computed(() => this.allArticles() === undefined);
+
+  constructor() {
+    effect(() => {
+      const code = this.routeCode();
+      if (this.codeCtrl.value !== code) {
+        this.codeCtrl.setValue(code, { emitEvent: true });
+      }
+    });
+  }
 
   readonly filtered = computed(() => {
     const name = (this.searchTerm() ?? '').toLowerCase();

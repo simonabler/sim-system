@@ -261,7 +261,7 @@
                   @for (s of b.slipsheets; track s.id) {
                     <span class="slip-chip mono">{{ s.slipsheetnumber }}</span>
                   }
-                  @if (!b.slipsheets?.length) {
+                  @if (!b.slipsheets.length) {
                     <span class="no-slips">—</span>
                   }
                 </td>

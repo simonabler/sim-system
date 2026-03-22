@@ -90,15 +90,15 @@ Entweder serverseitig genau einen "aktiven" Lieferschein liefern oder clientseit
 
 ## Mittel
 
-### 4. Rechnungs-PDF kann im Fehlerfall nicht aus der UI neu erzeugt werden
+### 4. Rechnungs-PDF konnte im Fehlerfall nicht aus der UI neu erzeugt werden
 
 **Problem**
 
-Backend und Angular-Service unterstuetzen die Neugenerierung eines Rechnungs-PDFs bereits, aber die Rechnungsdetailseite bietet dafuer keine Aktion an. Bei fehlendem PDF zeigt die UI nur eine Fehlermeldung.
+Backend und Angular-Service unterstuetzten die Neugenerierung eines Rechnungs-PDFs bereits, aber die Rechnungsdetailseite bot dafuer zunaechst keine Aktion an. Bei fehlendem PDF zeigte die UI nur eine Fehlermeldung.
 
 **Auswirkung im Workflow**
 
-Der Benutzer bekommt die Meldung `PDF nicht gefunden. Bitte neu erzeugen.`, kann diese Neugenerierung im UI aber gar nicht anstossen.
+Der Benutzer bekam die Meldung `PDF nicht gefunden. Bitte neu erzeugen.`, konnte diese Neugenerierung im UI aber nicht anstossen.
 
 **Codebeleg**
 
@@ -109,19 +109,23 @@ Der Benutzer bekommt die Meldung `PDF nicht gefunden. Bitte neu erzeugen.`, kann
 - `apps/sim-system/src/app/views/bill-detail/bill-detail.component.ts:56`
 - `apps/sim-system/src/app/views/bill-detail/bill-detail.component.html:52`
 
-**Empfehlung**
+**Status**
 
-Auf der Rechnungsdetailseite einen `PDF neu erzeugen`-Button einbauen, der `billService.recreate(...)` nutzt und danach den Download erneut versucht.
+UI angepasst:
 
-### 5. Dashboard-Deep-Link zur Artikelsuche funktioniert nicht
+- Rechnungsdetailseite besitzt jetzt einen `PDF neu erzeugen`-Button
+- der Button nutzt den vorhandenen `POST /bills/:id`
+- nach erfolgreicher Neuerzeugung wird der normale PDF-Download direkt erneut gestartet
+
+### 5. Dashboard-Deep-Link zur Artikelsuche funktionierte nicht
 
 **Problem**
 
-Das Dashboard navigiert mit `queryParams: { code }` zur Artikelliste. Die Artikelliste liest aber keine Query-Parameter aus und filtert nur ueber lokale FormControls.
+Das Dashboard navigierte mit `queryParams: { code }` zur Artikelliste. Die Artikelliste las diese Query-Parameter zunaechst nicht aus und filterte nur ueber lokale FormControls.
 
 **Auswirkung im Workflow**
 
-Ein Klick aus dem Dashboard auf einen Artikel oder Barcode landet zwar auf `/articles`, die erwartete Vorfilterung nach Code passiert aber nicht.
+Ein Klick aus dem Dashboard auf einen Artikel oder Barcode landete zwar auf `/articles`, die erwartete Vorfilterung nach Code passierte aber nicht.
 
 **Codebeleg**
 
@@ -131,9 +135,13 @@ Ein Klick aus dem Dashboard auf einen Artikel oder Barcode landet zwar auf `/art
 - `apps/sim-system/src/app/views/articles/articles.component.ts:23`
 - `apps/sim-system/src/app/views/articles/articles.component.ts:37`
 
-**Empfehlung**
+**Status**
 
-`ArticlesComponent` sollte `ActivatedRoute.queryParamMap` lesen und `codeCtrl` bzw. `searchCtrl` initial daraus setzen.
+Frontend angepasst:
+
+- `ArticlesComponent` liest jetzt `queryParamMap`
+- der Query-Parameter `code` wird in `codeCtrl` uebernommen
+- der Deep-Link vom Dashboard filtert die Artikelliste damit direkt vor
 
 ### 6. Login-Workflow ist im Frontend vorbereitet, aber als Gesamtablauf nicht lauffaehig
 

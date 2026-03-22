@@ -1,8 +1,9 @@
 import { ChangeDetectionStrategy, Component, computed, effect, ElementRef, inject, signal, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormControl } from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { debounceTime, switchMap, catchError, of, filter } from 'rxjs';
+import { debounceTime, switchMap, catchError, of, filter, map } from 'rxjs';
 import { ArticleService } from '../../services/article.service';
 
 interface LogEntry {
@@ -25,11 +26,16 @@ export class InventoryComponent {
   @ViewChild('codeInput') codeInputRef!: ElementRef<HTMLInputElement>;
 
   private articleService = inject(ArticleService);
+  private route = inject(ActivatedRoute);
 
   readonly codeCtrl = new FormControl('');
   readonly isVal = signal(0);
   readonly submitting = signal(false);
   readonly recentLog = signal<LogEntry[]>([]);
+  private readonly routeCode = toSignal(
+    this.route.queryParamMap.pipe(map(params => params.get('code') ?? '')),
+    { initialValue: '' }
+  );
 
   readonly article = toSignal(
     this.codeCtrl.valueChanges.pipe(
@@ -52,6 +58,14 @@ export class InventoryComponent {
   });
 
   constructor() {
+    effect(() => {
+      const code = this.routeCode();
+      if (this.codeCtrl.value !== code) {
+        this.codeCtrl.setValue(code, { emitEvent: true });
+        setTimeout(() => this.codeInputRef?.nativeElement?.focus(), 50);
+      }
+    });
+
     // Wenn Artikel wechselt: isVal auf Soll vorbelegen
     effect(() => {
       const stock = this.shouldVal();

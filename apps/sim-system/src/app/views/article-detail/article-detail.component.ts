@@ -32,8 +32,6 @@ export class ArticleDetailComponent {
     type:          new FormControl('', [Validators.required]),
     price:         new FormControl<number>(0, [Validators.required, Validators.min(0)]),
     unit:          new FormControl('', [Validators.required]),
-    stock:         new FormControl<number>(0),
-    inventoryDate: new FormControl(''),
     singlePos:     new FormControl(false),
     trackStock:    new FormControl(true),
     noDiscount:    new FormControl(false),
@@ -66,6 +64,8 @@ export class ArticleDetailComponent {
   );
 
   readonly loading = computed(() => !this.isNew() && this.loadedArticle() === undefined && !this.error());
+  readonly inventoryArticle = computed(() => this.loadedArticle());
+  readonly canGoToInventory = computed(() => !!this.inventoryArticle()?.code);
 
   constructor() {
     effect(() => {
@@ -96,6 +96,12 @@ export class ArticleDetailComponent {
       next: () => this.router.navigate(['/articles']),
       error: err => this.error.set(err.message || 'Fehler beim Löschen')
     });
+  }
+
+  goToInventory() {
+    const code = this.form.controls.code.value || this.inventoryArticle()?.code || '';
+    if (!code) return;
+    this.router.navigate(['/inventory'], { queryParams: { code } });
   }
 
   back() { this.router.navigate(['/articles']); }
