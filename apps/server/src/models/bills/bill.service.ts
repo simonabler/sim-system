@@ -319,7 +319,7 @@ export class BillService extends BaseService<Bill, BillEntity> {
   }
 
   private async writeBillPdf(bill: BillEntity): Promise<void> {
-    const retpdf = this.pdfMakerService.generateBill(bill);
+    const retpdf = await this.pdfMakerService.generateBill(bill);
     await this.pdfMakerService.savePDFToFileSystem(
       retpdf,
       join(this.appConfigService.pdf_bill_path, bill.path),

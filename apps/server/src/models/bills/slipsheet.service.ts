@@ -96,7 +96,7 @@ export class SlipsheetService extends BaseService<Slipsheet, SlipsheetEntity> {
     }
 
     try {
-      const contentd = this.pdfMakerService.generateDeliverySlip(slip);
+      const contentd = await this.pdfMakerService.generateDeliverySlip(slip);
       await this.pdfMakerService.savePDFToFileSystem(
         contentd,
         join(this.appConfigService.pdf_slip_path, slip.path),
