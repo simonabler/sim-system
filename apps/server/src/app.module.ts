@@ -8,6 +8,7 @@ import { SqliteConfigModule } from './config/database/sqlite/config.module';
 import { ArticleModule } from './models/article/article.module';
 import { BillModule } from './models/bills/bill.module';
 import { CustomerModule } from './models/customer/customer.module';
+import { CompanySettingsModule } from './models/settings/company-settings.module';
 import { SqliteDatabaseProviderModule } from './providers/database/sqlite/provider.module';
 import { UsersModule } from './models/users/users.module'; // Bug #7 fix: add UsersModule
 
@@ -20,6 +21,7 @@ const ENV = process.env.NODE_ENV;
     ArticleModule,
     CustomerModule,
     BillModule,
+    CompanySettingsModule,
     SharedModule,
     UsersModule, // Bug #7 fix
   ],
