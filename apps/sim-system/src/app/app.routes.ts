@@ -54,6 +54,10 @@ export const appRoutes: Route[] = [
     path: 'order/new',
     loadComponent: () => import('./views/order-new/order-new.component').then(m => m.OrderNewComponent)
   },
+  {
+    path: 'settings',
+    loadComponent: () => import('./views/settings/settings.component').then(m => m.SettingsComponent)
+  },
   { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
   { path: '**', redirectTo: 'dashboard' }
 ];
