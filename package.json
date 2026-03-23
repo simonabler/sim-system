@@ -29,6 +29,7 @@
     "multer": "^2.1.1",
     "nest-csv-parser": "^2.0.4",
     "ngx-toastr": "^20.0.5",
+    "pdf-lib": "^1.17.1",
     "pdf-to-printer": "^5.7.0",
     "pdfmake": "^0.2.23",
     "reflect-metadata": "^0.2.2",

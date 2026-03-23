@@ -35,6 +35,10 @@ export class SettingsService {
     return this._upload('settings/badge2', file);
   }
 
+  uploadTemplatePdf(file: File): Observable<CompanySettings> {
+    return this._upload('settings/template-pdf', file);
+  }
+
   private _upload(endpoint: string, file: File): Observable<CompanySettings> {
     const fd = new FormData();
     fd.append('file', file);

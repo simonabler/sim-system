@@ -4,13 +4,15 @@ export interface BankAccount {
   bic: string;
 }
 
+export type LetterheadMode = 'generated' | 'disabled' | 'template_pdf';
+
 export class CompanySettings {
   id?: number;
   companyName: string = '';
   street: string = '';
   zip: string = '';
   city: string = '';
-  country: string = 'Österreich';
+  country: string = 'Oesterreich';
   phone: string = '';
   email: string = '';
   website: string = '';
@@ -24,6 +26,8 @@ export class CompanySettings {
   logoPath: string | null = null;
   badge1Path: string | null = null;
   badge2Path: string | null = null;
+  letterheadMode: LetterheadMode = 'generated';
+  templatePdfPath: string | null = null;
   updatedAt?: Date;
 
   constructor(init?: Partial<CompanySettings>) {

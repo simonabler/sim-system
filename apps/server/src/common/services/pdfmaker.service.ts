@@ -1,17 +1,21 @@
 import { Injectable } from '@nestjs/common';
+import { mkdir, writeFile } from 'fs/promises';
+import { existsSync, readFileSync } from 'fs';
+import { join, dirname } from 'path';
+import moment from 'moment';
+import { PDFDocument } from 'pdf-lib';
 const PdfPrinter = require('pdfmake');
 import { Content, ContentTable, TDocumentDefinitions } from 'pdfmake/interfaces';
-import { SlipsheetEntity } from '../../models/bills/serializers/slipsheet.serializer';
-import { createWriteStream, existsSync, readFileSync } from 'fs';
-import { join } from 'path';
-import moment from 'moment';
+import { AnnotationEntity } from '../../models/bills/serializers/annotation.serializer';
 import { BillEntity } from '../../models/bills/serializers/bill.serializer';
 import { OrderEntryEntity } from '../../models/bills/serializers/order-entry.serializer';
-import { AnnotationEntity } from '../../models/bills/serializers/annotation.serializer';
+import { SlipsheetEntity } from '../../models/bills/serializers/slipsheet.serializer';
 import { CompanySettingsService } from '../../models/settings/company-settings.service';
-import { CompanySettingsEntity } from '../../models/settings/serializers/company-settings.serializer';
+import {
+  CompanySettingsEntity,
+} from '../../models/settings/serializers/company-settings.serializer';
+import { LetterheadMode } from '../../models/settings/interfaces/company-settings.interface';
 
-// Fallback-Pfade auf die bestehenden hardcoded Dateien
 const FALLBACK_LOGO = join(__dirname, '..', 'pdfAnnotation', 'logo.svg');
 const FALLBACK_BADGE1 = join(__dirname, '..', 'pdfAnnotation', 'adler.svg');
 const FALLBACK_BADGE2 = join(__dirname, '..', 'pdfAnnotation', 'gdfort.jpg');
@@ -47,15 +51,15 @@ export class PdfMakerService {
     ZapfDingbats: { normal: 'ZapfDingbats' },
   };
 
-  private readonly _printer;
+  private readonly printer;
 
   constructor(private readonly settingsService: CompanySettingsService) {
-    this._printer = new PdfPrinter(this.fonts);
+    this.printer = new PdfPrinter(this.fonts);
   }
 
-  public async generateDeliverySlip(slip: SlipsheetEntity): Promise<PDFKit.PDFDocument> {
+  public async generateDeliverySlip(slip: SlipsheetEntity): Promise<Buffer> {
     const settings = await this.getSettings();
-    const docDefinition = await this.buildDocDefinition(settings);
+    const docDefinition = this.buildDocDefinition(settings);
     const content: Array<Content> = [];
 
     content.push(this.buildHead(slip, slip.printDate, settings));
@@ -69,12 +73,12 @@ export class PdfMakerService {
     content.push(this.buildOrdersDelivery(slip));
     docDefinition.content = content;
 
-    return this._printer.createPdfKitDocument(docDefinition);
+    return this.renderPdfBuffer(docDefinition, settings);
   }
 
-  public async generateBill(bill: BillEntity): Promise<PDFKit.PDFDocument> {
+  public async generateBill(bill: BillEntity): Promise<Buffer> {
     const settings = await this.getSettings();
-    const docDefinition = await this.buildDocDefinition(settings);
+    const docDefinition = this.buildDocDefinition(settings);
     const content: Array<Content> = [];
 
     content.push(this.buildHead(bill.slipsheets[0], bill.billDate, settings));
@@ -82,33 +86,88 @@ export class PdfMakerService {
     content.push(this.buildOrders(bill, settings));
     docDefinition.content = content;
 
-    return this._printer.createPdfKitDocument(docDefinition);
+    return this.renderPdfBuffer(docDefinition, settings);
   }
 
-  public savePDFToFileSystem(doc: PDFKit.PDFDocument, filepath: string): Promise<string> {
+  public async savePDFToFileSystem(pdf: Buffer, filepath: string): Promise<string> {
+    await mkdir(dirname(filepath), { recursive: true });
+    await writeFile(filepath, pdf);
+    return filepath;
+  }
+
+  private async renderPdfBuffer(
+    docDefinition: TDocumentDefinitions,
+    settings: CompanySettingsEntity | null,
+  ): Promise<Buffer> {
+    const doc = this.printer.createPdfKitDocument(docDefinition);
+    const contentBuffer = await this.toBuffer(doc);
+
+    if (this.getLetterheadMode(settings) !== 'template_pdf') {
+      return contentBuffer;
+    }
+
+    return this.mergeWithTemplate(contentBuffer, settings);
+  }
+
+  private toBuffer(doc: PDFKit.PDFDocument): Promise<Buffer> {
     return new Promise((resolve, reject) => {
-      if (!this.saveStreamtoFileSystem(doc, filepath, (_err, _pages, path) => resolve(path))) {
-        reject(new Error('PDF konnte nicht gespeichert werden'));
-      }
+      const chunks: Buffer[] = [];
+
+      doc.on('data', (chunk: Buffer) => chunks.push(Buffer.from(chunk)));
+      doc.on('end', () => resolve(Buffer.concat(chunks)));
+      doc.on('error', reject);
+      doc.end();
     });
   }
 
-  public saveStreamtoFileSystem(
-    doc: PDFKit.PDFDocument,
-    filepath: string,
-    cb: Function,
-  ): boolean {
-    try {
-      if (filepath) {
-        doc.pipe(createWriteStream(filepath));
-        doc.on('end', () => cb(null, null, [filepath]));
-        doc.end();
-        return true;
-      }
-    } catch (error) {
-      console.error('PdfMakerService.saveStreamtoFileSystem:', error);
+  private async mergeWithTemplate(
+    contentBuffer: Buffer,
+    settings: CompanySettingsEntity | null,
+  ): Promise<Buffer> {
+    const templatePath = this.getExistingPath(settings?.templatePdfPath);
+    if (!templatePath) {
+      return contentBuffer;
     }
-    return false;
+
+    try {
+      const contentPdf = await PDFDocument.load(contentBuffer);
+      const templateBytes = readFileSync(templatePath);
+      const templatePdf = await PDFDocument.load(templateBytes);
+      const mergedPdf = await PDFDocument.create();
+      const templatePageCount = templatePdf.getPageCount();
+
+      for (let pageIndex = 0; pageIndex < contentPdf.getPageCount(); pageIndex += 1) {
+        const contentPage = contentPdf.getPage(pageIndex);
+        const { width, height } = contentPage.getSize();
+        const targetPage = mergedPdf.addPage([width, height]);
+        const templatePageIndex = templatePageCount === 0
+          ? -1
+          : Math.min(pageIndex, templatePageCount - 1);
+
+        if (templatePageIndex >= 0) {
+          const [embeddedTemplatePage] = await mergedPdf.embedPdf(templateBytes, [templatePageIndex]);
+          targetPage.drawPage(embeddedTemplatePage, {
+            x: 0,
+            y: 0,
+            width,
+            height,
+          });
+        }
+
+        const [embeddedContentPage] = await mergedPdf.embedPdf(contentBuffer, [pageIndex]);
+        targetPage.drawPage(embeddedContentPage, {
+          x: 0,
+          y: 0,
+          width,
+          height,
+        });
+      }
+
+      return Buffer.from(await mergedPdf.save());
+    } catch (error) {
+      console.error('PdfMakerService.mergeWithTemplate:', error);
+      return contentBuffer;
+    }
   }
 
   private async getSettings(): Promise<CompanySettingsEntity | null> {
@@ -117,6 +176,14 @@ export class PdfMakerService {
     } catch {
       return null;
     }
+  }
+
+  private getLetterheadMode(settings: CompanySettingsEntity | null): LetterheadMode {
+    return settings?.letterheadMode ?? 'generated';
+  }
+
+  private shouldRenderGeneratedLetterhead(settings: CompanySettingsEntity | null): boolean {
+    return this.getLetterheadMode(settings) === 'generated';
   }
 
   private getExistingPath(filePath: string | null | undefined): string | null {
@@ -134,17 +201,30 @@ export class PdfMakerService {
     return null;
   }
 
-  private buildLogoContent(settings: CompanySettingsEntity | null) {
-    const logoPath = this.getExistingPath(settings?.logoPath);
-    const usePath = logoPath || FALLBACK_LOGO;
-    const svg = readFileSync(usePath).toString();
+  private isSvg(path: string): boolean {
+    return path.toLowerCase().endsWith('.svg');
+  }
 
-    return { svg, fit: [170, 170], margin: [60, 30, 0, 0] };
+  private buildLogoContent(settings: CompanySettingsEntity | null): Content {
+    const usePath = this.getExistingPath(settings?.logoPath) || FALLBACK_LOGO;
+
+    if (this.isSvg(usePath)) {
+      return {
+        svg: readFileSync(usePath).toString(),
+        fit: [170, 170],
+        margin: [60, 30, 0, 0],
+      };
+    }
+
+    return {
+      image: usePath,
+      fit: [170, 170],
+      margin: [60, 30, 0, 0],
+    };
   }
 
   private buildFooterBadge1(settings: CompanySettingsEntity | null): Content {
     const usePath = this.getExistingPath(settings?.badge1Path) || FALLBACK_BADGE1;
-    const isSvg = usePath.toLowerCase().endsWith('.svg');
     const base: any = {
       alignment: 'right',
       width: 40,
@@ -152,16 +232,15 @@ export class PdfMakerService {
       color: '#e9582a',
     };
 
-    return isSvg
+    return this.isSvg(usePath)
       ? { ...base, svg: readFileSync(usePath).toString() }
       : { ...base, image: usePath };
   }
 
   private buildFooterBadge2(settings: CompanySettingsEntity | null): Content {
     const usePath = this.getExistingPath(settings?.badge2Path) || FALLBACK_BADGE2;
-    const isSvg = usePath.toLowerCase().endsWith('.svg');
 
-    return isSvg
+    return this.isSvg(usePath)
       ? {
           svg: readFileSync(usePath).toString(),
           width: 40,
@@ -177,13 +256,13 @@ export class PdfMakerService {
       `Zahlung innerhalb von ${settings?.paymentTermDays ?? 14} Tagen netto Kassa`;
 
     const bankLines = (settings?.bankAccounts ?? [])
-      .map((bank) => `${bank.name} · IBAN: ${bank.iban} · BIC: ${bank.bic}`)
-      .join(' · ');
+      .map((bank) => `${bank.name} | IBAN: ${bank.iban} | BIC: ${bank.bic}`)
+      .join(' | ');
 
     const city = settings?.issueCity ?? 'Landeck';
     const base = `Zahlbar und klagbar in ${city}`;
 
-    return [paymentText, base, bankLines].filter(Boolean).join(' · ');
+    return [paymentText, base, bankLines].filter(Boolean).join(' | ');
   }
 
   private buildHeaderStack(settings: CompanySettingsEntity | null): Content[] {
@@ -227,46 +306,49 @@ export class PdfMakerService {
     return lines;
   }
 
-  private async buildDocDefinition(
-    settings: CompanySettingsEntity | null,
-  ): Promise<TDocumentDefinitions> {
+  private buildDocDefinition(settings: CompanySettingsEntity | null): TDocumentDefinitions {
     const self = this;
+    const renderGeneratedLetterhead = this.shouldRenderGeneratedLetterhead(settings);
 
     return {
       pageOrientation: 'portrait',
       pageMargins: [60, 150, 60, 100],
-      header: (() => [
-        {
-          columns: [
-            self.buildLogoContent(settings),
+      header: renderGeneratedLetterhead
+        ? (() => [
             {
-              alignment: 'right',
-              margin: [0, 25, 70, 0],
-              stack: self.buildHeaderStack(settings),
+              columns: [
+                self.buildLogoContent(settings),
+                {
+                  alignment: 'right',
+                  margin: [0, 25, 70, 0],
+                  stack: self.buildHeaderStack(settings),
+                },
+              ],
             },
-          ],
-        },
-        {
-          canvas: [{ type: 'line', x1: 50, y1: 5, x2: 595 - 50, y2: 5, lineWidth: 1 }],
-        },
-      ]) as any,
-      footer: (() => [
-        {
-          canvas: [{ type: 'line', x1: 50, y1: 0, x2: 595 - 50, y2: 0, lineWidth: 1 }],
-          margin: [0, 30, 0, 5],
-        },
-        {
-          table: {
-            widths: [120, '*', 120],
-            body: [[
-              self.buildFooterBadge1(settings),
-              { text: self.buildFooterText(settings), style: 'footerText' },
-              self.buildFooterBadge2(settings),
-            ]],
-          },
-          layout: 'noBorders',
-        },
-      ]) as any,
+            {
+              canvas: [{ type: 'line', x1: 50, y1: 5, x2: 595 - 50, y2: 5, lineWidth: 1 }],
+            },
+          ]) as any
+        : undefined,
+      footer: renderGeneratedLetterhead
+        ? (() => [
+            {
+              canvas: [{ type: 'line', x1: 50, y1: 0, x2: 595 - 50, y2: 0, lineWidth: 1 }],
+              margin: [0, 30, 0, 5],
+            },
+            {
+              table: {
+                widths: [120, '*', 120],
+                body: [[
+                  self.buildFooterBadge1(settings),
+                  { text: self.buildFooterText(settings), style: 'footerText' },
+                  self.buildFooterBadge2(settings),
+                ]],
+              },
+              layout: 'noBorders',
+            },
+          ]) as any
+        : undefined,
       content: [],
       styles: this.buildStyles(),
       defaultStyle: { font: 'Arial', fontSize: 12 },
@@ -369,7 +451,11 @@ export class PdfMakerService {
       table.table.body.push([
         '',
         {
-          text: 'Lieferschein von ' + moment(slip.createdAt).format('DD.MM.YYYY') + ' L' + slip.slipsheetnumber,
+          text:
+            'Lieferschein von ' +
+            moment(slip.createdAt).format('DD.MM.YYYY') +
+            ' L' +
+            slip.slipsheetnumber,
           colSpan: 6,
           style: 'slipCell',
         },
@@ -383,11 +469,10 @@ export class PdfMakerService {
 
       const annotation = this.buildSlipAnnotations(slip);
       if (annotation) {
-        const annotationCell = { stack: annotation, colSpan: 6 };
-        table.table.body.push(['', annotationCell, '', '', '', '', '', '']);
+        table.table.body.push(['', { stack: annotation, colSpan: 6 }, '', '', '', '', '', '']);
       }
 
-      for (let i = 0; i < slip.orderEntries.length; i++) {
+      for (let i = 0; i < slip.orderEntries.length; i += 1) {
         const el: OrderEntryEntity = slip.orderEntries[i];
         const amount = el.amountCounted || el.amount;
         const discount = el.articleGroupRabatt ?? 0;
@@ -402,7 +487,7 @@ export class PdfMakerService {
           { text: el.article?.artNumber ?? '', style: 'tableCell' },
           { text: el.text, style: 'tableCell' },
           { text: amount, style: 'tableCell', alignment: 'right' },
-          { text: '€' + el.price.toFixed(2), style: 'tableCell', alignment: 'right' },
+          { text: 'EUR ' + el.price.toFixed(2), style: 'tableCell', alignment: 'right' },
           {
             text: isDiscount ? discount.toFixed(0) + '%' : '',
             style: 'tableCell',
@@ -413,7 +498,7 @@ export class PdfMakerService {
             style: 'tableCell',
             alignment: 'right',
           },
-          { text: '€' + total.toFixed(2), style: 'tableCell', alignment: 'right' },
+          { text: 'EUR ' + total.toFixed(2), style: 'tableCell', alignment: 'right' },
         ]);
       }
     }
@@ -430,7 +515,7 @@ export class PdfMakerService {
         { text: 'Summe', colSpan: 2, style: 'tableCell', alignment: 'right' },
         '',
         '',
-        { text: '€' + sum.toFixed(2), style: 'tableCell', alignment: 'right' },
+        { text: 'EUR ' + sum.toFixed(2), style: 'tableCell', alignment: 'right' },
       ],
       [
         empty,
@@ -440,7 +525,7 @@ export class PdfMakerService {
         { text: vatLabel, colSpan: 2, style: 'tableCell', alignment: 'right' },
         '',
         '',
-        { text: '€' + ((sum * vatRate) / 100).toFixed(2), style: 'tableCell', alignment: 'right' },
+        { text: 'EUR ' + ((sum * vatRate) / 100).toFixed(2), style: 'tableCell', alignment: 'right' },
       ],
       [
         empty,
@@ -451,7 +536,7 @@ export class PdfMakerService {
         '',
         '',
         {
-          text: '€' + (sum * (1 + vatRate / 100)).toFixed(2),
+          text: 'EUR ' + (sum * (1 + vatRate / 100)).toFixed(2),
           style: 'tableSumHeader',
           alignment: 'right',
         },
@@ -477,7 +562,7 @@ export class PdfMakerService {
       layout: this.getSlipTableLayout(),
     };
 
-    for (let i = 0; i < slip.orderEntries.length; i++) {
+    for (let i = 0; i < slip.orderEntries.length; i += 1) {
       const el = slip.orderEntries[i];
       table.table.body.push([
         { text: i + 1, style: 'tableCell' },

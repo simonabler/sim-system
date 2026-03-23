@@ -7,6 +7,7 @@ import {
   ValidateNested,
   Min,
   Max,
+  IsIn,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 
@@ -79,6 +80,11 @@ export class UpdateSettingsDto {
   @IsOptional()
   @IsString()
   issueCity?: string;
+
+  @ApiPropertyOptional({ enum: ['generated', 'disabled', 'template_pdf'] })
+  @IsOptional()
+  @IsIn(['generated', 'disabled', 'template_pdf'])
+  letterheadMode?: 'generated' | 'disabled' | 'template_pdf';
 
   @ApiPropertyOptional()
   @IsOptional()

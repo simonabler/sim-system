@@ -1,10 +1,13 @@
 import {
-  Entity,
   Column,
-  UpdateDateColumn,
+  Entity,
   PrimaryColumn,
+  UpdateDateColumn,
 } from 'typeorm';
-import { ICompanySettings } from '../interfaces/company-settings.interface';
+import {
+  ICompanySettings,
+  LetterheadMode,
+} from '../interfaces/company-settings.interface';
 
 @Entity({ name: 'company_settings' })
 export class CompanySettings implements ICompanySettings {
@@ -23,7 +26,7 @@ export class CompanySettings implements ICompanySettings {
   @Column({ nullable: true, default: null })
   city: string | null;
 
-  @Column({ nullable: true, default: 'Österreich' })
+  @Column({ nullable: true, default: 'Oesterreich' })
   country: string | null;
 
   @Column({ nullable: true, default: null })
@@ -64,6 +67,12 @@ export class CompanySettings implements ICompanySettings {
 
   @Column({ nullable: true, default: null })
   badge2Path: string | null;
+
+  @Column({ nullable: false, default: 'generated', length: 20 })
+  letterheadMode: LetterheadMode;
+
+  @Column({ nullable: true, default: null })
+  templatePdfPath: string | null;
 
   @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;

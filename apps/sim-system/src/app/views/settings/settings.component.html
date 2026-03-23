@@ -36,7 +36,7 @@
     [class.active]="activeTab() === 'logos'"
     (click)="setTab('logos')"
   >
-    Logos & Uploads
+    Briefpapier & Uploads
   </button>
 </div>
 
@@ -55,13 +55,8 @@
             <input type="text" class="sims-input" formControlName="companyName" />
           </div>
           <div class="col-12 col-md-6">
-            <label class="sims-label">Ausstellungsort (fuer Rechnungen)</label>
-            <input
-              type="text"
-              class="sims-input"
-              formControlName="issueCity"
-              placeholder="z.B. Landeck"
-            />
+            <label class="sims-label">Ausstellungsort</label>
+            <input type="text" class="sims-input" formControlName="issueCity" />
           </div>
           <div class="col-12">
             <label class="sims-label">Strasse</label>
@@ -89,30 +84,15 @@
           </div>
           <div class="col-12 col-md-6">
             <label class="sims-label">Website</label>
-            <input
-              type="url"
-              class="sims-input"
-              formControlName="website"
-              placeholder="www.meinefirma.at"
-            />
+            <input type="url" class="sims-input" formControlName="website" />
           </div>
           <div class="col-12 col-md-6">
             <label class="sims-label">FN + UID</label>
-            <input
-              type="text"
-              class="sims-input sims-input-mono"
-              formControlName="firmenbuchnummer"
-              placeholder="FN.: 000000x, ATU00000000"
-            />
+            <input type="text" class="sims-input sims-input-mono" formControlName="firmenbuchnummer" />
           </div>
           <div class="col-12 col-md-6">
-            <label class="sims-label">UID-Nummer (separat)</label>
-            <input
-              type="text"
-              class="sims-input sims-input-mono"
-              formControlName="vatId"
-              placeholder="ATU00000000"
-            />
+            <label class="sims-label">UID-Nummer separat</label>
+            <input type="text" class="sims-input sims-input-mono" formControlName="vatId" />
           </div>
         </div>
       </div>
@@ -124,30 +104,18 @@
         <div class="row g-3">
           <div class="col-6 col-md-3">
             <label class="sims-label">Zahlungsfrist (Tage)</label>
-            <input
-              type="number"
-              class="sims-input sims-input-mono"
-              formControlName="paymentTermDays"
-              min="0"
-            />
+            <input type="number" class="sims-input sims-input-mono" formControlName="paymentTermDays" min="0" />
           </div>
           <div class="col-6 col-md-3">
             <label class="sims-label">MwSt.-Satz (%)</label>
-            <input
-              type="number"
-              class="sims-input sims-input-mono"
-              formControlName="vatRate"
-              min="0"
-              max="100"
-            />
+            <input type="number" class="sims-input sims-input-mono" formControlName="vatRate" min="0" max="100" />
           </div>
           <div class="col-12">
-            <label class="sims-label">Zahlungstext (PDF-Footer)</label>
+            <label class="sims-label">Zahlungstext im PDF-Footer</label>
             <textarea
               class="sims-input"
               formControlName="paymentFooterText"
               rows="3"
-              placeholder="Zahlung innerhalb von 14 Tagen netto Kassa · Zahlbar und klagbar in ..."
             ></textarea>
           </div>
         </div>
@@ -161,11 +129,7 @@
             <div [formGroupName]="$index" class="bank-entry mb-2">
               <div class="bank-entry-header">
                 <span class="bank-label">Bank {{ $index + 1 }}</span>
-                <button
-                  type="button"
-                  class="btn-sims-ghost btn-sm"
-                  (click)="removeBank($index)"
-                >
+                <button type="button" class="btn-sims-ghost btn-sm" (click)="removeBank($index)">
                   Entfernen
                 </button>
               </div>
@@ -195,34 +159,108 @@
 
     @if (activeTab() === 'logos') {
       <div class="sims-card mb-3">
-        <div class="form-eyebrow">Uploads</div>
+        <div class="form-eyebrow">Briefpapier</div>
+        <div class="letterhead-grid">
+          <button
+            type="button"
+            class="letterhead-card"
+            [class.active]="isLetterheadMode('generated')"
+            (click)="setLetterheadMode('generated')"
+          >
+            <div class="bank-label">Generiert</div>
+            <div class="letterhead-copy">
+              Logo, Firmenblock und Footer werden aus den Einstellungen erzeugt.
+            </div>
+          </button>
+
+          <button
+            type="button"
+            class="letterhead-card"
+            [class.active]="isLetterheadMode('disabled')"
+            (click)="setLetterheadMode('disabled')"
+          >
+            <div class="bank-label">Deaktiviert</div>
+            <div class="letterhead-copy">
+              Fuer vorgedrucktes Papier. Es wird kein digitales Briefpapier erzeugt.
+            </div>
+          </button>
+
+          <button
+            type="button"
+            class="letterhead-card"
+            [class.active]="isLetterheadMode('template_pdf')"
+            (click)="setLetterheadMode('template_pdf')"
+          >
+            <div class="bank-label">Template-PDF</div>
+            <div class="letterhead-copy">
+              Ein hochgeladenes PDF wird als Seitenhintergrund fuer neue PDFs verwendet.
+            </div>
+          </button>
+        </div>
+
+        <p class="settings-subtle">
+          Die Auswahl wird erst mit "Einstellungen speichern" aktiv.
+        </p>
+
+        @if (isLetterheadMode('template_pdf')) {
+          <div class="template-upload">
+            <label class="sims-label">Template-PDF</label>
+            <div class="upload-zone compact" (click)="templatePdfInput.click()">
+              <div class="upload-placeholder">
+                <span>PDF hochladen</span>
+                <small>Jede Seite wird als Hintergrund fuer die PDF-Erzeugung genutzt.</small>
+              </div>
+            </div>
+            <input
+              #templatePdfInput
+              type="file"
+              accept=".pdf,application/pdf"
+              style="display:none"
+              (change)="onFileChange($event, 'templatePdf')"
+            />
+
+            @if (templatePdfUrl()) {
+              <a class="template-link" [href]="templatePdfUrl()" target="_blank" rel="noreferrer">
+                {{ templatePdfLabel() || 'Aktuelles Template ansehen' }}
+              </a>
+            }
+          </div>
+        }
+      </div>
+
+      <div class="sims-card mb-3">
+        <div class="form-eyebrow">Logo und Badges</div>
+        <p class="settings-subtle">
+          Diese Uploads werden nur im Modus "Generiert" verwendet.
+        </p>
+
         <div class="uploads-grid">
           <div class="upload-item">
-            <label class="sims-label">Firmenlogo (SVG oder PNG)</label>
+            <label class="sims-label">Firmenlogo</label>
             <div class="upload-zone" (click)="logoInput.click()">
               @if (logoPreviewUrl()) {
                 <img [src]="logoPreviewUrl()" alt="Logo" class="upload-preview" />
               } @else {
                 <div class="upload-placeholder">
                   <span>Logo hochladen</span>
-                  <small>SVG bevorzugt · max. 1 MB</small>
+                  <small>SVG, PNG oder JPG</small>
                 </div>
               }
             </div>
             <input
               #logoInput
               type="file"
-              accept=".svg,.png,.jpg"
+              accept=".svg,.png,.jpg,.jpeg"
               style="display:none"
               (change)="onFileChange($event, 'logo')"
             />
           </div>
 
           <div class="upload-item">
-            <label class="sims-label">Badge links (optional)</label>
+            <label class="sims-label">Badge links</label>
             <div class="upload-zone" (click)="badge1Input.click()">
               @if (badge1PreviewUrl()) {
-                <img [src]="badge1PreviewUrl()" alt="Badge 1" class="upload-preview" />
+                <img [src]="badge1PreviewUrl()" alt="Badge links" class="upload-preview" />
               } @else {
                 <div class="upload-placeholder">
                   <span>Badge hochladen</span>
@@ -233,36 +271,33 @@
             <input
               #badge1Input
               type="file"
-              accept=".svg,.png"
+              accept=".svg,.png,.jpg,.jpeg"
               style="display:none"
               (change)="onFileChange($event, 'badge1')"
             />
           </div>
 
           <div class="upload-item">
-            <label class="sims-label">Badge rechts (optional)</label>
+            <label class="sims-label">Badge rechts</label>
             <div class="upload-zone" (click)="badge2Input.click()">
               @if (badge2PreviewUrl()) {
-                <img [src]="badge2PreviewUrl()" alt="Badge 2" class="upload-preview" />
+                <img [src]="badge2PreviewUrl()" alt="Badge rechts" class="upload-preview" />
               } @else {
                 <div class="upload-placeholder">
                   <span>Badge hochladen</span>
-                  <small>PNG · max. 500 KB</small>
+                  <small>SVG, PNG oder JPG</small>
                 </div>
               }
             </div>
             <input
               #badge2Input
               type="file"
-              accept=".svg,.png,.jpg"
+              accept=".svg,.png,.jpg,.jpeg"
               style="display:none"
               (change)="onFileChange($event, 'badge2')"
             />
           </div>
         </div>
-        <p class="upload-hint-text">
-          Uploads werden sofort gespeichert. Das Logo wird beim naechsten PDF-Erstellen verwendet.
-        </p>
       </div>
     }
 

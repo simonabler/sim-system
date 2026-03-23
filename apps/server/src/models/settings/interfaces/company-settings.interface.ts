@@ -1,3 +1,5 @@
+export type LetterheadMode = 'generated' | 'disabled' | 'template_pdf';
+
 export interface ICompanySettings {
   id: number;
   companyName: string | null;
@@ -18,5 +20,7 @@ export interface ICompanySettings {
   logoPath: string | null;
   badge1Path: string | null;
   badge2Path: string | null;
+  letterheadMode: LetterheadMode;
+  templatePdfPath: string | null;
   updatedAt: Date;
 }

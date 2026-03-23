@@ -1,27 +1,28 @@
 import {
-  Get,
-  Put,
-  Post,
+  BadRequestException,
   Body,
-  Controller,
-  UseInterceptors,
-  SerializeOptions,
   ClassSerializerInterceptor,
-  ValidationPipe,
-  UsePipes,
+  Controller,
+  Get,
+  Post,
+  Put,
+  SerializeOptions,
   UploadedFile,
+  UseInterceptors,
+  UsePipes,
+  ValidationPipe,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { ApiBearerAuth, ApiConsumes, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { diskStorage } from 'multer';
 import { extname, join } from 'path';
-import { ApiBearerAuth, ApiConsumes, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ReS } from '../../common/res.model';
+import { UpdateSettingsDto } from './dto/update-settings.dto';
 import { CompanySettingsService } from './company-settings.service';
 import {
   CompanySettingsEntity,
   defaultSettingsGroupsForSerializing,
 } from './serializers/company-settings.serializer';
-import { UpdateSettingsDto } from './dto/update-settings.dto';
-import { ReS } from '../../common/res.model';
 
 const UPLOAD_DEST = join(process.cwd(), 'uploads', 'settings');
 
@@ -32,6 +33,23 @@ function storageConfig(fieldName: string) {
       cb(null, `${fieldName}${extname(file.originalname)}`);
     },
   });
+}
+
+function pdfOnlyFilter(
+  _req: unknown,
+  file: Express.Multer.File,
+  cb: (error: Error | null, acceptFile: boolean) => void,
+) {
+  const isPdf =
+    file.mimetype === 'application/pdf' ||
+    file.originalname.toLowerCase().endsWith('.pdf');
+
+  if (!isPdf) {
+    cb(new BadRequestException('Nur PDF-Dateien sind erlaubt'), false);
+    return;
+  }
+
+  cb(null, true);
 }
 
 @ApiBearerAuth()
@@ -61,7 +79,7 @@ export class CompanySettingsController {
   @UseInterceptors(FileInterceptor('file', { storage: storageConfig('logo') }))
   async uploadLogo(@UploadedFile() file: Express.Multer.File): Promise<ReS<CompanySettingsEntity>> {
     const relativePath = join('uploads', 'settings', file.filename);
-    return ReS.FromData(await this.settingsService.updateLogoPath('logoPath', relativePath));
+    return ReS.FromData(await this.settingsService.updateAssetPath('logoPath', relativePath));
   }
 
   @Post('/badge1')
@@ -70,7 +88,7 @@ export class CompanySettingsController {
   @UseInterceptors(FileInterceptor('file', { storage: storageConfig('badge1') }))
   async uploadBadge1(@UploadedFile() file: Express.Multer.File): Promise<ReS<CompanySettingsEntity>> {
     const relativePath = join('uploads', 'settings', file.filename);
-    return ReS.FromData(await this.settingsService.updateLogoPath('badge1Path', relativePath));
+    return ReS.FromData(await this.settingsService.updateAssetPath('badge1Path', relativePath));
   }
 
   @Post('/badge2')
@@ -79,6 +97,24 @@ export class CompanySettingsController {
   @UseInterceptors(FileInterceptor('file', { storage: storageConfig('badge2') }))
   async uploadBadge2(@UploadedFile() file: Express.Multer.File): Promise<ReS<CompanySettingsEntity>> {
     const relativePath = join('uploads', 'settings', file.filename);
-    return ReS.FromData(await this.settingsService.updateLogoPath('badge2Path', relativePath));
+    return ReS.FromData(await this.settingsService.updateAssetPath('badge2Path', relativePath));
+  }
+
+  @Post('/template-pdf')
+  @ApiConsumes('multipart/form-data')
+  @ApiOperation({ summary: 'Template-PDF hochladen' })
+  @UseInterceptors(
+    FileInterceptor('file', {
+      storage: storageConfig('template'),
+      fileFilter: pdfOnlyFilter as any,
+    }),
+  )
+  async uploadTemplatePdf(
+    @UploadedFile() file: Express.Multer.File,
+  ): Promise<ReS<CompanySettingsEntity>> {
+    const relativePath = join('uploads', 'settings', file.filename);
+    return ReS.FromData(
+      await this.settingsService.updateAssetPath('templatePdfPath', relativePath),
+    );
   }
 }

@@ -21,8 +21,8 @@ export class CompanySettingsService {
     return this.repo.transform(created);
   }
 
-  async updateLogoPath(
-    field: 'logoPath' | 'badge1Path' | 'badge2Path',
+  async updateAssetPath(
+    field: 'logoPath' | 'badge1Path' | 'badge2Path' | 'templatePdfPath',
     path: string,
   ): Promise<CompanySettingsEntity> {
     const existing = await this.repo.findOne({ where: { id: 1 } });
