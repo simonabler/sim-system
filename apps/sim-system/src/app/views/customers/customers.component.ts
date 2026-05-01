@@ -31,11 +31,13 @@ export class CustomersComponent {
 
   readonly filtered = computed(() => {
     const q = (this.searchTerm() ?? '').toLowerCase();
-    return (this.allCustomers()).filter(c =>
-      c.companyName?.toLowerCase().startsWith(q) ||
-      c.firstName?.toLowerCase().startsWith(q) ||
-      c.lastName?.toLowerCase().startsWith(q)
-    );
+    return (this.allCustomers())
+      .filter(c =>
+        c.companyName?.toLowerCase().startsWith(q) ||
+        c.firstName?.toLowerCase().startsWith(q) ||
+        c.lastName?.toLowerCase().startsWith(q)
+      )
+      .sort((a, b) => a.getName().localeCompare(b.getName(), 'de-AT', { sensitivity: 'base' }));
   });
 
   goToCustomer(id: number) { this.router.navigate(['/customers', id]); }
