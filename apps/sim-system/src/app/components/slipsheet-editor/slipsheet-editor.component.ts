@@ -49,6 +49,7 @@ export class SlipsheetEditorComponent {
   readonly textPositionPrice    = signal(0);
   readonly showAnnotationInput = signal(false);
   readonly deleting            = signal(false);
+  readonly printing            = signal(false);
   readonly annotationText     = signal('');
 
   // ── Computed ──────────────────────────────────────────────────
@@ -217,6 +218,28 @@ export class SlipsheetEditorComponent {
   }
 
   // ── Löschen ───────────────────────────────────────────────────
+  printPdf() {
+    const slip = this.slipsheet();
+    if (!slip || this.printing()) return;
+
+    this.printing.set(true);
+    this.error.set('');
+
+    this.slipsheetService.print(slip.id).subscribe({
+      next: () => {
+        this.printing.set(false);
+        this.slipsheetService.getById(slip.id).subscribe({
+          next: updated => this.updated.emit(updated),
+          error: () => this.error.set('Lieferschein konnte nach dem Drucken nicht aktualisiert werden.'),
+        });
+      },
+      error: (err: { message?: string }) => {
+        this.error.set(err?.message || 'Drucken fehlgeschlagen');
+        this.printing.set(false);
+      },
+    });
+  }
+
   deleteSlipsheet() {
     const slip = this.slipsheet();
     if (!slip || !this.canDelete()) return;

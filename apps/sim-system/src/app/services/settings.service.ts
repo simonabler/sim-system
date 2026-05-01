@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { CompanySettings } from '../models/settings.model';
+import { CompanySettings, PrinterOption } from '../models/settings.model';
 
 @Injectable({ providedIn: 'root' })
 export class SettingsService {
@@ -20,6 +20,12 @@ export class SettingsService {
         if (o.success) return new CompanySettings(o.data);
         throw new Error(o.message || 'Fehler beim Speichern');
       }),
+    );
+  }
+
+  getPrinters(): Observable<PrinterOption[]> {
+    return this.http.get<any>('settings/printers').pipe(
+      map(o => o.success ? o.data : []),
     );
   }
 

@@ -93,6 +93,38 @@
   margin: 0.85rem 0 0;
 }
 
+.print-settings {
+  display: grid;
+  gap: 1rem;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+}
+
+.print-toggle-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.print-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.print-toggle input {
+  width: 1rem;
+  height: 1rem;
+  accent-color: var(--accent-highlight);
+}
+
+.printer-select-wrap {
+  max-width: 420px;
+}
+
 .template-upload {
   margin-top: 1rem;
 }

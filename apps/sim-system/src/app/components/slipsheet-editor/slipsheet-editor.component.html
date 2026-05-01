@@ -258,6 +258,9 @@
       </button>
     }
     @if (slipsheet()) {
+      <button class="btn-sims-outline" (click)="printPdf()" [disabled]="printing()">
+        {{ printing() ? 'Wird gedruckt...' : 'Drucken' }}
+      </button>
       <button class="btn-sims-outline" (click)="downloadPdf()">
         PDF herunterladen
       </button>

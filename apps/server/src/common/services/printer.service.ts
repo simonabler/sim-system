@@ -1,15 +1,22 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { print } from 'pdf-to-printer';
 import { AppConfigService } from '../../config/app/config.service';
+import { CompanySettingsService } from '../../models/settings/company-settings.service';
 
 @Injectable()
 export class PrinterService {
+  constructor(
+    private readonly appConfigService: AppConfigService,
+    private readonly settingsService: CompanySettingsService,
+  ) {}
 
-  constructor(private appConfigService: AppConfigService) {}
   async print(path: string): Promise<boolean> {
+    const settings = await this.settingsService.get();
+    const printer = settings?.printerName?.trim() || this.appConfigService.printer;
     const options = {
-      printer: this.appConfigService.printer
+      printer,
     };
+
     try {
       await print(path, options);
       return true;

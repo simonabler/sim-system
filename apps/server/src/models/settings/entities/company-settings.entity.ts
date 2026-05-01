@@ -74,6 +74,12 @@ export class CompanySettings implements ICompanySettings {
   @Column({ nullable: true, default: null })
   templatePdfPath: string | null;
 
+  @Column({ default: true })
+  printDeliverySlipLetterhead: boolean;
+
+  @Column({ nullable: true, default: null })
+  printerName: string | null;
+
   @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
 }

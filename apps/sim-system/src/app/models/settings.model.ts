@@ -6,6 +6,11 @@ export interface BankAccount {
 
 export type LetterheadMode = 'generated' | 'disabled' | 'template_pdf';
 
+export interface PrinterOption {
+  deviceId: string;
+  name: string;
+}
+
 export class CompanySettings {
   id?: number;
   companyName: string = '';
@@ -28,6 +33,8 @@ export class CompanySettings {
   badge2Path: string | null = null;
   letterheadMode: LetterheadMode = 'generated';
   templatePdfPath: string | null = null;
+  printDeliverySlipLetterhead: boolean = true;
+  printerName: string = '';
   updatedAt?: Date;
 
   constructor(init?: Partial<CompanySettings>) {

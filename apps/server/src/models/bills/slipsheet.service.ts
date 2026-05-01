@@ -4,6 +4,8 @@ import {
   NotFoundException,
   UnprocessableEntityException,
 } from '@nestjs/common';
+import { mkdtemp, rm } from 'fs/promises';
+import { tmpdir } from 'os';
 import { BaseService } from '../../common/base.service';
 import { SlipsheetRepository } from './slipsheet.repository';
 import { Slipsheet } from './entities/slipsheet.entity';
@@ -11,10 +13,11 @@ import { SlipsheetEntity } from './serializers/slipsheet.serializer';
 import { CustomerEntity } from '../customer/serializers/customer.serializer';
 import { SlipsheetState } from './enums/slipsheet-state.enum';
 import { Between, EntityManager } from 'typeorm';
-import { join } from 'path';
+import { dirname, join } from 'path';
 import { PdfMakerService } from '../../common/services/pdfmaker.service';
 import { AppConfigService } from '../../config/app/config.service';
 import { TimeRangeDto } from '../../common/dto/time-range.dto';
+import { CompanySettingsService } from '../settings/company-settings.service';
 
 @Injectable()
 export class SlipsheetService extends BaseService<Slipsheet, SlipsheetEntity> {
@@ -22,6 +25,7 @@ export class SlipsheetService extends BaseService<Slipsheet, SlipsheetEntity> {
     private readonly slipsheetRepository: SlipsheetRepository,
     private readonly pdfMakerService: PdfMakerService,
     private readonly appConfigService: AppConfigService,
+    private readonly settingsService: CompanySettingsService,
   ) {
     super(slipsheetRepository);
   }
@@ -107,6 +111,33 @@ export class SlipsheetService extends BaseService<Slipsheet, SlipsheetEntity> {
 
     slip = (await this.getAllInformations([id]))[0];
     return slip;
+  }
+
+  async getPrintablePath(id: number, storedSlip: SlipsheetEntity): Promise<string> {
+    const settings = await this.settingsService.get();
+    if (settings?.printDeliverySlipLetterhead !== false) {
+      return join(this.appConfigService.pdf_slip_path, storedSlip.path);
+    }
+
+    const tempDir = await mkdtemp(join(tmpdir(), 'sim-slip-print-'));
+    const tempPath = join(tempDir, storedSlip.path || `L_${id}.pdf`);
+
+    const currentSlip = (await this.getAllInformations([id]))[0];
+    const content = await this.pdfMakerService.generateDeliverySlip(
+      currentSlip,
+      { disableLetterhead: true },
+    );
+    await this.pdfMakerService.savePDFToFileSystem(content, tempPath);
+
+    return tempPath;
+  }
+
+  async cleanupPrintablePath(path: string): Promise<void> {
+    if (!path.startsWith(tmpdir())) {
+      return;
+    }
+
+    await rm(dirname(path), { recursive: true, force: true });
   }
 
   closeAndSetBillId(shoppingcartIds: number[], billId: number): Promise<SlipsheetEntity[]> {

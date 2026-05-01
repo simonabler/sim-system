@@ -66,6 +66,18 @@ export class CompanySettingsController {
     return ReS.FromData(await this.settingsService.get());
   }
 
+  @Get('/printers')
+  @ApiOperation({ summary: 'Verfuegbare Drucker laden' })
+  async getPrinters(): Promise<ReS<Array<{ deviceId: string; name: string }>>> {
+    const printers = await this.settingsService.getPrinters();
+    return ReS.FromData(
+      printers.map((printer) => ({
+        deviceId: printer.deviceId,
+        name: printer.name,
+      })),
+    );
+  }
+
   @Put('/')
   @UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
   @ApiOperation({ summary: 'Einstellungen speichern' })

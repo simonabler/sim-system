@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { getPrinters, Printer } from 'pdf-to-printer';
 import { CompanySettingsRepository } from './company-settings.repository';
 import { CompanySettingsEntity } from './serializers/company-settings.serializer';
 import { UpdateSettingsDto } from './dto/update-settings.dto';
@@ -10,6 +11,10 @@ export class CompanySettingsService {
 
   async get(): Promise<CompanySettingsEntity | null> {
     return this.repo.get(1, [], false);
+  }
+
+  async getPrinters(): Promise<Printer[]> {
+    return getPrinters();
   }
 
   async upsert(dto: UpdateSettingsDto): Promise<CompanySettingsEntity> {

@@ -8,6 +8,7 @@ import {
   Min,
   Max,
   IsIn,
+  IsBoolean,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 
@@ -105,6 +106,17 @@ export class UpdateSettingsDto {
   @IsOptional()
   @IsString()
   paymentFooterText?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @Type(() => Boolean)
+  @IsBoolean()
+  printDeliverySlipLetterhead?: boolean;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  printerName?: string;
 
   @ApiPropertyOptional({ type: [BankAccountDto] })
   @IsOptional()

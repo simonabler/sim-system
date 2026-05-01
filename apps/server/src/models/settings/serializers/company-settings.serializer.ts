@@ -25,5 +25,7 @@ export class CompanySettingsEntity extends ModelEntity implements ICompanySettin
   @Expose({ groups: ['default'] }) badge2Path: string | null;
   @Expose({ groups: ['default'] }) letterheadMode: 'generated' | 'disabled' | 'template_pdf';
   @Expose({ groups: ['default'] }) templatePdfPath: string | null;
+  @Expose({ groups: ['default'] }) printDeliverySlipLetterhead: boolean;
+  @Expose({ groups: ['default'] }) printerName: string | null;
   @Expose({ groups: ['default'] }) updatedAt: Date;
 }

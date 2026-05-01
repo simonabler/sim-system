@@ -13,11 +13,12 @@ async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
   // Bug #8 fix: replace cors: true with proper CORS config
-  app.enableCors({
-    origin: process.env.CORS_ORIGIN?.split(',') ?? ['http://localhost:4200'],
-    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    credentials: true,
-  });
+  // app.enableCors({
+  //   origin: process.env.CORS_ORIGIN?.split(',') ?? ['http://localhost:4200'],
+  //   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  //   credentials: true,
+  // });
+  app.enableCors();
   app.useStaticAssets(join(process.cwd(), 'uploads'), { prefix: '/uploads' });
 
   app.setGlobalPrefix('api/v1');

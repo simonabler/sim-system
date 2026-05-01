@@ -27,6 +27,7 @@ import { OrderEntry } from './entities/order-entry.entity';
 import { Annotation } from './entities/annotation.entity';
 import { Discount } from './entities/discount.entity';
 import { Inventory } from '../article/entities/inventory.entity';
+import { CompanySettingsModule } from '../settings/company-settings.module';
 
 @Module({
   imports: [
@@ -41,6 +42,7 @@ import { Inventory } from '../article/entities/inventory.entity';
     ArticleModule,
     AppConfigModule,
     SharedModule,
+    CompanySettingsModule,
     forwardRef(() => CustomerModule),
   ],
 

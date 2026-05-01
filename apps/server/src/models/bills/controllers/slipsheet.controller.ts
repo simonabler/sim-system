@@ -130,8 +130,13 @@ export class SlipsheetController {
     @Response({ passthrough: true }) res): Promise<ReS<boolean>> {
 
     let slip: SlipsheetEntity = await this.getOrGenerateSlipsheep(id, true);
+    const printPath = await this.slipsheetService.getPrintablePath(id, slip);
 
-    return ReS.FromData(await this.printerService.print(join(this.appConfigService.pdf_slip_path, slip.path)));
+    try {
+      return ReS.FromData(await this.printerService.print(printPath));
+    } finally {
+      await this.slipsheetService.cleanupPrintablePath(printPath);
+    }
   }
 
   private async getOrGenerateSlipsheep(id: number, close: boolean) {

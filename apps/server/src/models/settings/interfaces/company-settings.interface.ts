@@ -22,5 +22,7 @@ export interface ICompanySettings {
   badge2Path: string | null;
   letterheadMode: LetterheadMode;
   templatePdfPath: string | null;
+  printDeliverySlipLetterhead: boolean;
+  printerName: string | null;
   updatedAt: Date;
 }

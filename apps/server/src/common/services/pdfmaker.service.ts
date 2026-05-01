@@ -20,6 +20,10 @@ const FALLBACK_LOGO = join(__dirname, '..', 'pdfAnnotation', 'logo.svg');
 const FALLBACK_BADGE1 = join(__dirname, '..', 'pdfAnnotation', 'adler.svg');
 const FALLBACK_BADGE2 = join(__dirname, '..', 'pdfAnnotation', 'gdfort.jpg');
 
+interface PdfRenderOptions {
+  disableLetterhead?: boolean;
+}
+
 @Injectable()
 export class PdfMakerService {
   private readonly fonts = {
@@ -57,9 +61,12 @@ export class PdfMakerService {
     this.printer = new PdfPrinter(this.fonts);
   }
 
-  public async generateDeliverySlip(slip: SlipsheetEntity): Promise<Buffer> {
+  public async generateDeliverySlip(
+    slip: SlipsheetEntity,
+    options: PdfRenderOptions = {},
+  ): Promise<Buffer> {
     const settings = await this.getSettings();
-    const docDefinition = this.buildDocDefinition(settings);
+    const docDefinition = this.buildDocDefinition(settings, options);
     const content: Array<Content> = [];
 
     content.push(this.buildHead(slip, slip.printDate, settings));
@@ -73,7 +80,7 @@ export class PdfMakerService {
     content.push(this.buildOrdersDelivery(slip));
     docDefinition.content = content;
 
-    return this.renderPdfBuffer(docDefinition, settings);
+    return this.renderPdfBuffer(docDefinition, settings, options);
   }
 
   public async generateBill(bill: BillEntity): Promise<Buffer> {
@@ -98,11 +105,12 @@ export class PdfMakerService {
   private async renderPdfBuffer(
     docDefinition: TDocumentDefinitions,
     settings: CompanySettingsEntity | null,
+    options: PdfRenderOptions = {},
   ): Promise<Buffer> {
     const doc = this.printer.createPdfKitDocument(docDefinition);
     const contentBuffer = await this.toBuffer(doc);
 
-    if (this.getLetterheadMode(settings) !== 'template_pdf') {
+    if (options.disableLetterhead || this.getLetterheadMode(settings) !== 'template_pdf') {
       return contentBuffer;
     }
 
@@ -306,13 +314,17 @@ export class PdfMakerService {
     return lines;
   }
 
-  private buildDocDefinition(settings: CompanySettingsEntity | null): TDocumentDefinitions {
+  private buildDocDefinition(
+    settings: CompanySettingsEntity | null,
+    options: PdfRenderOptions = {},
+  ): TDocumentDefinitions {
     const self = this;
-    const renderGeneratedLetterhead = this.shouldRenderGeneratedLetterhead(settings);
+    const renderGeneratedLetterhead =
+      !options.disableLetterhead && this.shouldRenderGeneratedLetterhead(settings);
 
     return {
       pageOrientation: 'portrait',
-      pageMargins: [60, 150, 60, 100],
+      pageMargins: options.disableLetterhead ? [60, 60, 60, 60] : [60, 150, 60, 100],
       header: renderGeneratedLetterhead
         ? (() => [
             {

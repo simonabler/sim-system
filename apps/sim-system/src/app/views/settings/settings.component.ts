@@ -12,7 +12,7 @@ import {
   FormGroup,
   ReactiveFormsModule,
 } from '@angular/forms';
-import { CompanySettings, LetterheadMode } from '../../models/settings.model';
+import { CompanySettings, LetterheadMode, PrinterOption } from '../../models/settings.model';
 import { SettingsService } from '../../services/settings.service';
 
 @Component({
@@ -37,6 +37,8 @@ export class SettingsComponent implements OnInit {
   readonly badge2PreviewUrl = signal<string | null>(null);
   readonly templatePdfUrl = signal<string | null>(null);
   readonly templatePdfLabel = signal('');
+  readonly printers = signal<PrinterOption[]>([]);
+  readonly printersLoading = signal(false);
 
   readonly form = new FormGroup({
     companyName: new FormControl(''),
@@ -54,6 +56,8 @@ export class SettingsComponent implements OnInit {
     paymentTermDays: new FormControl<number>(14),
     paymentFooterText: new FormControl(''),
     letterheadMode: new FormControl<LetterheadMode>('generated', { nonNullable: true }),
+    printDeliverySlipLetterhead: new FormControl(true, { nonNullable: true }),
+    printerName: new FormControl(''),
     bankAccounts: new FormArray<FormGroup>([]),
   });
 
@@ -62,6 +66,8 @@ export class SettingsComponent implements OnInit {
   }
 
   ngOnInit() {
+    this.loadPrinters();
+
     this.settingsService.get().subscribe({
       next: (settings) => {
         this.patchForm(settings);
@@ -91,6 +97,8 @@ export class SettingsComponent implements OnInit {
       paymentTermDays: settings.paymentTermDays,
       paymentFooterText: settings.paymentFooterText,
       letterheadMode: settings.letterheadMode,
+      printDeliverySlipLetterhead: settings.printDeliverySlipLetterhead ?? true,
+      printerName: settings.printerName ?? '',
     });
 
     this.bankAccountsArray.clear();
@@ -218,5 +226,19 @@ export class SettingsComponent implements OnInit {
 
   isLetterheadMode(mode: LetterheadMode): boolean {
     return this.form.controls.letterheadMode.value === mode;
+  }
+
+  private loadPrinters() {
+    this.printersLoading.set(true);
+    this.settingsService.getPrinters().subscribe({
+      next: (printers) => {
+        this.printers.set(printers);
+        this.printersLoading.set(false);
+      },
+      error: () => {
+        this.printers.set([]);
+        this.printersLoading.set(false);
+      },
+    });
   }
 }

@@ -202,6 +202,34 @@
           Die Auswahl wird erst mit "Einstellungen speichern" aktiv.
         </p>
 
+        <div class="print-settings">
+          <div class="print-toggle-row">
+            <label class="print-toggle">
+              <input type="checkbox" formControlName="printDeliverySlipLetterhead" />
+              <span>Briefpapier beim Lieferschein-Druck verwenden</span>
+            </label>
+            <p class="settings-subtle">
+              Betrifft nur den direkten Druck. Heruntergeladene PDFs werden weiterhin mit Briefpapier erzeugt.
+            </p>
+          </div>
+
+          <div class="printer-select-wrap">
+            <label class="sims-label">Drucker</label>
+            <select class="sims-input" formControlName="printerName">
+              <option value="">Standarddrucker aus Server-Konfiguration</option>
+              @for (printer of printers(); track printer.deviceId) {
+                <option [value]="printer.name">{{ printer.name }}</option>
+              }
+            </select>
+            @if (printersLoading()) {
+              <p class="settings-subtle">Drucker werden geladen...</p>
+            }
+            @if (!printersLoading() && printers().length === 0) {
+              <p class="settings-subtle">Keine Drucker gefunden oder Druckerliste nicht verfügbar.</p>
+            }
+          </div>
+        </div>
+
         @if (isLetterheadMode('template_pdf')) {
           <div class="template-upload">
             <label class="sims-label">Template-PDF</label>
