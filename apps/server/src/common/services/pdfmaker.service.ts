@@ -81,7 +81,7 @@ export class PdfMakerService {
     const docDefinition = this.buildDocDefinition(settings);
     const content: Array<Content> = [];
 
-    content.push(this.buildHead(bill.slipsheets[0], bill.billDate, settings));
+    content.push(this.buildHead(bill.slipsheets[0], bill.billDate, settings, { includeCustomerEmail: true }));
     content.push({ text: 'Rechnung #' + bill.billNumber, style: 'header' });
     content.push(this.buildOrders(bill, settings));
     docDefinition.content = content;
@@ -379,8 +379,24 @@ export class PdfMakerService {
     slip: SlipsheetEntity,
     date: Date | undefined,
     settings: CompanySettingsEntity | null,
+    options: { includeCustomerEmail?: boolean } = {},
   ): Content {
     const city = settings?.issueCity ?? 'Landeck';
+    const customerEmail = slip.customer.email?.trim();
+    const addressLines = [
+      'An',
+      slip.customer.companyName || '',
+      `${slip.customer.lastName} ${slip.customer.firstName}`,
+      slip.customer.address,
+      `${slip.customer.postcode} ${slip.customer.country}`
+    ];
+    
+    const customerDetailsLines = [
+            `${city}, am ${moment(date ?? new Date()).format('DD.MM.YYYY')}`,
+            (slip.customer.customerNumber ? 'Kunde: ' + slip.customer.customerNumber : ''),
+            (slip.customer.uid ? 'Ihre UID: ' + slip.customer.uid : 'Ihre UID:'),
+      ...(options.includeCustomerEmail && customerEmail ? [customerEmail] : []),
+    ];
 
     return {
       alignment: 'justify',
@@ -388,21 +404,12 @@ export class PdfMakerService {
       columns: [
         {
           width: 'auto',
-          text: [
-            'An\n',
-            (slip.customer.companyName || '') + '\n',
-            slip.customer.lastName + ' ' + slip.customer.firstName + '\n',
-            slip.customer.address + '\n',
-            slip.customer.postcode + ' ' + slip.customer.country + '\n',
-          ],
+          text: addressLines.map((line) => `${line}\n`),
         },
         {
           alignment: 'right',
           margin: [0, 60, 0, 0],
-          text:
-            `${city}, am ${moment(date ?? new Date()).format('DD.MM.YYYY')}` +
-            (slip.customer.customerNumber ? '\nKunde: ' + slip.customer.customerNumber : '\n') +
-            (slip.customer.uid ? '\nIhre UID: ' + slip.customer.uid : '\nIhre UID:\n'),
+          text: customerDetailsLines.map((line) => `${line}\n`),
         },
       ],
     };
@@ -430,7 +437,7 @@ export class PdfMakerService {
       style: 'tableExample',
       table: {
         headerRows: 1,
-        widths: [60, 'auto', '*', 'auto', 'auto', 'auto', 'auto', 'auto'],
+        widths: [20, 'auto', '*', 'auto', 'auto', 'auto', 'auto', 'auto'],
         body: [[
           { text: 'Pos', style: 'tableHeader', margin: [0, 0, 5, 0] },
           { text: 'Art.Num.', style: 'tableHeader' },
@@ -487,7 +494,7 @@ export class PdfMakerService {
           { text: el.article?.artNumber ?? '', style: 'tableCell' },
           { text: el.text, style: 'tableCell' },
           { text: amount, style: 'tableCell', alignment: 'right' },
-          { text: 'EUR ' + el.price.toFixed(2), style: 'tableCell', alignment: 'right' },
+          { text: 'EUR ' + el.price.toFixed(2), style: 'tableCell', alignment: 'right', noWrap: true },
           {
             text: isDiscount ? discount.toFixed(0) + '%' : '',
             style: 'tableCell',
@@ -498,7 +505,7 @@ export class PdfMakerService {
             style: 'tableCell',
             alignment: 'right',
           },
-          { text: 'EUR ' + total.toFixed(2), style: 'tableCell', alignment: 'right' },
+          { text: 'EUR ' + total.toFixed(2), style: 'tableCell', alignment: 'right', noWrap: true },
         ]);
       }
     }
@@ -534,12 +541,13 @@ export class PdfMakerService {
         empty,
         { text: 'Gesamt', colSpan: 2, style: 'tableSumHeader', alignment: 'right' },
         '',
-        '',
         {
           text: 'EUR ' + (sum * (1 + vatRate / 100)).toFixed(2),
           style: 'tableSumHeader',
+          colSpan: 2,
           alignment: 'right',
         },
+        empty,
       ],
     );
 
