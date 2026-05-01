@@ -109,6 +109,15 @@ export class ArticleService extends BaseService<Article, ArticleEntity> {
       .leftJoinAndSelect('article.articleGroup', 'articlegroup');
   }
 
+  async getTotalStockValue(): Promise<number> {
+    const result = await this.articleRepository
+      .createQueryBuilder('article')
+      .select('SUM(article.netto * article.inventoryStock)', 'stockValue')
+      .where('article.trackStock = :trackStock', { trackStock: true })
+      .getRawOne();
+    return Number(result?.stockValue ?? 0);
+  }
+
 
   async importCsv(preview: boolean, file: Express.Multer.File) {
 

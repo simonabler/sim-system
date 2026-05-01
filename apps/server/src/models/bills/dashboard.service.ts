@@ -28,6 +28,7 @@ export class DashboardService {
     const thirtyDaysAgo = this.shiftDays(now, -30);
 
     const allArticles = await this.articleService.getAll();
+    const totalStockValue = await this.articleService.getTotalStockValue();
     // Bug fix: TypeORM 0.3 count() requires { where: { ... } } wrapper
     const openSlipsheetsCount = Number(
       await this.slipsheetRepository.count({ where: { state: SlipsheetState.OPEN } }),
@@ -148,6 +149,7 @@ export class DashboardService {
         openSlipsheets: openSlipsheetsCount,
         changedSlipsheets: changedSlipsheetsCount,
         openBills: openBillsCount,
+        totalStockValue: totalStockValue,
       },
       lowStockItems: lowStockArticles.slice(0, 15).map((item) => ({
         id: item.id,

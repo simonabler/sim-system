@@ -19,6 +19,7 @@ export interface DashboardSummary {
     outOfStockCount: number; inventoryAdjustmentsTodayCount: number;
     inventoryAdjustmentsTodayDelta: number; openSlipsheets: number;
     changedSlipsheets: number; openBills: number;
+    totalStockValue: number;
   };
   lowStockItems: Array<{ id: number; name: string; code: string; unit: string; stock: number; inventoryStock: number; articleGroupName: string | null }>;
   recentInventoryActivities: Array<{ id: number; createdAt: string; amountNew: number; diff: number; article: { id: number; name: string; code: string; unit: string } | null }>;

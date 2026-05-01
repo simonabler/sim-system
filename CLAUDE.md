@@ -4,6 +4,7 @@
 
 **Repository:** `github.com/simonabler/sim-system` · Branch: `first-init`  
 **Typ:** NX Monorepo — Fullstack Inventory Management System  
+**Stand:** 2026-05-01 (aktualisiert gegen kontext.md 2026-03-22)  
 **Teil des:** `abler.tirol` Ökosystems (siehe Design-Prinzipien unten)
 
 ---
@@ -14,9 +15,13 @@
 sim-system/
 ├── apps/
 │   ├── server/          → NestJS 11 Backend (REST API)
-│   └── sims/            → Angular 20 Frontend (Standalone Components)
+│   ├── sim-system/      → Angular 21 Frontend (Standalone Components)
+│   ├── server-e2e/      → Jest E2E Tests für Backend
+│   └── sim-system-e2e/  → Playwright E2E Tests für Frontend
 ├── libs/
-│   └── domain/          → Shared Domain Library
+│   └── domain/          → Shared Domain Library (noch nicht wirklich genutzt)
+├── storage/             → SQLite Datenbanken
+├── dist/                → Build-Artefakte
 ├── package.json         → Root (alle Dependencies)
 ├── nx.json
 └── tsconfig.base.json
@@ -95,46 +100,53 @@ npm install   # OHNE --ignore-scripts (kompiliert sqlite3 native binary)
 | `GET /dashboard/summary` | Dashboard KPIs |
 | `PUT /order-entries/:id` | Order-Entry updaten |
 
-### Bekannte offene Bugs (aus `kontext.md` — noch nicht behoben)
-- `GET /slipsheets/:id` gibt durch falsches Array-Indexing `undefined` zurück
-- `GET /bills/:id/pdf` hat Side-Effects (erzeugt Rechnung neu bei jedem Aufruf)
-- `generateBill()` löscht im Fehlerfall bestehende Rechnungen
-- Nummernvergabe für Rechnungen/Lieferscheine ohne DB-Lock (Race Condition)
-- `inventoryDate` ist `CreateDateColumn` statt normalem Column
+### Behobene Bugs ✅
+- ✅ `GET /slipsheets/:id` — Fixed: castet ID auf Zahl, wirft 404 wenn nicht gefunden
+- ✅ `GET /bills/:id/pdf` — Fixed: Read-only, erzeugt PDF nicht mehr bei jedem GET
+- ✅ `inventoryDate` — Fixed: jetzt normales `@Column({ type: 'datetime', nullable: true })`
+- ✅ CORS — Fixed: explizit konfiguriert in `main.ts`, nicht mehr `cors: true`
+
+### Bekannte offene Bugs
+- Race Condition: Nummernvergabe hat Retry-Logik, aber keinen echten DB-Lock
+- API-Contract-Brüche zwischen Frontend und Backend (siehe Punkt 4 unter "P0")
 
 ---
 
-## Frontend (`apps/sims`)
+## Frontend (`apps/sim-system`)
 
 ### Tech Stack
-- Angular 20, Standalone Components, `provideRouter`, `bootstrapApplication`
+- Angular 21, Standalone Components, `provideRouter`, `bootstrapApplication`
 - `@ng-select/ng-select` für Dropdowns
 - `ngx-toastr` für Notifications
 - Design: `abler.tirol` Design-System (Steel-Blue für SIMS)
 
 ### Starten
 ```bash
-npx nx serve sims    # :4200, Proxy → :9000
+npx nx serve sim-system    # :4200
 ```
 
-### Proxy
-`apps/sims/proxy.conf.json` leitet `/api/*` auf `http://localhost:9000` weiter.
+### API-Verbindung
+Kein Proxy-File nötig. Das Frontend nutzt `environment.apiUrl`:
+- **Dev:** `http://localhost:3000/api/v1`
+- **Prod:** Same-Origin (leerer String in Konfiguration)
 
-### Routing-Struktur
+### Routing-Struktur (aktuell)
 ```
-/                    → /dashboard
-/dashboard           → DashboardComponent
-/dashboard/inventory → InventoryListComponent
-/article             → ArticleComponent
-/mobile/tracking     → MobileTrackingComponent
-/mobile/inventory    → MobileInventoryComponent
-/admin/customer      → CustomerComponent
-/admin/customer/new  → CustomerEditComponent
-/admin/customer/detail/:id → CustomerDetailComponent
-/admin/customer/edit/:id   → CustomerEditComponent
-/admin/bills         → BillsComponent
-/login               → LoginComponent
+/dashboard               → DashboardComponent
+/articles                → ArticleListComponent
+/articles/:id            → ArticleDetailComponent
+/customers               → CustomerListComponent
+/customers/new           → CustomerEditComponent
+/customers/:id           → CustomerDetailComponent
+/customers/:id/edit      → CustomerEditComponent
+/slipsheets              → SlipsheetListComponent
+/slipsheets/:id          → SlipsheetDetailComponent
+/bills                   → BillListComponent
+/bills/:id               → BillDetailComponent
+/inventory               → InventoryListComponent
+/order/new               → OrderNewComponent
 ```
+**Hinweis:** Login-Route fehlt noch, ist aber noch nicht implementiert
 
 ### Services (alle `providedIn: 'root'`)
 - `AuthenticationService` — Login/Logout (JWT in localStorage)
@@ -154,7 +166,7 @@ npx nx serve sims    # :4200, Proxy → :9000
 
 ## Design-System (`abler.tirol`)
 
-Alle CSS-Variablen sind in `apps/sims/src/styles.scss` definiert.
+Alle CSS-Variablen sind in `apps/sim-system/src/styles.scss` definiert.
 
 ### SIMS Akzentfarben (Steel-Blue / Lager)
 ```css
@@ -200,15 +212,15 @@ Alle CSS-Variablen sind in `apps/sims/src/styles.scss` definiert.
    - sqlite provider mit expliziten Entity-Klassen statt Glob
    - mock-Dateien aus App-Build ausgeschlossen
    - webpack.config.js: `src`-Alias + konditionelle Migrations-Assets
-3. **Frontend von Angular 9 → Angular 20 migriert:**
+3. **Frontend von Angular 9 → Angular 21 migriert:**
    - Alle NgModules gelöscht → Standalone Components
    - `bootstrapApplication` + `app.config.ts`
    - `provideRouter` / `provideHttpClient` / `provideAnimations` / `provideToastr`
    - Functional Interceptors + Functional Guards
    - `@coreui/angular` + `ngx-bootstrap` + `ngx-perfect-scrollbar` + `angular-datatables` + `ng2-charts` entfernt
-   - Eigenes Layout (Sidebar + Topbar) ohne CoreUI
+   - Eigenes Layout (Sidebar + Topbar + Bottom-Navigation) ohne CoreUI
    - Alle Templates: `bsModal` → native HTML-Dialog, `datatable` → `*ngFor`
-   - Feature-Routes: `article.routes.ts`, `mobile.routes.ts`, `admin.routes.ts`, `dashboard.routes.ts`
+   - Routes: Moderne Struktur mit direkten Routen unter `/dashboard`, `/articles`, `/customers`, etc.
    - `styles.scss` komplett neu — volles `abler.tirol` Design-System
 
 ---
@@ -217,82 +229,55 @@ Alle CSS-Variablen sind in `apps/sims/src/styles.scss` definiert.
 
 ### P0 — Für erste lauffähige Version nötig
 
-1. **`npm install` ohne `--ignore-scripts`** auf Zielmaschine ausführen (sqlite3 native binary)
+1. **API-Contract zwischen Frontend und Backend reparieren**
+   - Frontend erwartet diese Endpunkte, die es im Backend nicht gibt:
+     - `DELETE /customers/:id` — wird vom Frontend aufgerufen, existiert aber nicht im CustomerController
+     - `DELETE /customers/:id/discounts/:discountId` — gleiches Problem
+   - Frontend-Services: `apps/sim-system/src/app/services/customer.service.ts`
+   - Backend-Controller: `apps/server/src/models/customer/customer.controller.ts`
+   - Fix: Entweder die Endpunkte implementieren oder Frontend-Aufrufe entfernen
 
-2. **Bug: `GET /slipsheets/:id` gibt `undefined`** zurück
-   - Datei: `apps/server/src/app/models/bills/controllers/slipsheet.controller.ts` ~Zeile 102
-   - Problem: falsches Array-Indexing
-   - Fix: Return-Wert prüfen, korrektes Element zurückgeben
+2. **Auth-Flows entfernen oder komplett implementieren**
+   - Aktuell: Frontend hat `AuthenticationService` mit Login/Logout, aber:
+     - Backend hat keine `POST /users/login` oder `GET /users/me/refresh` Endpunkte
+     - Guards sind implementiert, aber Route `/login` existiert nicht
+   - Option A: Auth vollständig aus Frontend entfernen (einfach, für interne Tools OK)
+   - Option B: Backend Login + JWT Guard implementieren (für Produktion nötig)
+   - Relevante Dateien:
+     - Frontend: `apps/sim-system/src/app/services/authentication.service.ts`
+     - Backend: `apps/server/src/models/users/`
+     - Guards: `apps/sim-system/src/app/helpers/auth.guard.ts`
 
-3. **Bug: `GET /bills/:id/pdf` hat Side-Effects**
-   - Datei: `apps/server/src/app/models/bills/controllers/bill.controller.ts` ~Zeile 82
-   - Problem: Rechnung wird bei jedem GET neu generiert
-   - Fix: PDF nur lesen wenn bereits vorhanden, separate POST-Route für Neugenerierung
+3. **Frontend-Tests ausbauen**
+   - `apps/sim-system-e2e/` existiert, ist aber noch praktisch leer
+   - Backend-E2E-Tests in `apps/server-e2e/` sind vorhanden und teilweise veraltet (erwarten `{ message: 'Hello API' }`, bekommen aber `"V1"`)
 
-4. **Auth komplett aktivieren oder entfernen**
-   - Aktuell: Guards sind auskommentiert, API ist offen
-   - Option A: JWT Guard global einbauen (empfohlen für Produktion)
-   - Option B: Auth-Flows aus Frontend entfernen wenn nicht benötigt
-   - Relevante Dateien: `apps/server/src/app/models/users/`, `apps/sims/src/app/helpers/auth.guard.ts`
-
-5. **Login-Page implementieren**
-   - Aktuell: Stub-Component, leitet nur weiter
-   - `apps/sims/src/app/views/login/login.component.ts`
+4. **Migrationsworkflow dokumentieren**
+   - TypeORM Migrationen sind konfiguriert, aber NPM-Scripts im Root sind nicht hinterlegt
+   - `apps/server/src/datasource.ts` ist vorhanden für Migrations-CLI
+   - Should use: `npx typeorm migration:generate` etc. oder entsprechende npm-Scripts hinzufügen
 
 ### P1 — Wichtige Verbesserungen
 
-6. **Race Condition: Nummernvergabe transaktional machen**
-   - Dateien: `apps/server/src/app/models/bills/bill.service.ts` ~Zeile 114
-   - Dateien: `apps/server/src/app/models/bills/slipsheet.service.ts` ~Zeile 43
-   - Fix: DB-Transaktion + Lock beim `SELECT MAX(number) + 1`
+5. **Race Condition: Nummernvergabe verbessern**
+   - Dateien: `apps/server/src/models/bills/bill.service.ts`
+   - Dateien: `apps/server/src/models/bills/slipsheet.service.ts`
+   - Aktuell: Retry-Logik bei Unique-Constraint-Fehlern vorhanden
+   - TODO: echter Lock/serialisierter Number-Allocator für echte Transaktionalität
 
-7. **`inventoryDate` korrigieren**
-   - Datei: `apps/server/src/app/models/article/entities/article.entity.ts` ~Zeile 38
-   - Problem: `@CreateDateColumn()` statt normales `@Column({ type: 'datetime' })`
-   - Fix: Column-Typ ändern, Migration erstellen
-
-8. **Inventurbuchung awaiten**
-   - Datei: `apps/server/src/app/models/article/article.service.ts` ~Zeile 227
-   - Problem: `await` fehlt, Fehler gehen verloren
-
-9. **CustomerDetail: Rechnung aus ausgewählten Lieferscheinen erstellen**
-   - `apps/sims/src/app/views/admin/customer-detail/customer-detail.component.ts`
-   - Die Checkbox-Selektion (`selectedSlipIds`) ist implementiert
-   - `makeBill(selectedSlipIds)` ruft `billService.generate(ids)` auf
-   - Fehlt noch: visuelles Feedback nach Erstellung, Liste aktualisieren
-
-10. **Mobile HTML-Templates prüfen**
-    - `apps/sims/src/app/views/mobile/mobile-tracking/mobile-tracking.component.html`
-    - `apps/sims/src/app/views/mobile/inventory/inventory.component.html`
-    - Wurden nicht aus dem alten Code übernommen — müssen neu erstellt werden
-
-11. **Article-Edit HTML: ng-select Binding überprüfen**
-    - `apps/sims/src/app/views/article/article-edit/article-edit.component.html`
-    - `formControlName="articleGroup"` mit `ng-select` — könnte Typ-Mismatch haben
+6. **Frontend/Backend State-Filter Konsistenz**
+   - Frontend sendet State-Filter für Bills/Slipsheets, Backend unterstützt das schon
+   - Prüfen: Sind die Filter-Werte (`offen`, `geschlossen`, `bearbeitet`) überall konsistent?
 
 ### P2 — Sauberkeit & Betrieb
 
-12. **Frontend/Backend API-Contract Matrix vervollständigen**
-    - `DELETE /articles/:id` im Backend fehlt (Frontend ruft es auf)
-    - `POST /bills/:id` → Backend hat das als recreate implementiert
-    - `state`-Filter von Frontend wird im Backend ignoriert
+7. **Docker-Setup mit neuer Struktur testen**
+   - `docker-compose.dev.yml` + `dockerfiles/` vorhanden
+   - Noch nicht mit `apps/sim-system` statt `apps/sims` getestet
 
-13. **CORS härten**
-    - Aktuell: `cors: true` (alles erlaubt)
-    - Fix: erlaubte Origins per ENV-Variable
-
-14. **Docker-Setup verifizieren**
-    - `docker-compose.dev.yml` + `dockerfiles/` vorhanden
-    - Noch nicht mit neuer Monorepo-Struktur getestet
-
-15. **Migrations-Workflow einrichten**
-    - `apps/server/src/datasource.ts` vorhanden
-    - `npm run migration:generate --name=InitialSchema`
-    - `npm run migration:run`
-
-16. **SIMS Farbpalette finalisieren**
-    - Laut Design-Dokument ist `sims` noch "muss noch definiert werden"
-    - Aktuell: Steel-Blue (`#1e3a5f` / `#3b82f6`) — bei Bedarf anpassen
+8. **Root-Endpoint dokumentieren**
+   - `GET /` gibt aktuell `"V1"` zurück (nicht `{ message: 'Hello API' }`)
+   - Backend-E2E-Tests erwarten das alte Format — müssen aktualisiert werden
 
 ---
 
@@ -301,22 +286,21 @@ Alle CSS-Variablen sind in `apps/sims/src/styles.scss` definiert.
 ```bash
 # Builds
 npx nx build server
-npx nx build sims
-npx nx build sims --configuration=development
+npx nx build sim-system
+npx nx build sim-system --configuration=development
 
 # Dev-Server
-npx nx serve server          # Backend :9000
-npx nx serve sims            # Frontend :4200
+npx nx serve server              # Backend :9000
+npx nx serve sim-system          # Frontend :4200
 
-# Migrations (TypeORM)
-npm run migration:generate --name=MigrationName
-npm run migration:run
-npm run migration:revert
-npm run migration:show
+# Migrations (TypeORM) — nutze TypeORM CLI direkt
+npx typeorm migration:generate -d apps/server/src/datasource.ts -n MigrationName
+npx typeorm migration:run -d apps/server/src/datasource.ts
+npx typeorm migration:revert -d apps/server/src/datasource.ts
 
 # Tests
 npx nx test server
-npx nx test sims
+npx nx test sim-system
 ```
 
 ---
@@ -324,25 +308,26 @@ npx nx test sims
 ## Wichtige Dateipfade
 
 ```
-apps/server/src/main.ts                           → NestJS Bootstrap
-apps/server/src/app/app.module.ts                 → Root Module
-apps/server/src/app/models/                       → Entities, Services, Controllers
-apps/server/src/app/common/services/pdfmaker.service.ts  → PDF-Generierung
+apps/server/src/main.ts                           → NestJS Bootstrap + Config
+apps/server/src/models/                           → Entities, Services, Controllers
+apps/server/src/models/*/entities/                → TypeORM Entities
+apps/server/src/common/services/pdfmaker.service.ts  → PDF-Generierung
 apps/server/src/datasource.ts                     → TypeORM DataSource (für Migrations)
 apps/server/.env                                  → Umgebungsvariablen (gitignored)
 apps/server/.env.example                          → Vorlage
 
-apps/sims/src/main.ts                             → Angular Bootstrap
-apps/sims/src/app/app.config.ts                   → App-Konfiguration (Provider)
-apps/sims/src/app/app.routes.ts                   → Root-Routing
-apps/sims/src/app/containers/default-layout/      → Haupt-Layout (Sidebar+Topbar)
-apps/sims/src/app/services/                       → Angular Services
-apps/sims/src/app/models/                         → TypeScript Daten-Modelle
-apps/sims/src/styles.scss                         → Globales Stylesheet (Design-System)
-apps/sims/proxy.conf.json                         → Dev-Proxy → :9000
-apps/sims/src/environments/                       → API-URL Konfiguration
+apps/sim-system/src/main.ts                       → Angular Bootstrap
+apps/sim-system/src/app/app.config.ts             → App-Konfiguration (Provider)
+apps/sim-system/src/app/app.routes.ts             → Root-Routing
+apps/sim-system/src/app/containers/default-layout/  → Haupt-Layout (Sidebar+Topbar)
+apps/sim-system/src/app/services/                 → Angular Services
+apps/sim-system/src/app/models/                   → TypeScript Daten-Modelle
+apps/sim-system/src/styles.scss                   → Globales Stylesheet (abler.tirol Design)
+apps/sim-system/src/environments/                 → environment.apiUrl Konfiguration
 ```
 
 ---
 
-*Erstellt: 2026-03-15 · Branch: first-init · Letzter Commit: c656aa6*
+---
+
+Erstellt: 2026-03-15 · Aktualisiert: 2026-05-01 · Branch: first-init

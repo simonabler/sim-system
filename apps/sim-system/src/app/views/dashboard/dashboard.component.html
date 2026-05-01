@@ -83,6 +83,17 @@
     </div>
   </div>
 
+  <!-- Einkaufswert Lager — nur intern -->
+  <div class="row g-3 mb-4">
+    <div class="col-12 col-md-4">
+      <div class="sims-card" style="border-left: 3px solid var(--accent-highlight);">
+        <div class="kpi-label eyebrow">Einkaufswert Lager</div>
+        <div class="kpi-value mono">{{ summary()!.kpis.totalStockValue | number:'1.2-2' }} €</div>
+        <div style="font-size:0.7rem; color:var(--ink-3); margin-top:0.25rem;">Einkaufspreise × Lagerbestand</div>
+      </div>
+    </div>
+  </div>
+
   <!-- Trend-Balkendiagramm -->
   @if (trendPoints().length > 0) {
     <div class="sims-card mb-4">
