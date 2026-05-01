@@ -74,10 +74,10 @@
             <td data-label="Bezeichnung">{{ article.name }}</td>
             <td data-label="Artikel-Nr." class="numeric">{{ article.artNumber }}</td>
             <td data-label="Barcode" class="numeric">{{ article.code }}</td>
-            <td data-label="Lagerstand" class="numeric">{{ article.stock }}</td>
+            <td data-label="Lagerstand" class="numeric">{{ stockLabel(article) }}</td>
             <td data-label="Einheit">{{ article.unit }}</td>
             <td data-label="Status">
-              <span [class]="getBadgeClass(article.stock)">{{ getBadgeLabel(article.stock) }}</span>
+              <span [class]="getBadgeClass(article)">{{ getBadgeLabel(article) }}</span>
             </td>
             <td data-label="Inventurdatum">{{ article.inventoryDate ? (article.inventoryDate | date:'dd.MM.yyyy') : '—' }}</td>
           </tr>

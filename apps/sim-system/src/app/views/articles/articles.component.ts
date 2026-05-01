@@ -76,7 +76,7 @@ export class ArticlesComponent {
       code: article => article.code,
       stock: article => article.stock,
       unit: article => article.unit,
-      status: article => this.stockRank(article.stock),
+      status: article => this.stockRank(article),
       inventoryDate: article => article.inventoryDate,
     });
   });
@@ -93,19 +93,30 @@ export class ArticlesComponent {
     return ariaSort(this.sortState(), key);
   }
 
-  getBadgeClass(stock: number): string {
+  getBadgeClass(article: Article): string {
+    const stock = article.stock;
+    if (!article.trackStock || stock == null) return 'sims-badge sims-badge-neutral';
     if (stock <= 0)  return 'sims-badge sims-badge-error';
     if (stock < 10)  return 'sims-badge sims-badge-warning';
     return 'sims-badge sims-badge-success';
   }
 
-  getBadgeLabel(stock: number): string {
+  getBadgeLabel(article: Article): string {
+    const stock = article.stock;
+    if (!article.trackStock || stock == null) return 'Ohne Bestand';
     if (stock <= 0)  return 'Kein Bestand';
     if (stock < 10)  return 'Niedrig';
     return 'Verfügbar';
   }
 
-  private stockRank(stock: number): number {
+  stockLabel(article: Article): string {
+    if (!article.trackStock || article.stock == null) return '—';
+    return String(article.stock);
+  }
+
+  private stockRank(article: Article): number | null {
+    const stock = article.stock;
+    if (!article.trackStock || stock == null) return null;
     if (stock <= 0) return 0;
     if (stock < 10) return 1;
     return 2;

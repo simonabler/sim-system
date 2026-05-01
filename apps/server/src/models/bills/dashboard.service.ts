@@ -273,7 +273,8 @@ export class DashboardService {
       })
       .andWhere('datetime(orderEntry.createdAt) <= datetime(:to)', {
         to: toParam,
-      });
+      })
+      .andWhere('article.trackStock = :trackStock', { trackStock: true });
 
     if (articleGroupId) {
       outgoingQuery.andWhere('article.articleGroupId = :articleGroupId', {
@@ -340,6 +341,7 @@ export class DashboardService {
       .andWhere('datetime(inventory.createdAt) <= datetime(:to)', {
         to: toParam,
       })
+      .andWhere('article.trackStock = :trackStock', { trackStock: true })
       .orderBy('inventory.createdAt', desc ? 'DESC' : 'ASC');
 
     if (articleGroupId) {
@@ -364,11 +366,12 @@ export class DashboardService {
       .createQueryBuilder('inventory')
       .leftJoinAndSelect('inventory.article', 'article')
       .leftJoinAndSelect('article.articleGroup', 'articleGroup')
+      .where('article.trackStock = :trackStock', { trackStock: true })
       .orderBy('inventory.createdAt', 'DESC')
       .take(take);
 
     if (articleGroupId) {
-      queryBuilder.where('article.articleGroupId = :articleGroupId', {
+      queryBuilder.andWhere('article.articleGroupId = :articleGroupId', {
         articleGroupId,
       });
     }
@@ -416,11 +419,12 @@ export class DashboardService {
     const queryBuilder = this.orderEntryRepository
       .createQueryBuilder('orderEntry')
       .leftJoin('orderEntry.article', 'article')
+      .where('article.trackStock = :trackStock', { trackStock: true })
       .orderBy('orderEntry.createdAt', 'DESC')
       .take(1);
 
     if (articleGroupId) {
-      queryBuilder.where('article.articleGroupId = :articleGroupId', {
+      queryBuilder.andWhere('article.articleGroupId = :articleGroupId', {
         articleGroupId,
       });
     }

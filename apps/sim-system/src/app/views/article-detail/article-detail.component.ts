@@ -65,7 +65,7 @@ export class ArticleDetailComponent {
 
   readonly loading = computed(() => !this.isNew() && this.loadedArticle() === undefined && !this.error());
   readonly inventoryArticle = computed(() => this.loadedArticle());
-  readonly canGoToInventory = computed(() => !!this.inventoryArticle()?.code);
+  readonly canGoToInventory = computed(() => !!this.inventoryArticle()?.code && !!this.inventoryArticle()?.trackStock);
 
   constructor() {
     effect(() => {

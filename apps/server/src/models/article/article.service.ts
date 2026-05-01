@@ -43,7 +43,7 @@ export class ArticleService extends BaseService<Article, ArticleEntity> {
           return Promise.reject(new NotFoundException('Model not found.'));
         }
         if (entity) {
-          entity['stock'] = (entity.inventoryStock ?? 0) - (entity['totalAmount'] ?? 0);
+          this.applyStock(entity);
         }
 
         return Promise.resolve(entity ? this.articleRepository.transform(entity) : null);
@@ -67,7 +67,7 @@ export class ArticleService extends BaseService<Article, ArticleEntity> {
         if (!entity && throwsException) {
           return Promise.reject(new NotFoundException('Model not found.'));
         }
-        entity.map((m) => (m['stock'] = (m.inventoryStock ?? 0) - (m['totalAmount'] ?? 0)));
+        entity.forEach((m) => this.applyStock(m));
 
         return Promise.resolve(entity ? this.articleRepository.transformMany(entity) : null);
       })
@@ -91,7 +91,7 @@ export class ArticleService extends BaseService<Article, ArticleEntity> {
           return Promise.reject(new NotFoundException('Model not found.'));
         }
         if (entity) {
-          entity['stock'] = (entity.inventoryStock ?? 0) - (entity['totalAmount'] ?? 0);
+          this.applyStock(entity);
         }
         return Promise.resolve(entity ? this.articleRepository.transform(entity) : null);
       })
@@ -109,10 +109,20 @@ export class ArticleService extends BaseService<Article, ArticleEntity> {
             .select('COALESCE(SUM(orderEntry.amount), 0)')
             .from(OrderEntry, 'orderEntry')
             .where('orderEntry.articleId = article.id')
-            .andWhere('orderEntry.createdAt >= article.inventoryDate'),
+            .andWhere('orderEntry.createdAt >= article.inventoryDate')
+            .andWhere('article.trackStock = :trackStock', { trackStock: true }),
         'article_totalAmount',
       )
       .leftJoinAndSelect('article.articleGroup', 'articlegroup');
+  }
+
+  private applyStock(entity: ArticleEntity | Article): void {
+    if (!entity.trackStock) {
+      entity['stock'] = null;
+      return;
+    }
+
+    entity['stock'] = (entity.inventoryStock ?? 0) - (entity['totalAmount'] ?? 0);
   }
 
   async getTotalStockValue(): Promise<number> {

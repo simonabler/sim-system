@@ -49,6 +49,7 @@ export class InventoryComponent {
   );
 
   readonly shouldVal = computed(() => this.article()?.stock ?? 0);
+  readonly canBookInventory = computed(() => !!this.article()?.trackStock);
   readonly diff = computed(() => this.isVal() - this.shouldVal());
   readonly diffClass = computed(() => {
     const d = this.diff();
@@ -88,7 +89,7 @@ export class InventoryComponent {
 
   onSubmit() {
     const art = this.article();
-    if (!art) return;
+    if (!art || !art.trackStock) return;
     this.submitting.set(true);
     this.articleService.createInventory(art, this.isVal()).subscribe({
       next: () => {

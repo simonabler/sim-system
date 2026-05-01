@@ -45,9 +45,9 @@
           }
           @if (pendingArticle()!.trackStock) {
             <span class="sims-badge"
-              [class.sims-badge-empty]="pendingArticle()!.stock <= 0"
-              [class.sims-badge-low]="pendingArticle()!.stock > 0 && pendingArticle()!.stock < 10"
-              [class.sims-badge-ok]="pendingArticle()!.stock >= 10">
+              [class.sims-badge-empty]="(pendingArticle()!.stock ?? 0) <= 0"
+              [class.sims-badge-low]="(pendingArticle()!.stock ?? 0) > 0 && (pendingArticle()!.stock ?? 0) < 10"
+              [class.sims-badge-ok]="(pendingArticle()!.stock ?? 0) >= 10">
               {{ pendingArticle()!.stock }} {{ pendingArticle()!.unit }}
             </span>
           }

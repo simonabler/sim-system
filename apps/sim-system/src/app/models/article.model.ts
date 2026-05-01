@@ -17,7 +17,7 @@ export class Article {
   supplier: string;
   imgPath!: string;
   price!: number;
-  stock!: number;
+  stock!: number | null;
   unit: string;
   inventoryDate!: string;
   inventoryStock!: number;

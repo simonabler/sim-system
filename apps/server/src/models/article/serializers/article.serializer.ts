@@ -32,7 +32,7 @@ export class ArticleEntity
   artNumber: string;
 
   @Expose({ groups: ['default'] })
-  stock: number;
+  stock: number | null;
 
   @Expose({ groups: ['default'] })
   @Type(() => ArticleGroupEntity)

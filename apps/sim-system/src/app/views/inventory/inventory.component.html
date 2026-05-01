@@ -5,7 +5,6 @@
   </div>
 </div>
 
-<!-- Scan-Bereich -->
 <div class="sims-card scan-card">
   <label class="sims-label eyebrow">Barcode scannen oder eingeben</label>
   <div class="scan-row">
@@ -30,11 +29,8 @@
   </div>
 </div>
 
-<!-- Artikel-Info -->
 @if (article()) {
   <div class="sims-card article-card">
-
-    <!-- Kompakter Header -->
     <div class="article-card-header">
       <div class="article-name">{{ article()!.name }}</div>
       <div class="article-meta">
@@ -46,7 +42,6 @@
       </div>
     </div>
 
-    <!-- Info-Tabelle -->
     <table class="article-info-table">
       @if (article()!.type) {
         <tr>
@@ -54,10 +49,17 @@
           <td><span class="sims-badge sims-badge-neutral badge-sm">{{ article()!.type }}</span></td>
         </tr>
       }
-      <tr>
-        <th>Lagerstand</th>
-        <td class="mono stock-val">{{ article()!.stock }} <small>{{ article()!.unit }}</small></td>
-      </tr>
+      @if (article()!.trackStock) {
+        <tr>
+          <th>Lagerstand</th>
+          <td class="mono stock-val">{{ article()!.stock }} <small>{{ article()!.unit }}</small></td>
+        </tr>
+      } @else {
+        <tr>
+          <th>Lagerstand</th>
+          <td><span class="sims-badge sims-badge-neutral badge-sm">Ohne Bestand</span></td>
+        </tr>
+      }
       @if (article()!.supplier) {
         <tr>
           <th>Hersteller</th>
@@ -73,47 +75,50 @@
     </table>
   </div>
 
-  <!-- Soll / Ist -->
-  <div class="count-card">
-    <div class="count-half">
-      <div class="eyebrow">Soll</div>
-      <div class="mono count-val muted">{{ shouldVal() }} <small>{{ article()!.unit }}</small></div>
-    </div>
-    <div class="count-divider"></div>
-    <div class="count-half">
-      <div class="eyebrow">Ist</div>
-      <div class="count-ist-row">
-        <button class="step-btn" (click)="stepIs(-1)" aria-label="Weniger">−</button>
-        <input
-          type="number"
-          class="is-input mono"
-          [value]="isVal()"
-          (input)="onIsInput($event)"
-          (focus)="$any($event.target).select()"
-          inputmode="decimal"
-          min="0"
-          step="0.01"
-        />
-        <button class="step-btn" (click)="stepIs(1)" aria-label="Mehr">+</button>
-        <small class="mono unit-label">{{ article()!.unit }}</small>
+  @if (article()!.trackStock) {
+    <div class="count-card">
+      <div class="count-half">
+        <div class="eyebrow">Soll</div>
+        <div class="mono count-val muted">{{ shouldVal() }} <small>{{ article()!.unit }}</small></div>
+      </div>
+      <div class="count-divider"></div>
+      <div class="count-half">
+        <div class="eyebrow">Ist</div>
+        <div class="count-ist-row">
+          <button class="step-btn" (click)="stepIs(-1)" aria-label="Weniger">−</button>
+          <input
+            type="number"
+            class="is-input mono"
+            [value]="isVal()"
+            (input)="onIsInput($event)"
+            (focus)="$any($event.target).select()"
+            inputmode="decimal"
+            min="0"
+            step="0.01"
+          />
+          <button class="step-btn" (click)="stepIs(1)" aria-label="Mehr">+</button>
+          <small class="mono unit-label">{{ article()!.unit }}</small>
+        </div>
       </div>
     </div>
-  </div>
 
-  <!-- Differenz-Banner -->
-  <div class="diff-banner" [class]="diffClass()">
-    <span class="eyebrow">Differenz</span>
-    <span class="mono diff-val">
-      {{ diff() > 0 ? '+' : '' }}{{ diff() }} {{ article()!.unit }}
-    </span>
-  </div>
+    <div class="diff-banner" [class]="diffClass()">
+      <span class="eyebrow">Differenz</span>
+      <span class="mono diff-val">
+        {{ diff() > 0 ? '+' : '' }}{{ diff() }} {{ article()!.unit }}
+      </span>
+    </div>
 
-  <button class="btn-sims-primary inv-submit" (click)="onSubmit()" [disabled]="submitting()">
-    {{ submitting() ? 'Wird gebucht…' : 'Inventur buchen' }}
-  </button>
+    <button class="btn-sims-primary inv-submit" (click)="onSubmit()" [disabled]="submitting()">
+      {{ submitting() ? 'Wird gebucht…' : 'Inventur buchen' }}
+    </button>
+  } @else {
+    <div class="sims-card">
+      Für diesen Artikel ist keine Bestandsführung aktiviert. Es wird kein Lagerstand berechnet und keine Inventur gebucht.
+    </div>
+  }
 }
 
-<!-- Log -->
 @if (recentLog().length > 0) {
   <div class="log-section">
     <div class="eyebrow">Zuletzt gebucht</div>

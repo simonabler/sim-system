@@ -26,6 +26,8 @@ export class Article implements IArticle {
   @Column({ nullable: false, default: 0.0, precision: 5, scale: 2 })
   price!: number;
 
+  stock!: number | null;
+
   @Column({ nullable: false, default: 0.0, precision: 5, scale: 2 })
   netto!: number;
 
