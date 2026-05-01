@@ -167,7 +167,7 @@ export class BillDetailComponent {
     }
 
     const confirmed = window.confirm(
-      'Rechnung wirklich zurueckholen? Die Rechnung wird geloescht und alle Lieferscheine werden wieder freigegeben.',
+      'Rechnung wirklich zurückholen? Die Rechnung wird gelöscht und alle Lieferscheine werden wieder freigegeben.',
     );
     if (!confirmed) {
       return;
@@ -183,7 +183,7 @@ export class BillDetailComponent {
       },
       error: () => {
         this.deleting.set(false);
-        this.error.set('Rechnung konnte nicht zurueckgeholt werden.');
+        this.error.set('Rechnung konnte nicht zurückgeholt werden.');
       },
     });
   }

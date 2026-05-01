@@ -12,7 +12,7 @@ export class CompanySettings {
   street: string = '';
   zip: string = '';
   city: string = '';
-  country: string = 'Oesterreich';
+  country: string = 'Österreich';
   phone: string = '';
   email: string = '';
   website: string = '';

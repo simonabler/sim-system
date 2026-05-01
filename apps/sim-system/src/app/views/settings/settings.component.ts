@@ -43,7 +43,7 @@ export class SettingsComponent implements OnInit {
     street: new FormControl(''),
     zip: new FormControl(''),
     city: new FormControl(''),
-    country: new FormControl('Oesterreich'),
+    country: new FormControl('Österreich'),
     phone: new FormControl(''),
     email: new FormControl(''),
     website: new FormControl(''),

@@ -26,7 +26,7 @@ export class CompanySettings implements ICompanySettings {
   @Column({ nullable: true, default: null })
   city: string | null;
 
-  @Column({ nullable: true, default: 'Oesterreich' })
+  @Column({ nullable: true, default: 'Österreich' })
   country: string | null;
 
   @Column({ nullable: true, default: null })

@@ -45,7 +45,7 @@ export class OrderEntryService extends BaseService<OrderEntry, OrderEntryEntity>
     const hasArticle = !!addOrderEntry.article;
     const hasText = !!addOrderEntry.text;
     if (hasArticle === hasText)
-      throw new BadRequestException('ether article or text has to be set, not both or nothing');
+      throw new BadRequestException('Entweder Artikel oder Text muss gesetzt sein, nicht beides und nicht keines von beiden');
 
     if (!slipsheet)
       slipsheet = await this.slipsheetService.findOpenForCustomer(customer);
@@ -86,7 +86,7 @@ export class OrderEntryService extends BaseService<OrderEntry, OrderEntryEntity>
     if (article.singlePos || !order) {
 
       if (addOrderEntry.amount <= 0)
-        throw new BadRequestException('Amount <= 0, for new or single position');
+        throw new BadRequestException('Menge muss bei neuen oder einzelnen Positionen größer als 0 sein');
 
       const articleDiscount = customer.discounts?.find((o) => o.articleGroupId === article.articleGroup?.id)?.value || 0;
       const orderEntryEntity: DeepPartial<OrderEntry> = {
@@ -101,7 +101,7 @@ export class OrderEntryService extends BaseService<OrderEntry, OrderEntryEntity>
       return this.orderEntryRepository.createEntity(orderEntryEntity, relations);
     } else {
       if (order.amount + addOrderEntry.amount <= 0)
-        throw new BadRequestException('new amount <= 0, update position');
+        throw new BadRequestException('Neue Menge muss beim Aktualisieren einer Position größer als 0 sein');
 
       return this.orderEntryRepository.updateEntity(
         order.id,

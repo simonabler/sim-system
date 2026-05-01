@@ -27,7 +27,7 @@ export class CreateCustomerDto implements ICustomer {
 
   @ApiProperty({
     example: '20',
-    description: 'Generall Discount of customer',
+    description: 'Allgemeiner Rabatt des Kunden',
   })
   @IsOptional()
   customerDiscount: number = 0;

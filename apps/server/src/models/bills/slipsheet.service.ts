@@ -79,7 +79,7 @@ export class SlipsheetService extends BaseService<Slipsheet, SlipsheetEntity> {
     }
 
     if (slip.orderEntries.length === 0 && slip.annotations.length === 0) {
-      throw new UnprocessableEntityException('Keine Eintraege auf Lieferschein');
+      throw new UnprocessableEntityException('Keine Einträge auf dem Lieferschein');
     }
 
     if (!slip.path || !slip.slipsheetnumber) {

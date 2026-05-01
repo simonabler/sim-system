@@ -1,9 +1,9 @@
 <div class="sims-page-header">
   <div>
     <div class="eyebrow">Rechnungen</div>
-    <h1 class="page-title">Rechnung #{{ bill()?.getNumber() || '...' }}</h1>
+    <h1 class="page-title">Rechnung #{{ bill()?.getNumber() || '…' }}</h1>
   </div>
-  <button class="btn-sims-ghost" (click)="back()">Zurueck</button>
+  <button class="btn-sims-ghost" (click)="back()">Zurück</button>
 </div>
 
 @if (loading()) {
@@ -52,7 +52,7 @@
               (click)="saveBillDate()"
               [disabled]="busy() || !billDateDraft() || !hasDateChanges()"
             >
-              {{ savingDate() ? 'Wird gespeichert...' : 'Datum speichern' }}
+              {{ savingDate() ? 'Wird gespeichert…' : 'Datum speichern' }}
             </button>
             <button
               type="button"
@@ -63,7 +63,7 @@
               Abbrechen
             </button>
           </div>
-          <div class="date-hint">Speichern aktualisiert auch das Rechnungspdf.</div>
+          <div class="date-hint">Speichern aktualisiert auch das Rechnungs-PDF.</div>
         }
       </div>
       <div class="col-6 col-lg-2">
@@ -113,23 +113,23 @@
 
   <div class="sticky-actions">
     <button class="btn-sims-primary" (click)="downloadPdf()" [disabled]="busy()">
-      {{ downloading() ? 'Wird geladen...' : 'PDF herunterladen' }}
+      {{ downloading() ? 'Wird geladen…' : 'PDF herunterladen' }}
     </button>
     <button class="btn-sims-outline" (click)="recreatePdf()" [disabled]="busy()">
-      {{ recreating() ? 'Wird neu erzeugt...' : 'PDF neu erzeugen' }}
+      {{ recreating() ? 'Wird neu erzeugt…' : 'PDF neu erzeugen' }}
     </button>
   </div>
 
   <div class="sims-card release-card mt-3">
     <div>
-      <div class="eyebrow">Rueckgaengig machen</div>
-      <h2 class="release-title">Rechnung loeschen und Lieferscheine wieder freigeben</h2>
+      <div class="eyebrow">Rückgängig machen</div>
+      <h2 class="release-title">Rechnung löschen und Lieferscheine wieder freigeben</h2>
       <p class="release-copy">
-        Die Rechnung wird entfernt. Zugeordnete Lieferscheine bleiben abgeschlossen, koennen danach aber wieder neu verrechnet werden.
+        Die Rechnung wird entfernt. Zugeordnete Lieferscheine bleiben abgeschlossen, können danach aber wieder neu verrechnet werden.
       </p>
     </div>
     <button class="btn-sims-danger" (click)="releaseBill()" [disabled]="busy()">
-      {{ deleting() ? 'Wird zurueckgeholt...' : 'Rechnung zurueckholen' }}
+      {{ deleting() ? 'Wird zurückgeholt…' : 'Rechnung zurückholen' }}
     </button>
   </div>
 
