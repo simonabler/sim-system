@@ -89,10 +89,10 @@
           <thead>
             <tr>
               <th class="col-sel"></th>
-              <th>Lieferschein-Nr.</th>
-              <th>Datum</th>
-              <th style="text-align:right;">Betrag</th>
-              <th>Status</th>
+              <th [attr.aria-sort]="slipAriaSort('number')"><button type="button" class="table-sort-button" (click)="sortSlipsBy('number')" aria-label="Nach Lieferscheinnummer sortieren">Lieferschein-Nr. <span class="table-sort-icon">{{ slipSortIcon('number') }}</span></button></th>
+              <th [attr.aria-sort]="slipAriaSort('date')"><button type="button" class="table-sort-button" (click)="sortSlipsBy('date')" aria-label="Nach Datum sortieren">Datum <span class="table-sort-icon">{{ slipSortIcon('date') }}</span></button></th>
+              <th style="text-align:right;" [attr.aria-sort]="slipAriaSort('amount')"><button type="button" class="table-sort-button" (click)="sortSlipsBy('amount')" aria-label="Nach Betrag sortieren">Betrag <span class="table-sort-icon">{{ slipSortIcon('amount') }}</span></button></th>
+              <th [attr.aria-sort]="slipAriaSort('status')"><button type="button" class="table-sort-button" (click)="sortSlipsBy('status')" aria-label="Nach Status sortieren">Status <span class="table-sort-icon">{{ slipSortIcon('status') }}</span></button></th>
               <th class="col-actions"></th>
             </tr>
           </thead>
@@ -243,15 +243,15 @@
         <table class="bills-table">
           <thead>
             <tr>
-              <th>Rechnung</th>
-              <th>Enthaltene Lieferscheine</th>
-              <th>Status</th>
-              <th style="text-align:right;">Gesamt</th>
+              <th [attr.aria-sort]="billAriaSort('number')"><button type="button" class="table-sort-button" (click)="sortBillsBy('number')" aria-label="Nach Rechnung sortieren">Rechnung <span class="table-sort-icon">{{ billSortIcon('number') }}</span></button></th>
+              <th [attr.aria-sort]="billAriaSort('slipsheets')"><button type="button" class="table-sort-button" (click)="sortBillsBy('slipsheets')" aria-label="Nach enthaltenen Lieferscheinen sortieren">Enthaltene Lieferscheine <span class="table-sort-icon">{{ billSortIcon('slipsheets') }}</span></button></th>
+              <th [attr.aria-sort]="billAriaSort('state')"><button type="button" class="table-sort-button" (click)="sortBillsBy('state')" aria-label="Nach Status sortieren">Status <span class="table-sort-icon">{{ billSortIcon('state') }}</span></button></th>
+              <th style="text-align:right;" [attr.aria-sort]="billAriaSort('total')"><button type="button" class="table-sort-button" (click)="sortBillsBy('total')" aria-label="Nach Gesamt sortieren">Gesamt <span class="table-sort-icon">{{ billSortIcon('total') }}</span></button></th>
               <th class="col-actions"></th>
             </tr>
           </thead>
           <tbody>
-            @for (b of bills(); track b.id) {
+            @for (b of sortedBills(); track b.id) {
               <tr class="bill-row-main" (click)="navigateToBill(b)">
                 <td>
                   <div class="bill-number mono">{{ b.getNumber() }}</div>

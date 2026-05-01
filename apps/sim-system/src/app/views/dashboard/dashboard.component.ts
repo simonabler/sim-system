@@ -6,6 +6,9 @@ import { switchMap, catchError, of } from 'rxjs';
 import { DashboardService } from '../../services/dashboard.service';
 import { ArticleGroupService } from '../../services/article-group.service';
 import { ArticleGroup } from '../../models/article.model';
+import { ariaSort, nextSortState, sortIcon, sortItems, SortState } from '../../shared/table-sort';
+
+type InventoryActivitySortKey = 'article' | 'date' | 'amountNew' | 'diff';
 
 @Component({
   selector: 'app-dashboard',
@@ -26,6 +29,7 @@ export class DashboardComponent {
   readonly articleGroupId = signal<number | null>(null);
   readonly autoRefreshSeconds = signal(0);
   readonly error = signal('');
+  readonly inventorySortState = signal<SortState<InventoryActivitySortKey>>({ key: null, direction: null });
 
   readonly articleGroups = toSignal(this.articleGroupService.getAll(), { initialValue: [] as ArticleGroup[] });
 
@@ -51,6 +55,14 @@ export class DashboardComponent {
   );
 
   readonly loading = computed(() => this.summary() === undefined && !this.error());
+  readonly sortedRecentInventoryActivities = computed(() =>
+    sortItems(this.summary()?.recentInventoryActivities ?? [], this.inventorySortState(), {
+      article: inv => inv.article?.name,
+      date: inv => inv.createdAt,
+      amountNew: inv => inv.amountNew,
+      diff: inv => inv.diff,
+    })
+  );
 
   // Auto-Refresh via effect + onCleanup
   constructor() {
@@ -64,6 +76,18 @@ export class DashboardComponent {
 
   triggerRefresh() { this._refreshTick.update(n => n + 1); }
   refreshNow() { this.triggerRefresh(); }
+
+  sortInventoryBy(key: InventoryActivitySortKey) {
+    this.inventorySortState.update(state => nextSortState(state, key));
+  }
+
+  inventorySortIcon(key: InventoryActivitySortKey): string {
+    return sortIcon(this.inventorySortState(), key);
+  }
+
+  inventoryAriaSort(key: InventoryActivitySortKey): 'none' | 'ascending' | 'descending' {
+    return ariaSort(this.inventorySortState(), key);
+  }
 
   // Trend-Ableitungen
   readonly trendPoints = computed(() => {

@@ -12,6 +12,9 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { catchError, map, of, switchMap } from 'rxjs';
 import { Bill } from '../../models/bill.model';
 import { BillService } from '../../services/bill.service';
+import { ariaSort, nextSortState, sortIcon, sortItems, SortState } from '../../shared/table-sort';
+
+type BillSlipSortKey = 'number' | 'date' | 'state';
 
 @Component({
   selector: 'app-bill-detail',
@@ -36,6 +39,7 @@ export class BillDetailComponent {
   readonly deleting = signal(false);
   readonly editingDate = signal(false);
   readonly billDateDraft = signal('');
+  readonly slipSortState = signal<SortState<BillSlipSortKey>>({ key: null, direction: null });
 
   readonly busy = computed(
     () =>
@@ -52,6 +56,14 @@ export class BillDetailComponent {
     }
 
     return this.billDateDraft() !== this.toDateInputValue(bill.billDate);
+  });
+  readonly sortedSlipsheets = computed(() => {
+    const slipsheets = this.bill()?.slipsheets ?? [];
+    return sortItems(slipsheets, this.slipSortState(), {
+      number: slip => slip.slipsheetnumber,
+      date: slip => slip.createdAt,
+      state: slip => slip.state,
+    });
   });
 
   constructor() {
@@ -190,6 +202,18 @@ export class BillDetailComponent {
 
   back() {
     this.router.navigate(['/bills']);
+  }
+
+  sortSlipsBy(key: BillSlipSortKey) {
+    this.slipSortState.update(state => nextSortState(state, key));
+  }
+
+  slipSortIcon(key: BillSlipSortKey): string {
+    return sortIcon(this.slipSortState(), key);
+  }
+
+  slipAriaSort(key: BillSlipSortKey): 'none' | 'ascending' | 'descending' {
+    return ariaSort(this.slipSortState(), key);
   }
 
   startEditBillDate() {

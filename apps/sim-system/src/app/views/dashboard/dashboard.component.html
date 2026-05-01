@@ -230,14 +230,14 @@
         <table class="table-responsive-cards">
           <thead>
             <tr>
-              <th>Artikel</th>
-              <th>Datum</th>
-              <th>Neue Menge</th>
-              <th>Differenz</th>
+              <th [attr.aria-sort]="inventoryAriaSort('article')"><button type="button" class="table-sort-button" (click)="sortInventoryBy('article')" aria-label="Nach Artikel sortieren">Artikel <span class="table-sort-icon">{{ inventorySortIcon('article') }}</span></button></th>
+              <th [attr.aria-sort]="inventoryAriaSort('date')"><button type="button" class="table-sort-button" (click)="sortInventoryBy('date')" aria-label="Nach Datum sortieren">Datum <span class="table-sort-icon">{{ inventorySortIcon('date') }}</span></button></th>
+              <th [attr.aria-sort]="inventoryAriaSort('amountNew')"><button type="button" class="table-sort-button" (click)="sortInventoryBy('amountNew')" aria-label="Nach neuer Menge sortieren">Neue Menge <span class="table-sort-icon">{{ inventorySortIcon('amountNew') }}</span></button></th>
+              <th [attr.aria-sort]="inventoryAriaSort('diff')"><button type="button" class="table-sort-button" (click)="sortInventoryBy('diff')" aria-label="Nach Differenz sortieren">Differenz <span class="table-sort-icon">{{ inventorySortIcon('diff') }}</span></button></th>
             </tr>
           </thead>
           <tbody>
-            @for (inv of summary()!.recentInventoryActivities; track inv.id) {
+            @for (inv of sortedRecentInventoryActivities(); track inv.id) {
               <tr (click)="goToArticle(inv.article?.code)" style="cursor:pointer;">
                 <td data-label="Artikel">{{ inv.article?.name || '—' }}</td>
                 <td data-label="Datum">{{ inv.createdAt | date:'dd.MM.yyyy HH:mm' }}</td>

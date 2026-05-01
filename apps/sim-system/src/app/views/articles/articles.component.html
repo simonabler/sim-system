@@ -59,13 +59,13 @@
     <table class="table-responsive-cards">
       <thead>
         <tr>
-          <th>Bezeichnung</th>
-          <th>Artikel-Nr.</th>
-          <th>Barcode</th>
-          <th>Lagerstand</th>
-          <th>Einheit</th>
-          <th>Status</th>
-          <th>Inventurdatum</th>
+          <th [attr.aria-sort]="ariaSort('name')"><button type="button" class="table-sort-button" (click)="sortBy('name')" aria-label="Nach Bezeichnung sortieren">Bezeichnung <span class="table-sort-icon">{{ sortIcon('name') }}</span></button></th>
+          <th [attr.aria-sort]="ariaSort('artNumber')"><button type="button" class="table-sort-button" (click)="sortBy('artNumber')" aria-label="Nach Artikelnummer sortieren">Artikel-Nr. <span class="table-sort-icon">{{ sortIcon('artNumber') }}</span></button></th>
+          <th [attr.aria-sort]="ariaSort('code')"><button type="button" class="table-sort-button" (click)="sortBy('code')" aria-label="Nach Barcode sortieren">Barcode <span class="table-sort-icon">{{ sortIcon('code') }}</span></button></th>
+          <th [attr.aria-sort]="ariaSort('stock')"><button type="button" class="table-sort-button" (click)="sortBy('stock')" aria-label="Nach Lagerstand sortieren">Lagerstand <span class="table-sort-icon">{{ sortIcon('stock') }}</span></button></th>
+          <th [attr.aria-sort]="ariaSort('unit')"><button type="button" class="table-sort-button" (click)="sortBy('unit')" aria-label="Nach Einheit sortieren">Einheit <span class="table-sort-icon">{{ sortIcon('unit') }}</span></button></th>
+          <th [attr.aria-sort]="ariaSort('status')"><button type="button" class="table-sort-button" (click)="sortBy('status')" aria-label="Nach Status sortieren">Status <span class="table-sort-icon">{{ sortIcon('status') }}</span></button></th>
+          <th [attr.aria-sort]="ariaSort('inventoryDate')"><button type="button" class="table-sort-button" (click)="sortBy('inventoryDate')" aria-label="Nach Inventurdatum sortieren">Inventurdatum <span class="table-sort-icon">{{ sortIcon('inventoryDate') }}</span></button></th>
         </tr>
       </thead>
       <tbody>

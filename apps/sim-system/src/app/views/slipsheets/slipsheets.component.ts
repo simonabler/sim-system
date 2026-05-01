@@ -4,6 +4,9 @@ import { Router } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { SlipsheetService } from '../../services/slipsheet.service';
 import { Slipsheet } from '../../models/bill.model';
+import { ariaSort, nextSortState, sortIcon, sortItems, SortState } from '../../shared/table-sort';
+
+type SlipsheetSortKey = 'number' | 'customer' | 'date' | 'billing' | 'state' | 'positions';
 
 @Component({
   selector: 'app-slipsheets',
@@ -21,13 +24,35 @@ export class SlipsheetsComponent {
   readonly loading = computed(() => this.slipsheets() === undefined);
 
   readonly showOnlyOpen = signal(false);
+  readonly sortState = signal<SortState<SlipsheetSortKey>>({ key: null, direction: null });
 
   readonly openCount = computed(() => this.slipsheets().filter(s => s.isOpen()).length);
 
   readonly filteredSlipsheets = computed(() => {
     const all = this.slipsheets();
-    return this.showOnlyOpen() ? all.filter(s => s.isOpen()) : all;
+    const filtered = this.showOnlyOpen() ? all.filter(s => s.isOpen()) : all;
+
+    return sortItems(filtered, this.sortState(), {
+      number: slip => slip.slipsheetnumber,
+      customer: slip => this.customerName(slip),
+      date: slip => slip.createdAt,
+      billing: slip => slip.isOpen() ? 0 : 1,
+      state: slip => slip.state,
+      positions: slip => slip.orderEntries.length,
+    });
   });
+
+  sortBy(key: SlipsheetSortKey) {
+    this.sortState.update(state => nextSortState(state, key));
+  }
+
+  sortIcon(key: SlipsheetSortKey): string {
+    return sortIcon(this.sortState(), key);
+  }
+
+  ariaSort(key: SlipsheetSortKey): 'none' | 'ascending' | 'descending' {
+    return ariaSort(this.sortState(), key);
+  }
 
   toggleFilter() { this.showOnlyOpen.update(v => !v); }
 
@@ -53,5 +78,9 @@ export class SlipsheetsComponent {
     return s.isOpen()
       ? 'sims-badge slip-badge-open'
       : 'sims-badge slip-badge-billed';
+  }
+
+  customerName(s: Slipsheet): string {
+    return s.customer?.companyName || s.customer?.lastName || '';
   }
 }

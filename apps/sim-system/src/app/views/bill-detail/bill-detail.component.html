@@ -89,13 +89,13 @@
       <table class="table-responsive-cards">
         <thead>
           <tr>
-            <th>Lieferschein-Nr.</th>
-            <th>Datum</th>
-            <th>Status</th>
+            <th [attr.aria-sort]="slipAriaSort('number')"><button type="button" class="table-sort-button" (click)="sortSlipsBy('number')" aria-label="Nach Lieferscheinnummer sortieren">Lieferschein-Nr. <span class="table-sort-icon">{{ slipSortIcon('number') }}</span></button></th>
+            <th [attr.aria-sort]="slipAriaSort('date')"><button type="button" class="table-sort-button" (click)="sortSlipsBy('date')" aria-label="Nach Datum sortieren">Datum <span class="table-sort-icon">{{ slipSortIcon('date') }}</span></button></th>
+            <th [attr.aria-sort]="slipAriaSort('state')"><button type="button" class="table-sort-button" (click)="sortSlipsBy('state')" aria-label="Nach Status sortieren">Status <span class="table-sort-icon">{{ slipSortIcon('state') }}</span></button></th>
           </tr>
         </thead>
         <tbody>
-          @for (slipsheet of bill()!.slipsheets; track slipsheet.id) {
+          @for (slipsheet of sortedSlipsheets(); track slipsheet.id) {
             <tr [routerLink]="['/slipsheets', slipsheet.id]">
               <td data-label="Nr." class="numeric">{{ slipsheet.slipsheetnumber }}</td>
               <td data-label="Datum">{{ slipsheet.createdAt | date:'dd.MM.yyyy' }}</td>

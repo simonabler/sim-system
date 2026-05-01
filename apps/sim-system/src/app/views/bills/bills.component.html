@@ -38,19 +38,19 @@
     <table class="table-responsive-cards">
       <thead>
         <tr>
-          <th>Rechnungsnummer</th>
-          <th>Datum</th>
-          <th>Kunde</th>
-          <th>Lieferscheine</th>
-          <th>Status</th>
+          <th [attr.aria-sort]="ariaSort('number')"><button type="button" class="table-sort-button" (click)="sortBy('number')" aria-label="Nach Rechnungsnummer sortieren">Rechnungsnummer <span class="table-sort-icon">{{ sortIcon('number') }}</span></button></th>
+          <th [attr.aria-sort]="ariaSort('date')"><button type="button" class="table-sort-button" (click)="sortBy('date')" aria-label="Nach Datum sortieren">Datum <span class="table-sort-icon">{{ sortIcon('date') }}</span></button></th>
+          <th [attr.aria-sort]="ariaSort('customer')"><button type="button" class="table-sort-button" (click)="sortBy('customer')" aria-label="Nach Kunde sortieren">Kunde <span class="table-sort-icon">{{ sortIcon('customer') }}</span></button></th>
+          <th [attr.aria-sort]="ariaSort('slipsheets')"><button type="button" class="table-sort-button" (click)="sortBy('slipsheets')" aria-label="Nach Lieferscheinen sortieren">Lieferscheine <span class="table-sort-icon">{{ sortIcon('slipsheets') }}</span></button></th>
+          <th [attr.aria-sort]="ariaSort('state')"><button type="button" class="table-sort-button" (click)="sortBy('state')" aria-label="Nach Status sortieren">Status <span class="table-sort-icon">{{ sortIcon('state') }}</span></button></th>
         </tr>
       </thead>
       <tbody>
-        @for (b of bills(); track b.id) {
+        @for (b of sortedBills(); track b.id) {
           <tr (click)="goTo(b.id)">
             <td data-label="Rechnungsnummer" class="numeric">{{ b.getNumber() }}</td>
             <td data-label="Datum">{{ b.billDate | date:'dd.MM.yyyy' }}</td>
-            <td data-label="Kunde">{{ b.customer?.companyName || b.customer?.lastName }}</td>
+            <td data-label="Kunde">{{ customerName(b) }}</td>
             <td data-label="Lieferscheine" class="numeric">{{ b.slipsheets.length }}</td>
             <td data-label="Status"><span [class]="badgeClass(b.state)">{{ badgeLabel(b.state) }}</span></td>
           </tr>

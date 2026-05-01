@@ -222,6 +222,34 @@
     padding: 0.85rem 1.25rem;
     text-align: left; border-bottom: 1px solid var(--border);
   }
+  .table-sort-button {
+    appearance: none;
+    background: transparent;
+    border: 0;
+    color: inherit;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font: inherit;
+    letter-spacing: inherit;
+    margin: -0.35rem -0.45rem;
+    min-height: 32px;
+    padding: 0.35rem 0.45rem;
+    text-align: inherit;
+    text-transform: inherit;
+  }
+  .table-sort-button:hover,
+  .table-sort-button:focus-visible {
+    color: var(--accent-primary);
+    outline: none;
+  }
+  .table-sort-icon {
+    color: var(--ink-3);
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    line-height: 1;
+  }
   tbody tr { border-bottom: 1px solid var(--border-sub); }
   tbody tr:hover { background: var(--accent-light); cursor: pointer; }
   tbody td {

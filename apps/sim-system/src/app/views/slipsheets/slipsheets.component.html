@@ -54,12 +54,12 @@
     <table class="table-responsive-cards">
       <thead>
         <tr>
-          <th>Nummer</th>
-          <th>Kunde</th>
-          <th>Datum</th>
-          <th>Verrechnung</th>
-          <th>Status</th>
-          <th>Pos.</th>
+          <th [attr.aria-sort]="ariaSort('number')"><button type="button" class="table-sort-button" (click)="sortBy('number')" aria-label="Nach Nummer sortieren">Nummer <span class="table-sort-icon">{{ sortIcon('number') }}</span></button></th>
+          <th [attr.aria-sort]="ariaSort('customer')"><button type="button" class="table-sort-button" (click)="sortBy('customer')" aria-label="Nach Kunde sortieren">Kunde <span class="table-sort-icon">{{ sortIcon('customer') }}</span></button></th>
+          <th [attr.aria-sort]="ariaSort('date')"><button type="button" class="table-sort-button" (click)="sortBy('date')" aria-label="Nach Datum sortieren">Datum <span class="table-sort-icon">{{ sortIcon('date') }}</span></button></th>
+          <th [attr.aria-sort]="ariaSort('billing')"><button type="button" class="table-sort-button" (click)="sortBy('billing')" aria-label="Nach Verrechnung sortieren">Verrechnung <span class="table-sort-icon">{{ sortIcon('billing') }}</span></button></th>
+          <th [attr.aria-sort]="ariaSort('state')"><button type="button" class="table-sort-button" (click)="sortBy('state')" aria-label="Nach Status sortieren">Status <span class="table-sort-icon">{{ sortIcon('state') }}</span></button></th>
+          <th [attr.aria-sort]="ariaSort('positions')"><button type="button" class="table-sort-button" (click)="sortBy('positions')" aria-label="Nach Positionen sortieren">Pos. <span class="table-sort-icon">{{ sortIcon('positions') }}</span></button></th>
         </tr>
       </thead>
       <tbody>

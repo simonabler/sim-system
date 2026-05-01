@@ -20,6 +20,10 @@ import { BillService } from '../../services/bill.service';
 import { SlipsheetService } from '../../services/slipsheet.service';
 import { Customer } from '../../models/customer.model';
 import { Slipsheet, Bill } from '../../models/bill.model';
+import { ariaSort, nextSortState, sortIcon, sortItems, SortState } from '../../shared/table-sort';
+
+type CustomerSlipSortKey = 'number' | 'date' | 'amount' | 'status';
+type CustomerBillSortKey = 'number' | 'slipsheets' | 'state' | 'total';
 
 @Component({
   selector: 'app-customer-detail',
@@ -67,6 +71,8 @@ export class CustomerDetailComponent {
   readonly queryCtrl = new FormControl('');
   readonly generatingBill = signal(false);
   readonly toast = signal<{ type: 'success' | 'error'; msg: string } | null>(null);
+  readonly slipSortState = signal<SortState<CustomerSlipSortKey>>({ key: null, direction: null });
+  readonly billSortState = signal<SortState<CustomerBillSortKey>>({ key: null, direction: null });
 
   private readonly preselectId = toSignal(
     this.route.queryParamMap.pipe(map(p => p.get('preselect'))),
@@ -87,10 +93,26 @@ export class CustomerDetailComponent {
 
   readonly filteredSlips = computed(() => {
     const q = (this.query() ?? '').toLowerCase();
-    return this.slipsheets()
+    const filtered = this.slipsheets()
       .filter(s => this.showOnlyOpen() ? s.isOpen() : true)
       .filter(s => !q || (s.slipsheetnumber ?? '').toLowerCase().includes(q));
+
+    return sortItems(filtered, this.slipSortState(), {
+      number: slip => slip.slipsheetnumber,
+      date: slip => slip.createdAt,
+      amount: slip => slip.getPrice(),
+      status: slip => this.slipBillLabel(slip),
+    });
   });
+
+  readonly sortedBills = computed(() =>
+    sortItems(this.bills(), this.billSortState(), {
+      number: bill => bill.getNumber(),
+      slipsheets: bill => bill.slipsheets.map(s => s.slipsheetnumber).join(', '),
+      state: bill => bill.state,
+      total: bill => bill.getTotal(),
+    })
+  );
 
   readonly activeSlip = computed(() => {
     const id = this.activeSlipId();
@@ -199,6 +221,30 @@ export class CustomerDetailComponent {
   }
 
   toggleOpenFilter() { this.showOnlyOpen.update(v => !v); }
+
+  sortSlipsBy(key: CustomerSlipSortKey) {
+    this.slipSortState.update(state => nextSortState(state, key));
+  }
+
+  slipSortIcon(key: CustomerSlipSortKey): string {
+    return sortIcon(this.slipSortState(), key);
+  }
+
+  slipAriaSort(key: CustomerSlipSortKey): 'none' | 'ascending' | 'descending' {
+    return ariaSort(this.slipSortState(), key);
+  }
+
+  sortBillsBy(key: CustomerBillSortKey) {
+    this.billSortState.update(state => nextSortState(state, key));
+  }
+
+  billSortIcon(key: CustomerBillSortKey): string {
+    return sortIcon(this.billSortState(), key);
+  }
+
+  billAriaSort(key: CustomerBillSortKey): 'none' | 'ascending' | 'descending' {
+    return ariaSort(this.billSortState(), key);
+  }
 
   back() { this.router.navigate(['/customers']); }
 

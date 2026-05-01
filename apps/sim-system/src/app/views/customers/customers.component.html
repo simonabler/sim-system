@@ -24,10 +24,10 @@
     <table class="table-responsive-cards">
       <thead>
         <tr>
-          <th>Name / Firma</th>
-          <th>Kundennummer</th>
-          <th>E-Mail</th>
-          <th>Ort</th>
+          <th [attr.aria-sort]="ariaSort('name')"><button type="button" class="table-sort-button" (click)="sortBy('name')" aria-label="Nach Name oder Firma sortieren">Name / Firma <span class="table-sort-icon">{{ sortIcon('name') }}</span></button></th>
+          <th [attr.aria-sort]="ariaSort('customerNumber')"><button type="button" class="table-sort-button" (click)="sortBy('customerNumber')" aria-label="Nach Kundennummer sortieren">Kundennummer <span class="table-sort-icon">{{ sortIcon('customerNumber') }}</span></button></th>
+          <th [attr.aria-sort]="ariaSort('email')"><button type="button" class="table-sort-button" (click)="sortBy('email')" aria-label="Nach E-Mail sortieren">E-Mail <span class="table-sort-icon">{{ sortIcon('email') }}</span></button></th>
+          <th [attr.aria-sort]="ariaSort('place')"><button type="button" class="table-sort-button" (click)="sortBy('place')" aria-label="Nach Ort sortieren">Ort <span class="table-sort-icon">{{ sortIcon('place') }}</span></button></th>
         </tr>
       </thead>
       <tbody>
