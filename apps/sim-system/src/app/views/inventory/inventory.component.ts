@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, effect, ElementRef, inject, signal, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, HostListener, computed, effect, ElementRef, inject, signal, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormControl } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
@@ -71,6 +71,12 @@ export class InventoryComponent {
       const stock = this.shouldVal();
       this.isVal.set(stock);
     });
+  }
+
+  @HostListener('document:onbarcodescaned', ['$event'])
+  onBarcodeReaderInput(event: Event) {
+    this.codeCtrl.setValue((event as CustomEvent<string>).detail, { emitEvent: true });
+    setTimeout(() => this.codeInputRef?.nativeElement?.focus(), 50);
   }
 
   stepIs(delta: number) { this.isVal.update(v => Math.max(0, v + delta)); }

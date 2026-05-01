@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, effect, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, HostListener, computed, effect, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormGroup, FormControl, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -74,6 +74,11 @@ export class ArticleDetailComponent {
         this.form.patchValue({ ...article, articleGroup: article.articleGroup?.id ?? null });
       }
     });
+  }
+
+  @HostListener('document:onbarcodescaned', ['$event'])
+  onBarcodeReaderInput(event: Event) {
+    this.form.controls.code.setValue((event as CustomEvent<string>).detail);
   }
 
   save() {

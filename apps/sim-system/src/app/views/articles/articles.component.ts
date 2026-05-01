@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, effect, inject, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, HostListener, computed, effect, inject, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormControl } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -51,6 +51,11 @@ export class ArticlesComponent {
         this.codeCtrl.setValue(code, { emitEvent: true });
       }
     });
+  }
+
+  @HostListener('document:onbarcodescaned', ['$event'])
+  onBarcodeReaderInput(event: Event) {
+    this.codeCtrl.setValue((event as CustomEvent<string>).detail, { emitEvent: true });
   }
 
   readonly filtered = computed(() => {

@@ -1,5 +1,5 @@
 import {
-  ChangeDetectionStrategy, Component, ElementRef, ViewChild,
+  ChangeDetectionStrategy, Component, ElementRef, HostListener, ViewChild,
   inject, signal, computed, input, output,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
@@ -80,6 +80,12 @@ export class SlipsheetEditorComponent {
   );
 
   // ── Artikel hinzufügen ────────────────────────────────────────
+  @HostListener('document:onbarcodescaned', ['$event'])
+  onBarcodeReaderInput(event: Event) {
+    this.codeCtrl.setValue((event as CustomEvent<string>).detail, { emitEvent: true });
+    setTimeout(() => this.codeInputRef?.nativeElement?.focus(), 50);
+  }
+
   addPending() {
     const article  = this.pendingArticle();
     const customer = this.customer();

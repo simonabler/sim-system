@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { Router, RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
@@ -54,9 +54,13 @@ const ICONS: Record<string, string> = {
   templateUrl: './app.html',
   styleUrl: './app.scss',
 })
-export class App {
+export class App implements OnInit, OnDestroy {
   private sanitizer = inject(DomSanitizer);
   private router    = inject(Router);
+  private scanTimeout?: ReturnType<typeof setTimeout>;
+  private isScanning = false;
+  private inputString = '';
+  private readonly keyboardListener = (event: KeyboardEvent) => this.handleKeyboardEvent(event);
 
   readonly navItems = [
     { label: 'Start', children: [
@@ -91,5 +95,69 @@ export class App {
 
   isActive(route: string): boolean {
     return this.router.url.startsWith(route);
+  }
+
+  ngOnInit(): void {
+    document.addEventListener('keydown', this.keyboardListener, true);
+  }
+
+  ngOnDestroy(): void {
+    document.removeEventListener('keydown', this.keyboardListener, true);
+    this.clearScanTimeout();
+  }
+
+  private handleKeyboardEvent(event: KeyboardEvent): void {
+    if (!this.isScanning && event.key !== '^') {
+      return;
+    }
+
+    event.preventDefault();
+
+    if (!this.isScanning) {
+      this.isScanning = true;
+      this.inputString = '';
+    }
+
+    this.clearScanTimeout();
+
+    if (event.key === 'Enter' || event.key === 'Tab') {
+      this.dispatchBarcodeScan();
+      return;
+    }
+
+    if (event.key.length !== 1) {
+      this.armScanTimeout();
+      return;
+    }
+
+    if (event.key !== '^') {
+      this.inputString += event.key;
+    }
+
+    this.armScanTimeout();
+  }
+
+  private armScanTimeout(): void {
+    this.scanTimeout = setTimeout(() => this.dispatchBarcodeScan(), 200);
+  }
+
+  private clearScanTimeout(): void {
+    if (this.scanTimeout) {
+      clearTimeout(this.scanTimeout);
+      this.scanTimeout = undefined;
+    }
+  }
+
+  private dispatchBarcodeScan(): void {
+    const barcode = this.inputString.trim();
+    this.isScanning = false;
+    this.inputString = '';
+    this.clearScanTimeout();
+
+    if (barcode.length <= 5) {
+      return;
+    }
+
+    document.dispatchEvent(new CustomEvent('onbarcodescaned', { detail: barcode }));
   }
 }
