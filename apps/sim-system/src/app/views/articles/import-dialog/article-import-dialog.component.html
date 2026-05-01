@@ -1,0 +1,181 @@
+<dialog #importDialogEl (close)="onDialogClose()">
+  <div class="import-dialog-card">
+
+    <!-- ── Step 1: Datei wählen ── -->
+    @if (step() === 1) {
+      <div class="dialog-header">
+        <div class="eyebrow">Import</div>
+        <h2 class="dialog-title">CSV importieren</h2>
+      </div>
+
+      <label class="drop-zone" [class.has-file]="selectedFile()">
+        <input type="file" accept=".csv" class="drop-input" (change)="onFileChange($event)" />
+        @if (!selectedFile()) {
+          <span class="drop-icon">↑</span>
+          <span class="drop-label">CSV-Datei auswählen oder ablegen</span>
+        } @else {
+          <span class="drop-icon">✓</span>
+          <span class="drop-label selected">{{ selectedFile()!.name }}</span>
+          <span class="file-meta">{{ csvHeaders().length }} Spalten erkannt</span>
+        }
+      </label>
+
+      @if (fileError()) {
+        <p class="dialog-error">{{ fileError() }}</p>
+      }
+
+      <div class="dialog-actions">
+        <button class="btn-sims-ghost" (click)="close()">Abbrechen</button>
+        <button class="btn-sims-primary" [disabled]="!selectedFile()" (click)="goToMapping()">
+          Weiter →
+        </button>
+      </div>
+    }
+
+    <!-- ── Step 2: Spalten zuweisen ── -->
+    @if (step() === 2) {
+      <div class="dialog-header">
+        <div class="eyebrow">Schritt 2 / 3</div>
+        <h2 class="dialog-title">Spalten zuweisen</h2>
+        <p class="dialog-sub">Weise jede CSV-Spalte einem Artikelfeld zu. Pflichtfeld: Barcode.</p>
+      </div>
+
+      <div class="mapping-table">
+        @for (row of mapping(); track row.csvHeader; let i = $index) {
+          <div class="mapping-row">
+            <span class="csv-header-label">
+              <span class="mono-label">{{ row.csvHeader }}</span>
+              @if (isSuggested(row.csvHeader)) {
+                <span class="badge-auto">Auto</span>
+              }
+            </span>
+            <span class="mapping-arrow">→</span>
+            <select
+              class="sims-select mapping-select"
+              [value]="row.articleField ?? ''"
+              (change)="updateMapping(i, $any($event.target).value)">
+              @for (field of articleFields; track field.key) {
+                <option [value]="field.key ?? ''">{{ field.label }}</option>
+              }
+            </select>
+          </div>
+        }
+      </div>
+
+      @if (mappingError()) {
+        <p class="dialog-error">{{ mappingError() }}</p>
+      }
+
+      <div class="dialog-actions">
+        <button class="btn-sims-ghost" (click)="step.set(1)">← Zurück</button>
+        <button class="btn-sims-primary" (click)="goToPreview()">Vorschau →</button>
+      </div>
+    }
+
+    <!-- ── Step 3: Vorschau / Dry-Run ── -->
+    @if (step() === 3) {
+      <div class="dialog-header">
+        <div class="eyebrow">Schritt 3 / 3</div>
+        <h2 class="dialog-title">Vorschau</h2>
+      </div>
+
+      @if (previewLoading()) {
+        <div class="preview-skeleton">
+          <div class="sk" style="height:80px; border-radius: var(--radius-md);"></div>
+        </div>
+      }
+
+      @if (!previewLoading() && preview()) {
+        <div class="preview-stats">
+          <div class="stat-card stat-new">
+            <span class="stat-num">{{ preview()!.newArticle.length }}</span>
+            <span class="stat-label">Neu</span>
+          </div>
+          <div class="stat-card stat-update">
+            <span class="stat-num">{{ preview()!.updateableArticle.length }}</span>
+            <span class="stat-label">Updates</span>
+          </div>
+          <div class="stat-card stat-total">
+            <span class="stat-num">{{ preview()!.articleCount }}</span>
+            <span class="stat-label">Gesamt</span>
+          </div>
+        </div>
+
+        @if (preview()!.newArticle.length > 0) {
+          <button class="expander-btn btn-sims-ghost" (click)="toggleNewList()">
+            {{ showNewList() ? '▲' : '▼' }} {{ preview()!.newArticle.length }} neue Artikel
+          </button>
+          @if (showNewList()) {
+            <ul class="preview-list">
+              @for (a of preview()!.newArticle; track a.code) {
+                <li class="preview-item">
+                  <span class="item-code">{{ a.code }}</span>
+                  <span class="item-name">{{ a.name || '—' }}</span>
+                </li>
+              }
+            </ul>
+          }
+        }
+
+        @if (preview()!.updateableArticle.length > 0) {
+          <button class="expander-btn btn-sims-ghost" (click)="toggleUpdateList()">
+            {{ showUpdateList() ? '▲' : '▼' }} {{ preview()!.updateableArticle.length }} Updates
+          </button>
+          @if (showUpdateList()) {
+            <ul class="preview-list">
+              @for (a of preview()!.updateableArticle; track a.code) {
+                <li class="preview-item update">
+                  <span class="item-code">{{ a.code }}</span>
+                  <span class="item-name">{{ a.name || '—' }}</span>
+                </li>
+              }
+            </ul>
+          }
+        }
+      }
+
+      @if (previewError()) {
+        <p class="dialog-error">{{ previewError() }}</p>
+      }
+
+      @if (importError()) {
+        <p class="dialog-error">{{ importError() }}</p>
+      }
+
+      <div class="dialog-actions">
+        <button class="btn-sims-ghost" (click)="step.set(2)" [disabled]="importing()">
+          ← Zurück
+        </button>
+        <button
+          class="btn-sims-primary"
+          (click)="confirmImport()"
+          [disabled]="previewLoading() || importing() || !!previewError()">
+          {{ importing() ? 'Wird importiert…' : 'Import starten' }}
+        </button>
+      </div>
+    }
+
+    <!-- ── Step 4: Ergebnis ── -->
+    @if (step() === 4) {
+      <div class="dialog-header">
+        <div class="eyebrow">Fertig</div>
+        <h2 class="dialog-title">Import abgeschlossen</h2>
+      </div>
+
+      @if (result()) {
+        <div class="result-banner" [class.result-warn]="result()!.failed > 0">
+          <div class="result-count">{{ result()!.succeeded }}</div>
+          <div class="result-desc">Artikel erfolgreich importiert</div>
+          @if (result()!.failed > 0) {
+            <div class="result-failed">{{ result()!.failed }} fehlgeschlagen</div>
+          }
+        </div>
+      }
+
+      <div class="dialog-actions">
+        <button class="btn-sims-primary" (click)="close()">Schließen</button>
+      </div>
+    }
+
+  </div>
+</dialog>

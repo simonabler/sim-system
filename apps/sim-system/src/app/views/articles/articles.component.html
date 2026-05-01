@@ -3,8 +3,13 @@
     <div class="eyebrow">Stammdaten</div>
     <h1 class="page-title">Artikel</h1>
   </div>
-  <button class="btn-sims-primary" (click)="newArticle()">+ Artikel</button>
+  <div class="header-actions">
+    <button class="btn-sims-outline" (click)="openImport()">CSV importieren</button>
+    <button class="btn-sims-primary" (click)="newArticle()">+ Artikel</button>
+  </div>
 </div>
+
+<app-article-import-dialog />
 
 <!-- Suchleiste -->
 <div class="row g-2 mb-3">

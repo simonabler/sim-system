@@ -9,6 +9,12 @@ import { Article } from './entities/article.entity';
 import { InventoryService } from './inventory.service';
 import { ArticleEntity } from './serializers/article.serializer';
 import { UpdateArticleDto } from './dto/update-article.dto';
+import {
+  ArticleImportRow,
+  CsvColumnMapping,
+  ImportExecuteResponse,
+  ImportPreviewResponse,
+} from './dto/article-import-row';
 
 @Injectable()
 export class ArticleService extends BaseService<Article, ArticleEntity> {
@@ -225,6 +231,117 @@ export class ArticleService extends BaseService<Article, ArticleEntity> {
     return retValue;
   }
 
+
+  // ── Dynamic CSV import (column mapping provided by frontend) ──
+
+  async importCsvWithMapping(
+    preview: boolean,
+    file: Express.Multer.File,
+    mapping: CsvColumnMapping[],
+  ): Promise<ImportPreviewResponse | ImportExecuteResponse> {
+    const rawRows = ArticleService.parseCsvRaw(file.buffer);
+    const fieldMap = new Map<string, keyof ArticleImportRow>();
+    for (const m of mapping) {
+      if (m.articleField !== null) fieldMap.set(m.csvHeader, m.articleField);
+    }
+
+    const rows: ArticleImportRow[] = rawRows
+      .map(raw => {
+        const row: ArticleImportRow = { code: '' };
+        for (const [header, field] of fieldMap) {
+          (row as unknown as Record<string, string>)[field] = raw[header] ?? '';
+        }
+        return row;
+      })
+      .filter(r => r.code.trim().length > 0);
+
+    const checked = await this.checkCSVDynamic(rows);
+
+    if (preview) {
+      return checked;
+    }
+
+    let succeeded = 0;
+    const failedCodes: string[] = [];
+
+    for (const row of checked.newArticle) {
+      try {
+        await this.createArticleFromRow(row);
+        succeeded++;
+      } catch {
+        failedCodes.push(row.code);
+      }
+    }
+
+    for (const row of checked.updateableArticle) {
+      try {
+        await this.updateArticleFromRow(row);
+        succeeded++;
+      } catch {
+        failedCodes.push(row.code);
+      }
+    }
+
+    return { succeeded, failed: failedCodes.length, failedCodes };
+  }
+
+  private static parseCsvRaw(buffer: Buffer): Record<string, string>[] {
+    const content = buffer.toString('utf-8');
+    const lines = content.split(/\r?\n/).filter(l => l.trim().length > 0);
+    if (lines.length < 2) return [];
+    const sep = lines[0].includes(';') ? ';' : ',';
+    const headers = lines[0].split(sep).map(h => h.trim().replace(/^"|"$/g, ''));
+    return lines.slice(1).map(line => {
+      const vals = line.split(sep).map(v => v.trim().replace(/^"|"$/g, ''));
+      return Object.fromEntries(headers.map((h, i) => [h, vals[i] ?? '']));
+    });
+  }
+
+  private async checkCSVDynamic(rows: ArticleImportRow[]): Promise<ImportPreviewResponse> {
+    const articles = await this.getAll();
+    const newArticle: ArticleImportRow[] = [];
+    const updateableArticle: ArticleImportRow[] = [];
+
+    for (const row of rows) {
+      if (articles.find(a => a.code === row.code)) {
+        updateableArticle.push(row);
+      } else {
+        newArticle.push(row);
+      }
+    }
+
+    return { articleCount: newArticle.length + updateableArticle.length, newArticle, updateableArticle };
+  }
+
+  private async createArticleFromRow(row: ArticleImportRow): Promise<void> {
+    const per = this.parsePe(row.pe);
+    const article = new Article();
+    article.code = row.code;
+    article.name = row.name ?? row.code;
+    article.unit = row.unit ?? '';
+    article.type = row.type ?? '';
+    article.artNumber = row.artNumber ?? '';
+    article.price = row.price ? this.ceilNumber(+(row.price.replace(',', '.')) / per) : 0;
+    article.netto = row.netto ? this.ceilNumber(+(row.netto.replace(',', '.')) / per) : 0;
+    await this.articleRepository.insert(article);
+  }
+
+  private async updateArticleFromRow(row: ArticleImportRow): Promise<void> {
+    const per = this.parsePe(row.pe);
+    const update: Partial<Article> = {};
+    if (row.name !== undefined)      update.name      = row.name;
+    if (row.unit !== undefined)      update.unit      = row.unit;
+    if (row.type !== undefined)      update.type      = row.type;
+    if (row.artNumber !== undefined) update.artNumber = row.artNumber;
+    if (row.price !== undefined)     update.price     = this.ceilNumber(+(row.price.replace(',', '.')) / per);
+    if (row.netto !== undefined)     update.netto     = this.ceilNumber(+(row.netto.replace(',', '.')) / per);
+    await this.articleRepository.update({ code: row.code }, update);
+  }
+
+  private parsePe(pe?: string): number {
+    const val = +(pe?.replace(',', '.') ?? '1') || 1;
+    return val === 0 ? 1 : val;
+  }
 
   async update(id: number, inputs: UpdateArticleDto): Promise<ArticleEntity> {
     const { articleGroup, ...rest } = inputs;

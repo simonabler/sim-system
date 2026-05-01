@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, effect, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormControl } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -7,11 +7,12 @@ import { map } from 'rxjs';
 import { debounceTime, startWith } from 'rxjs/operators';
 import { ArticleService } from '../../services/article.service';
 import { Article } from '../../models/article.model';
+import { ArticleImportDialogComponent } from './import-dialog/article-import-dialog.component';
 
 @Component({
   selector: 'app-articles',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, ArticleImportDialogComponent],
   templateUrl: './articles.component.html',
   styleUrl: './articles.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -20,6 +21,9 @@ export class ArticlesComponent {
   private articleService = inject(ArticleService);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
+
+  @ViewChild(ArticleImportDialogComponent) importDialog!: ArticleImportDialogComponent;
+  openImport() { this.importDialog.open(); }
 
   readonly searchCtrl = new FormControl('');
   readonly codeCtrl = new FormControl('');

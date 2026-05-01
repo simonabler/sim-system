@@ -11,6 +11,7 @@ import {
   Patch,
   Query,
   UploadedFile,
+  BadRequestException,
 } from '@nestjs/common';
 import {
   ApiBearerAuth,
@@ -108,25 +109,37 @@ export class ArticleController {
     schema: {
       type: 'object',
       properties: {
-        file: {
+        file: { type: 'string', format: 'binary' },
+        mapping: {
           type: 'string',
-          format: 'binary',
+          description: 'JSON array of CsvColumnMapping — weglassen für Legacy-Modus',
         },
       },
     },
   })
   @UseInterceptors(FileInterceptor('file', { storage: memoryStorage() }))
-  @SerializeOptions({
-    ignoreDecorators: true,
-  })
-
+  @SerializeOptions({ ignoreDecorators: true })
   async importCvs(
-    @Query('preview') preview: boolean,
+    @Query('preview') preview: string,
     @UploadedFile() file: Express.Multer.File,
+    @Body('mapping') mappingJson?: string,
   ): Promise<any> {
+    const isPreview = preview === 'true';
 
-    return ReS.FromData(await this.articleService.importCsv(preview, file));
+    if (mappingJson) {
+      let mapping: import('../dto/article-import-row').CsvColumnMapping[];
+      try {
+        mapping = JSON.parse(mappingJson);
+      } catch {
+        throw new BadRequestException('mapping ist kein gültiges JSON');
+      }
+      if (!mapping.some(m => m.articleField === 'code')) {
+        throw new BadRequestException('Mapping muss eine Spalte auf "code" (Barcode) abbilden');
+      }
+      return ReS.FromData(await this.articleService.importCsvWithMapping(isPreview, file, mapping));
+    }
 
+    return ReS.FromData(await this.articleService.importCsv(isPreview, file));
   }
 
   @Patch(':id')
