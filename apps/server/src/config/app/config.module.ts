@@ -1,18 +1,13 @@
 import { Module } from '@nestjs/common';
 import configuration from './configuration';
 import { AppConfigService } from './config.service';
-import { ConfigModule, ConfigService } from '@nestjs/config';
-import { join } from 'path';
+import { ConfigModule } from '@nestjs/config';
 
-const ENV = process.env.NODE_ENV;
 @Module({
   imports: [
-    ConfigModule.forRoot({
-      load: [configuration],
-      envFilePath: !ENV ? '.env' : `.env.${ENV}`,
-    }),
+    ConfigModule.forFeature(configuration),
   ],
-  providers: [ConfigService, AppConfigService],
-  exports: [ConfigService, AppConfigService],
+  providers: [AppConfigService],
+  exports: [ConfigModule, AppConfigService],
 })
 export class AppConfigModule {}

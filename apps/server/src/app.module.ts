@@ -15,6 +15,9 @@ import { UsersModule } from './models/users/users.module'; // Bug #7 fix: add Us
 const ENV = process.env.NODE_ENV;
 @Module({
   imports: [
+    ConfigModule.forRoot({
+      envFilePath: process.env.ENV_FILE || (!ENV ? '.env' : `.env.${ENV}`),
+    }),
     AppConfigModule,
     SqliteConfigModule,
     SqliteDatabaseProviderModule,
@@ -23,7 +26,7 @@ const ENV = process.env.NODE_ENV;
     BillModule,
     CompanySettingsModule,
     SharedModule,
-    UsersModule, // Bug #7 fix
+    UsersModule, 
   ],
   controllers: [AppController],
   providers: [AppService],

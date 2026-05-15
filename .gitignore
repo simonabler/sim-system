@@ -45,3 +45,6 @@ Thumbs.db
 sim*.db
 uploads/settings/*
 !uploads/settings/.gitkeep
+
+.env.*
+prod.sqlite3
