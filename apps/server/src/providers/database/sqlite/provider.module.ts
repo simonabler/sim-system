@@ -14,7 +14,7 @@ import { SqliteConfigModule } from '../../../config/database/sqlite/config.modul
         migrations: ['dist/migration/*.js'],
         migrationsRun: sqliteConfigService.migrationsRun,
         synchronize: sqliteConfigService.synchronizeRun,
-        logging: true,
+        logging: sqliteConfigService.logging,
       }),
       inject: [SqliteConfigService],
     } as TypeOrmModuleAsyncOptions),

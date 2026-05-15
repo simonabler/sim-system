@@ -17,4 +17,9 @@ export class SqliteConfigService {
   get entities(): string {
     return this.configService.get<string>('sqlite.entities', 'dist/**/*.entity.js');
   }
+
+  get logging(): string[] {
+    return [this.configService.get<string>('sqlite.logging', 'error')];
+  }
+
 }

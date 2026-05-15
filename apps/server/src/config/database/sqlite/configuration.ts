@@ -5,4 +5,5 @@ export default registerAs('sqlite', () => ({
   migrationsRun: process.env.SQLITE_RUN_MIGRATION,
   synchronizeRun: process.env.SQLITE_RUN_SYNCHRONIZE,
   entities: process.env.SQLITE_ENTITIES,
+  logging: process.env.SQLITE_LOGGING,
 }));
