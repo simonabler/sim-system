@@ -19,6 +19,7 @@ import { LetterheadMode } from '../../models/settings/interfaces/company-setting
 const FALLBACK_LOGO = join(__dirname, '..', 'pdfAnnotation', 'logo.svg');
 const FALLBACK_BADGE1 = join(__dirname, '..', 'pdfAnnotation', 'adler.svg');
 const FALLBACK_BADGE2 = join(__dirname, '..', 'pdfAnnotation', 'gdfort.jpg');
+const HEAD_CLEAR_CM_IN_POINTS = 56.7;
 
 interface PdfRenderOptions {
   disableLetterhead?: boolean;
@@ -324,7 +325,9 @@ export class PdfMakerService {
 
     return {
       pageOrientation: 'portrait',
-      pageMargins: options.disableLetterhead ? [60, 60, 60, 60] : [60, 150, 60, 100],
+      pageMargins: options.disableLetterhead
+        ? [60, 60 + HEAD_CLEAR_CM_IN_POINTS, 60, 60]
+        : [60, 150, 60, 100],
       header: renderGeneratedLetterhead
         ? (() => [
             {
