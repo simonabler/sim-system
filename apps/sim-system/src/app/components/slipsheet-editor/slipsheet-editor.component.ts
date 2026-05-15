@@ -51,6 +51,8 @@ export class SlipsheetEditorComponent {
   readonly deleting            = signal(false);
   readonly printing            = signal(false);
   readonly annotationText     = signal('');
+  readonly editingAnnotation   = signal<any | null>(null);
+  readonly editAnnotationText  = signal('');
 
   // ── Computed ──────────────────────────────────────────────────
   /** True when the slipsheet is already linked to a bill */
@@ -192,6 +194,51 @@ export class SlipsheetEditorComponent {
         this.showAnnotationInput.set(false);
       },
       error: (err: { message?: string }) => this.error.set(err?.message || 'Fehler'),
+    });
+  }
+
+  startEditAnnotation(annotation: any) {
+    this.editingAnnotation.set(annotation);
+    this.editAnnotationText.set(annotation.text || '');
+  }
+
+  cancelEditAnnotation() {
+    this.editingAnnotation.set(null);
+    this.editAnnotationText.set('');
+  }
+
+  saveAnnotationEdit() {
+    const slip = this.slipsheet();
+    const annotation = this.editingAnnotation();
+    const text = this.editAnnotationText().trim();
+    if (!slip || !annotation || !text) return;
+
+    this.submitting.set(true);
+    this.slipsheetService.updateAnnotation(slip, { ...annotation, text }).subscribe({
+      next: updated => {
+        this.updated.emit(updated);
+        this.submitting.set(false);
+        this.cancelEditAnnotation();
+      },
+      error: (err: { message?: string }) => {
+        this.error.set(err?.message || 'Fehler beim Speichern');
+        this.submitting.set(false);
+      },
+    });
+  }
+
+  deleteAnnotation(annotation: any) {
+    const slip = this.slipsheet();
+    if (!slip || !annotation?.id) return;
+
+    this.slipsheetService.deleteAnnotation(slip, annotation.id).subscribe({
+      next: updated => {
+        this.updated.emit(updated);
+        if (this.editingAnnotation()?.id === annotation.id) {
+          this.cancelEditAnnotation();
+        }
+      },
+      error: (err: { message?: string }) => this.error.set(err?.message || 'Fehler beim Löschen'),
     });
   }
 

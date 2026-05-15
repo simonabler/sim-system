@@ -8,6 +8,7 @@ import {
   ClassSerializerInterceptor,
   Param,
   Patch,
+  Delete,
 } from '@nestjs/common';
 import {
   ApiBearerAuth,
@@ -21,6 +22,8 @@ import { AnnotationService } from '../annotation.service';
 import { extendedAnnotationForSerializing, AnnotationEntity } from '../serializers/annotation.serializer';
 import { CreateAnnotationDto } from '../dto/create-annotation.dto';
 import { UpdateAnnotationDto } from '../dto/update-annotation.dto';
+import { SlipsheetService } from '../slipsheet.service';
+import { BillService } from '../bill.service';
 
 @ApiBearerAuth()
 @Controller('annotation')
@@ -34,6 +37,8 @@ import { UpdateAnnotationDto } from '../dto/update-annotation.dto';
 export class AnnotationController {
   constructor(
     private readonly annotationService: AnnotationService,
+    private readonly slipsheetService: SlipsheetService,
+    private readonly billService: BillService,
   ) {
 
   }
@@ -62,7 +67,6 @@ export class AnnotationController {
     description: 'Create new annotation',
   })
   async post(@Body() annotation: CreateAnnotationDto): Promise<ReS<AnnotationEntity>> {
-    console.log(annotation);
     return ReS.FromData(await this.annotationService.create(annotation));
   }
 
@@ -71,8 +75,28 @@ export class AnnotationController {
     summary: 'Update annotation',
     description: 'Update annotation from ID',
   })
-  async update(@Param('id') id: number, @Body() updateArticleDto: UpdateAnnotationDto) {
-    return ReS.FromData(await this.annotationService.update(id, updateArticleDto));
+  async update(@Param('id') id: number, @Body() updateAnnotationDto: UpdateAnnotationDto) {
+    const annotation = await this.annotationService.get(+id, ['slipsheet'], true);
+    await this.slipsheetService.changed(annotation.slipsheet);
+    if (annotation.slipsheet.billId)
+      await this.billService.changed(annotation.slipsheet.billId);
+
+    return ReS.FromData(await this.annotationService.update(+id, updateAnnotationDto));
+  }
+
+  @Delete(':id')
+  @ApiOperation({
+    summary: 'Delete annotation',
+    description: 'Delete annotation from ID',
+  })
+  async delete(@Param('id') id: number): Promise<ReS<null>> {
+    const annotation = await this.annotationService.get(+id, ['slipsheet'], true);
+    await this.annotationService.delete(+id, true);
+    await this.slipsheetService.changed(annotation.slipsheet);
+    if (annotation.slipsheet.billId)
+      await this.billService.changed(annotation.slipsheet.billId);
+
+    return ReS.FromData(null);
   }
 
 }

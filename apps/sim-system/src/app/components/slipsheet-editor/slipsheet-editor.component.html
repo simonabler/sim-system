@@ -213,7 +213,31 @@
   <div class="editor-section">
     <div class="editor-section-label">Kommissionen</div>
     @for (ann of slipsheet()!.annotations; track ann.id) {
-      <div class="annotation-row">{{ ann.text }}</div>
+      @if (editingAnnotation()?.id === ann.id) {
+        <div class="annotation-row annotation-row-editing">
+          <input
+            type="text"
+            class="sims-input"
+            maxlength="250"
+            [value]="editAnnotationText()"
+            (input)="editAnnotationText.set($any($event.target).value)"
+            (keydown.enter)="saveAnnotationEdit()"
+            style="flex:1;"
+          />
+          <div class="annotation-actions">
+            <button class="btn-sims-primary" style="padding:0.2rem 0.65rem; font-size:0.8rem;" (click)="saveAnnotationEdit()" [disabled]="submitting() || !editAnnotationText().trim()">✓</button>
+            <button class="btn-sims-ghost" style="padding:0.2rem 0.5rem; font-size:0.8rem;" (click)="cancelEditAnnotation()">✕</button>
+          </div>
+        </div>
+      } @else {
+        <div class="annotation-row">
+          <span class="annotation-text">{{ ann.text }}</span>
+          <div class="annotation-actions">
+            <button class="btn-icon" (click)="startEditAnnotation(ann)" title="Kommission bearbeiten">✏</button>
+            <button class="btn-icon btn-icon-del" (click)="deleteAnnotation(ann)" title="Kommission löschen">✕</button>
+          </div>
+        </div>
+      }
     }
   </div>
 }

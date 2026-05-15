@@ -120,6 +120,18 @@ export class SlipsheetService {
     );
   }
 
+  updateAnnotation(slipsheet: Slipsheet, annotation: { id: number; text: string }): Observable<Slipsheet> {
+    return this.http.patch<any>(`annotation/${annotation.id}`, { text: annotation.text }).pipe(
+      switchMap(() => this.getById(slipsheet.id))
+    );
+  }
+
+  deleteAnnotation(slipsheet: Slipsheet, annotationId: number): Observable<Slipsheet> {
+    return this.http.delete<any>(`annotation/${annotationId}`).pipe(
+      switchMap(() => this.getById(slipsheet.id))
+    );
+  }
+
   print(id: number): Observable<boolean> {
     return this.http.post<any>(`slipsheets/${id}/print`, {}).pipe(
       map(o => {

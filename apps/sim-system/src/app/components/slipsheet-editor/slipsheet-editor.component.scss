@@ -260,12 +260,32 @@
 
 /* ── Annotations ─────────────────────────────────────────────── */
 .annotation-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
   padding: 0.4rem 0;
   border-bottom: 1px solid var(--border-sub);
   font-size: 0.875rem;
   color: var(--ink-2);
 
   &:last-child { border-bottom: none; }
+}
+
+.annotation-row-editing {
+  align-items: flex-start;
+}
+
+.annotation-text {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.annotation-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  flex-shrink: 0;
 }
 
 /* ── Action Bar ──────────────────────────────────────────────── */
