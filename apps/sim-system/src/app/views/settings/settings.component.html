@@ -228,6 +228,18 @@
               <p class="settings-subtle">Keine Drucker gefunden oder Druckerliste nicht verfügbar.</p>
             }
           </div>
+
+          <div class="printer-copies-wrap">
+            <label class="sims-label">Druckanzahl (Exemplare)</label>
+            <input
+              type="number"
+              class="sims-input sims-input-mono"
+              formControlName="printCopies"
+              min="1"
+              max="10"
+              style="max-width:80px;"
+            />
+          </div>
         </div>
 
         @if (isLetterheadMode('template_pdf')) {

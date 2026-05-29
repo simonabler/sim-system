@@ -81,6 +81,13 @@ export class ArticleDetailComponent {
     this.form.controls.code.setValue((event as CustomEvent<string>).detail);
   }
 
+  onDecimalKeydown(event: KeyboardEvent): void {
+    if (event.key === ',') {
+      event.preventDefault();
+      document.execCommand('insertText', false, '.');
+    }
+  }
+
   save() {
     if (this.form.invalid) { this.form.markAllAsTouched(); return; }
     this.saving.set(true);

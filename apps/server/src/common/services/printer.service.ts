@@ -13,16 +13,16 @@ export class PrinterService {
   async print(path: string): Promise<boolean> {
     const settings = await this.settingsService.get();
     const printer = settings?.printerName?.trim() || this.appConfigService.printer;
-    const options = {
-      printer,
-    };
+    const copies = Math.max(1, settings?.printCopies ?? 1);
+    const options = { printer };
 
     try {
-      await print(path, options);
+      for (let i = 0; i < copies; i++) {
+        await print(path, options);
+      }
       return true;
     } catch (error) {
       throw new InternalServerErrorException('Drucken fehlgeschlagen');
     }
-    return false;
   }
 }

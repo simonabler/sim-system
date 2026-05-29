@@ -87,6 +87,7 @@
         <div class="count-ist-row">
           <button class="step-btn" (click)="stepIs(-1)" aria-label="Weniger">−</button>
           <input
+            #isInput
             type="number"
             class="is-input mono"
             [value]="isVal()"

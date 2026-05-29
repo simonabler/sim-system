@@ -80,6 +80,9 @@ export class CompanySettings implements ICompanySettings {
   @Column({ nullable: true, default: null })
   printerName: string | null;
 
+  @Column({ default: 1 })
+  printCopies: number;
+
   @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
 }

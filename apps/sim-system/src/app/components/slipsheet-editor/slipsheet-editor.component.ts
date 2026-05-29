@@ -1,6 +1,6 @@
 import {
   ChangeDetectionStrategy, Component, ElementRef, HostListener, ViewChild,
-  inject, signal, computed, input, output,
+  effect, inject, signal, computed, input, output,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormControl } from '@angular/forms';
@@ -22,6 +22,7 @@ import { Slipsheet, Order } from '../../models/bill.model';
 })
 export class SlipsheetEditorComponent {
   @ViewChild('codeInput') codeInputRef!: ElementRef<HTMLInputElement>;
+  @ViewChild('amountInput') amountInputRef!: ElementRef<HTMLInputElement>;
 
   private articleService = inject(ArticleService);
   private slipsheetService = inject(SlipsheetService);
@@ -81,6 +82,18 @@ export class SlipsheetEditorComponent {
     ),
     { initialValue: null as Article | null }
   );
+
+  constructor() {
+    effect(() => {
+      const article = this.pendingArticle();
+      if (article) {
+        setTimeout(() => {
+          const el = this.amountInputRef?.nativeElement;
+          if (el) { el.focus(); el.select(); }
+        }, 50);
+      }
+    });
+  }
 
   // ── Artikel hinzufügen ────────────────────────────────────────
   @HostListener('document:onbarcodescaned', ['$event'])

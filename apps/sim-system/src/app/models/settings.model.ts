@@ -35,6 +35,7 @@ export class CompanySettings {
   templatePdfPath: string | null = null;
   printDeliverySlipLetterhead: boolean = true;
   printerName: string = '';
+  printCopies: number = 1;
   updatedAt?: Date;
 
   constructor(init?: Partial<CompanySettings>) {

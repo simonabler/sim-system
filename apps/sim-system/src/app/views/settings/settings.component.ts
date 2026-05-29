@@ -58,6 +58,7 @@ export class SettingsComponent implements OnInit {
     letterheadMode: new FormControl<LetterheadMode>('generated', { nonNullable: true }),
     printDeliverySlipLetterhead: new FormControl(true, { nonNullable: true }),
     printerName: new FormControl(''),
+    printCopies: new FormControl<number>(1),
     bankAccounts: new FormArray<FormGroup>([]),
   });
 
@@ -99,6 +100,7 @@ export class SettingsComponent implements OnInit {
       letterheadMode: settings.letterheadMode,
       printDeliverySlipLetterhead: settings.printDeliverySlipLetterhead ?? true,
       printerName: settings.printerName ?? '',
+      printCopies: settings.printCopies ?? 1,
     });
 
     this.bankAccountsArray.clear();

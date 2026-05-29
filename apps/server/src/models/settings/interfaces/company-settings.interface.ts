@@ -24,5 +24,6 @@ export interface ICompanySettings {
   templatePdfPath: string | null;
   printDeliverySlipLetterhead: boolean;
   printerName: string | null;
+  printCopies: number;
   updatedAt: Date;
 }

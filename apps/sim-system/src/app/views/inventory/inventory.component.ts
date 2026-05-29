@@ -24,6 +24,7 @@ interface LogEntry {
 })
 export class InventoryComponent {
   @ViewChild('codeInput') codeInputRef!: ElementRef<HTMLInputElement>;
+  @ViewChild('isInput') isInputRef!: ElementRef<HTMLInputElement>;
 
   private articleService = inject(ArticleService);
   private route = inject(ActivatedRoute);
@@ -67,10 +68,14 @@ export class InventoryComponent {
       }
     });
 
-    // Wenn Artikel wechselt: isVal auf Soll vorbelegen
+    // Wenn Artikel wechselt: isVal auf Soll vorbelegen + Focus auf Ist-Eingabe
     effect(() => {
+      const article = this.article();
       const stock = this.shouldVal();
       this.isVal.set(stock);
+      if (article?.trackStock) {
+        setTimeout(() => this.isInputRef?.nativeElement?.focus(), 50);
+      }
     });
   }
 
