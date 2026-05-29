@@ -19,7 +19,7 @@ import { LetterheadMode } from '../../models/settings/interfaces/company-setting
 const FALLBACK_LOGO = join(__dirname, '..', 'pdfAnnotation', 'logo.svg');
 const FALLBACK_BADGE1 = join(__dirname, '..', 'pdfAnnotation', 'adler.svg');
 const FALLBACK_BADGE2 = join(__dirname, '..', 'pdfAnnotation', 'gdfort.jpg');
-const HEAD_CLEAR_CM_IN_POINTS = 56.7;
+const HEAD_CLEAR_CM_IN_POINTS = 70;
 
 interface PdfRenderOptions {
   disableLetterhead?: boolean;
