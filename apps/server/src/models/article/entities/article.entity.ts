@@ -23,12 +23,12 @@ export class Article implements IArticle {
   @Column({ nullable: false, unique: true, length: 50 })
   code!: string;
 
-  @Column({ nullable: false, default: 0.0, precision: 5, scale: 2 })
+  @Column({ type: 'real', nullable: false, default: 0.0 })
   price!: number;
 
   stock!: number | null;
 
-  @Column({ nullable: false, default: 0.0, precision: 5, scale: 2 })
+  @Column({ type: 'real', nullable: false, default: 0.0 })
   netto!: number;
 
   @Column({ default: 0 })

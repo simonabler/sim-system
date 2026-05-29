@@ -1,4 +1,4 @@
-import { Expose, Type } from 'class-transformer';
+import { Expose, Transform, Type } from 'class-transformer';
 import { ModelEntity } from '../../../common/serializers/model.serializer';
 import { IArticle } from '../interfaces/article.interface';
 import { ArticleGroupEntity } from './article-group.serializer';
@@ -52,6 +52,7 @@ export class ArticleEntity
   noDiscount: boolean;
 
   @Expose({ groups: ['default'] })
+  @Transform(({ value }) => value != null ? Number(value) : 0)
   price: number;
   @Expose({ groups: ['default'] })
   type: string;
