@@ -27,5 +27,6 @@ export class CompanySettingsEntity extends ModelEntity implements ICompanySettin
   @Expose({ groups: ['default'] }) templatePdfPath: string | null;
   @Expose({ groups: ['default'] }) printDeliverySlipLetterhead: boolean;
   @Expose({ groups: ['default'] }) printerName: string | null;
+  @Expose({ groups: ['default'] }) printCopies: number;
   @Expose({ groups: ['default'] }) updatedAt: Date;
 }
