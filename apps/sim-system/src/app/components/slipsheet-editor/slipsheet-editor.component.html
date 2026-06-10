@@ -159,7 +159,12 @@
             @if (editingOrder()?.id === order.id) {
               <!-- Inline-Edit Zeile Row 1 -->
               <tr class="row-editing">
-                <td>{{ order.article?.name || order.text }}</td>
+                <td>
+                  {{ order.article?.name || order.text }}
+                  @if (order.article?.artNumber) {
+                    <div class="mono" style="font-size:0.7rem; color:var(--ink-3); margin-top:0.1rem;">{{ order.article.artNumber }}</div>
+                  }
+                </td>
                 <td>
                   <input
                     type="number"
