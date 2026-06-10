@@ -157,7 +157,7 @@
         <tbody>
           @for (order of slipsheet()!.orderEntries; track order.id) {
             @if (editingOrder()?.id === order.id) {
-              <!-- Inline-Edit Zeile -->
+              <!-- Inline-Edit Zeile Row 1 -->
               <tr class="row-editing">
                 <td>{{ order.article?.name || order.text }}</td>
                 <td>
@@ -172,11 +172,59 @@
                     min="0.01"
                   />
                 </td>
-                <td class="numeric mono">{{ fmt(order.price) }} €</td>
-                <td class="numeric mono">{{ fmt(editAmount() * order.price) }} €</td>
+                <td>
+                  <input
+                    type="number"
+                    class="sims-input mono"
+                    style="max-width:90px;"
+                    [value]="editPrice()"
+                    (input)="editPrice.set(+$any($event.target).value)"
+                    inputmode="decimal"
+                    step="0.01"
+                    min="0"
+                  />
+                </td>
+                <td class="numeric mono">{{ fmt(editAmount() * editPrice()) }} €</td>
                 <td class="col-entry-actions" style="white-space:nowrap;">
                   <button class="btn-sims-primary" style="padding:0.2rem 0.65rem; font-size:0.8rem;" (click)="saveEdit()" [disabled]="submitting()">✓</button>
                   <button class="btn-sims-ghost" style="padding:0.2rem 0.5rem; font-size:0.8rem;" (click)="cancelEdit()">✕</button>
+                </td>
+              </tr>
+              <!-- Inline-Edit Zeile Row 2: Rabatte -->
+              <tr class="row-editing row-editing-discounts">
+                <td colspan="5">
+                  <div class="edit-discount-row">
+                    <div class="field-group">
+                      <label class="field-label" for="edit-customer-rabatt">Kunden-Rabatt %</label>
+                      <input
+                        id="edit-customer-rabatt"
+                        type="number"
+                        class="sims-input mono"
+                        style="max-width:80px;"
+                        [value]="editCustomerRabatt()"
+                        (input)="editCustomerRabatt.set(+$any($event.target).value)"
+                        inputmode="decimal"
+                        step="0.01"
+                        min="0"
+                        max="100"
+                      />
+                    </div>
+                    <div class="field-group">
+                      <label class="field-label" for="edit-group-rabatt">Gruppen-Rabatt %</label>
+                      <input
+                        id="edit-group-rabatt"
+                        type="number"
+                        class="sims-input mono"
+                        style="max-width:80px;"
+                        [value]="editArticleGroupRabatt()"
+                        (input)="editArticleGroupRabatt.set(+$any($event.target).value)"
+                        inputmode="decimal"
+                        step="0.01"
+                        min="0"
+                        max="100"
+                      />
+                    </div>
+                  </div>
                 </td>
               </tr>
             } @else {
@@ -188,10 +236,18 @@
                   }
                 </td>
                 <td class="numeric mono">{{ order.amount }} {{ order.article?.unit || '' }}</td>
-                <td class="numeric mono">{{ fmt(order.price) }} €</td>
+                <td class="numeric mono">
+                  {{ fmt(order.price) }} €
+                  @if ((order.customerRabatt || 0) !== 0 || (order.articleGroupRabatt || 0) !== 0) {
+                    <div class="discount-hint">
+                      @if ((order.customerRabatt || 0) !== 0) { <span>K: −{{ order.customerRabatt }} %</span> }
+                      @if ((order.articleGroupRabatt || 0) !== 0) { <span>G: −{{ order.articleGroupRabatt }} %</span> }
+                    </div>
+                  }
+                </td>
                 <td class="numeric mono" style="font-weight:500;">{{ fmt(order.getPrice()) }} €</td>
                 <td class="col-entry-actions" style="white-space:nowrap; text-align:right;">
-                  <button class="btn-icon" (click)="startEdit(order)" title="Menge ändern">✏</button>
+                  <button class="btn-icon" (click)="startEdit(order)" title="Bearbeiten">✏</button>
                   <button class="btn-icon btn-icon-del" (click)="deleteOrder(order)" title="Löschen">✕</button>
                 </td>
               </tr>

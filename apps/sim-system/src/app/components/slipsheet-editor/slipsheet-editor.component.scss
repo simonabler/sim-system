@@ -213,6 +213,31 @@
   td { border-bottom-color: var(--accent-highlight); }
 }
 
+.row-editing-discounts td {
+  padding-top: 0;
+  padding-bottom: 0.6rem;
+  border-bottom: 2px solid var(--accent-highlight);
+}
+
+.edit-discount-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+/* Discount hint below price in display rows */
+.discount-hint {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  margin-top: 0.15rem;
+  font-size: 0.65rem;
+  font-family: var(--mono);
+  color: var(--ink-3);
+  justify-content: flex-end;
+}
+
 /* ── Icon Buttons (edit / delete) ────────────────────────────── */
 .btn-icon {
   background: none;

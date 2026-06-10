@@ -42,8 +42,11 @@ export class SlipsheetEditorComponent {
   readonly pendingAmount      = signal(1);
   readonly submitting         = signal(false);
   readonly error              = signal('');
-  readonly editingOrder       = signal<Order | null>(null);
-  readonly editAmount         = signal(1);
+  readonly editingOrder            = signal<Order | null>(null);
+  readonly editAmount              = signal(1);
+  readonly editPrice               = signal(0);
+  readonly editCustomerRabatt      = signal(0);
+  readonly editArticleGroupRabatt  = signal(0);
   readonly showTextInput        = signal(false);
   readonly textPositionText     = signal('');
   readonly textPositionAmount   = signal(1);
@@ -167,6 +170,9 @@ export class SlipsheetEditorComponent {
   startEdit(order: Order) {
     this.editingOrder.set(order);
     this.editAmount.set(order.amount);
+    this.editPrice.set(order.price);
+    this.editCustomerRabatt.set(order.customerRabatt);
+    this.editArticleGroupRabatt.set(order.articleGroupRabatt);
   }
 
   cancelEdit() { this.editingOrder.set(null); }
@@ -176,7 +182,13 @@ export class SlipsheetEditorComponent {
     const order = this.editingOrder();
     if (!slip || !order) return;
     this.submitting.set(true);
-    this.slipsheetService.updateOrder(slip, new Order({ ...order, amount: this.editAmount() })).subscribe({
+    this.slipsheetService.updateOrder(slip, new Order({
+      ...order,
+      amount: this.editAmount(),
+      price: this.editPrice(),
+      customerRabatt: this.editCustomerRabatt(),
+      articleGroupRabatt: this.editArticleGroupRabatt(),
+    })).subscribe({
       next: updated => {
         this.updated.emit(updated);
         this.submitting.set(false);

@@ -52,10 +52,13 @@
             <span class="mapping-arrow">→</span>
             <select
               class="sims-select mapping-select"
-              [value]="row.articleField ?? ''"
               (change)="updateMapping(i, $any($event.target).value)">
               @for (field of articleFields; track field.key) {
-                <option [value]="field.key ?? ''">{{ field.label }}</option>
+                <option
+                  [value]="field.key ?? ''"
+                  [selected]="(field.key ?? '') === (row.articleField ?? '')">
+                  {{ field.label }}
+                </option>
               }
             </select>
           </div>
