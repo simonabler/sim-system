@@ -75,7 +75,7 @@
             <td data-label="Bezeichnung">{{ article.name }}</td>
             <td data-label="Artikel-Nr." class="numeric">{{ article.artNumber }}</td>
             <td data-label="Barcode" class="numeric">{{ article.code }}</td>
-            <td data-label="Preis" class="numeric mono">{{ article.price !== null && article.price !== undefined ? (article.price | number:'1.2-2':'de') + ' €' : '—' }}</td>
+            <td data-label="Preis" class="numeric mono">{{ article.price !== null && article.price !== undefined ? fmt(article.price) + ' €' : '—' }}</td>
             <td data-label="Lagerstand" class="numeric">{{ stockLabel(article) }}</td>
             <td data-label="Einheit">{{ article.unit }}</td>
             <td data-label="Status">

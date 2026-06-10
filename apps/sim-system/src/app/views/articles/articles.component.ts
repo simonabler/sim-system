@@ -123,6 +123,10 @@ export class ArticlesComponent {
     return 2;
   }
 
+  fmt(value: number): string {
+    return new Intl.NumberFormat('de-AT', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value);
+  }
+
   goToArticle(id: number) { this.router.navigate(['/articles', id]); }
   newArticle() { this.router.navigate(['/articles', 'new']); }
 }
