@@ -1,0 +1,145 @@
+<div class="sims-page-header">
+  <div>
+    <div class="eyebrow">Artikel</div>
+    <h1 class="page-title">{{ isNew() ? 'Neuer Artikel' : 'Artikel bearbeiten' }}</h1>
+  </div>
+  <button class="btn-sims-ghost" (click)="back()">← Zurück</button>
+</div>
+
+@if (loading()) { <div class="sims-card skeleton" style="height:400px;"></div> }
+
+@if (error()) {
+  <div class="sims-card mb-3" style="color:var(--status-error); border-color:var(--status-error-border);">{{ error() }}</div>
+}
+
+@if (!loading()) {
+  <form [formGroup]="form" (ngSubmit)="save()">
+    @if (!isNew() && inventoryArticle(); as article) {
+      <div class="inventory-summary mb-3">
+        <div class="inventory-summary-copy">
+          <div class="eyebrow">Inventur</div>
+          @if (article.trackStock) {
+            <h2 class="inventory-summary-title">Lagerstand wird nur über Inventur gepflegt</h2>
+            <p class="inventory-summary-text">
+              Bestand und Inventurdatum sind schreibgeschützt und werden ausschließlich in der Inventurfunktion aktualisiert.
+            </p>
+            <div class="inventory-summary-meta">
+              <span class="inventory-pill">
+                Lagerstand
+                <strong>{{ article.stock }} {{ article.unit }}</strong>
+              </span>
+              <span class="inventory-pill">
+                Letzte Inventur
+                <strong>{{ article.inventoryDate ? (article.inventoryDate | date:'dd.MM.yyyy') : '-' }}</strong>
+              </span>
+            </div>
+          } @else {
+            <h2 class="inventory-summary-title">Keine Bestandsführung aktiviert</h2>
+            <p class="inventory-summary-text">
+              Für diesen Artikel wird kein Lagerstand berechnet und keine Inventur gebucht.
+            </p>
+          }
+        </div>
+        @if (article.trackStock) {
+          <button
+            type="button"
+            class="btn-sims-outline inventory-link"
+            (click)="goToInventory()"
+            [disabled]="!canGoToInventory()"
+          >
+            Inventur buchen
+          </button>
+        }
+      </div>
+    }
+
+    <div class="sims-card article-form-card mb-3">
+      <div class="row g-3">
+        <div class="col-12 col-md-6">
+          <label class="sims-label">Bezeichnung *</label>
+          <input type="text" class="sims-input" formControlName="name" />
+        </div>
+        <div class="col-12 col-md-6">
+          <label class="sims-label">Barcode *</label>
+          <input type="text" class="sims-input" formControlName="code" />
+        </div>
+        <div class="col-12 col-md-6">
+          <label class="sims-label">Artikel-Nr.</label>
+          <input type="text" class="sims-input" formControlName="artNumber" />
+        </div>
+        <div class="col-12 col-md-6">
+          <label class="sims-label">Lieferant *</label>
+          <input type="text" class="sims-input" formControlName="supplier" />
+        </div>
+        <div class="col-12 col-md-6">
+          <label class="sims-label">Typ *</label>
+          <input type="text" class="sims-input" formControlName="type" />
+        </div>
+        <div class="col-6 col-md-3">
+          <label class="sims-label">Preis *</label>
+          <input type="number" class="sims-input" formControlName="price" inputmode="decimal" step="0.01" min="0" (keydown)="onDecimalKeydown($event)" />
+        </div>
+        <div class="col-6 col-md-3">
+          <label class="sims-label">Einheit *</label>
+          <input type="text" class="sims-input" formControlName="unit" />
+        </div>
+        <div class="col-12 col-md-6">
+          <label class="sims-label">Artikelgruppe</label>
+          <select class="sims-select" formControlName="articleGroup">
+            <option [value]="null">- keine -</option>
+            @for (g of articleGroups(); track g.id) {
+              <option [value]="g.id">{{ g.name }}</option>
+            }
+          </select>
+        </div>
+        <div class="col-12">
+          <label class="sims-label">Beschreibung</label>
+          <textarea class="sims-textarea" formControlName="description" rows="3"></textarea>
+        </div>
+        <div class="col-12">
+          <div class="checkbox-grid">
+            <label class="checkbox-card">
+              <input type="checkbox" formControlName="trackStock" />
+              <span class="checkbox-indicator"></span>
+              <span class="checkbox-copy">
+                <strong>Bestandsführung</strong>
+                <small>Der Artikel wird über Inventur und Lagerbewegungen nachgeführt.</small>
+              </span>
+            </label>
+            <label class="checkbox-card">
+              <input type="checkbox" formControlName="singlePos" />
+              <span class="checkbox-indicator"></span>
+              <span class="checkbox-copy">
+                <strong>Einzelposition</strong>
+                <small>Jede Buchung erzeugt eine eigene Position, statt eine bestehende zu erhöhen.</small>
+              </span>
+            </label>
+            <label class="checkbox-card">
+              <input type="checkbox" formControlName="noDiscount" />
+              <span class="checkbox-indicator"></span>
+              <span class="checkbox-copy">
+                <strong>Kein Rabatt</strong>
+                <small>Kunden- und Artikelgruppenrabatte werden für diesen Artikel ignoriert.</small>
+              </span>
+            </label>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sticky-actions">
+      <div class="row g-2">
+        <div class="col-12 col-md-auto">
+          <button type="submit" class="btn-sims-primary" [disabled]="saving()">
+            {{ saving() ? 'Wird gespeichert…' : 'Speichern' }}
+          </button>
+        </div>
+        @if (!isNew()) {
+          <div class="col-12 col-md-auto">
+            <button type="button" class="btn-sims-danger" (click)="delete()">Löschen</button>
+          </div>
+        }
+      </div>
+    </div>
+  </form>
+}

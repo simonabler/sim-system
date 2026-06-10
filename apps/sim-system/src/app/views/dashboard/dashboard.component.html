@@ -1,0 +1,258 @@
+<div class="sims-page-header">
+  <div>
+    <div class="eyebrow">Übersicht</div>
+    <h1 class="page-title">Dashboard</h1>
+  </div>
+  <div style="display:flex; gap:0.75rem; align-items:center; flex-wrap:wrap;">
+    <select class="sims-select" style="width:auto;" [value]="days()" (change)="days.set(+$any($event.target).value)">
+      <option value="7">7 Tage</option>
+      <option value="14">14 Tage</option>
+      <option value="30">30 Tage</option>
+      <option value="60">60 Tage</option>
+      <option value="90">90 Tage</option>
+    </select>
+    <select class="sims-select" style="width:auto;" [value]="autoRefreshSeconds()" (change)="autoRefreshSeconds.set(+$any($event.target).value)">
+      <option value="0">Kein Auto-Refresh</option>
+      <option value="30">30 s</option>
+      <option value="60">1 min</option>
+      <option value="120">2 min</option>
+    </select>
+    <button class="btn-sims-outline" (click)="refreshNow()">↻ Aktualisieren</button>
+  </div>
+</div>
+
+@if (loading()) {
+  <div class="row g-3 mb-4">
+    @for (i of [1,2,3,4,5,6]; track i) {
+      <div class="col-6 col-md-2"><div class="sims-card skeleton" style="height:90px;"></div></div>
+    }
+  </div>
+}
+
+@if (error()) {
+  <div class="sims-card" style="color:var(--status-error); border-color:var(--status-error-border);">{{ error() }}</div>
+}
+
+@if (summary() && !loading()) {
+  <!-- KPI Cards — 6 Stück -->
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-md-2">
+      <div class="sims-card kpi-card" (click)="goToArticle()">
+        <div class="kpi-label eyebrow">Artikel</div>
+        <div class="kpi-value mono">{{ summary()!.kpis.totalArticles }}</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-2">
+      <div class="sims-card kpi-card kpi-warn" (click)="goToArticle()">
+        <div class="kpi-label eyebrow">Niedriger Bestand</div>
+        <div class="kpi-value mono">{{ summary()!.kpis.lowStockCount }}</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-2">
+      <div class="sims-card kpi-card kpi-error" (click)="goToArticle()">
+        <div class="kpi-label eyebrow">Nicht auf Lager</div>
+        <div class="kpi-value mono">{{ summary()!.kpis.outOfStockCount }}</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-2">
+      <div class="sims-card kpi-card" (click)="goToSlipsheets()">
+        <div class="kpi-label eyebrow">Offene LS</div>
+        <div class="kpi-value mono">{{ summary()!.kpis.openSlipsheets }}</div>
+        @if (summary()!.kpis.changedSlipsheets > 0) {
+          <div style="font-size:0.7rem; color:var(--ink-3); margin-top:0.25rem;">{{ summary()!.kpis.changedSlipsheets }} geändert</div>
+        }
+      </div>
+    </div>
+    <div class="col-6 col-md-2">
+      <div class="sims-card kpi-card" (click)="goToBills()">
+        <div class="kpi-label eyebrow">Offene Rechnungen</div>
+        <div class="kpi-value mono">{{ summary()!.kpis.openBills }}</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-2">
+      <div class="sims-card kpi-card" (click)="goToInventory()">
+        <div class="kpi-label eyebrow">Inventur heute</div>
+        <div class="kpi-value mono">{{ summary()!.kpis.inventoryAdjustmentsTodayCount }}</div>
+        @if (summary()!.kpis.inventoryAdjustmentsTodayDelta !== 0) {
+          <div class="mono" style="font-size:0.7rem; margin-top:0.25rem;"
+               [style.color]="summary()!.kpis.inventoryAdjustmentsTodayDelta > 0 ? 'var(--status-success)' : 'var(--status-error)'">
+            {{ summary()!.kpis.inventoryAdjustmentsTodayDelta > 0 ? '+' : '' }}{{ summary()!.kpis.inventoryAdjustmentsTodayDelta }}
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+
+  <!-- Einkaufswert Lager — nur intern -->
+  <div class="row g-3 mb-4">
+    <div class="col-12 col-md-4">
+      <div class="sims-card" style="border-left: 3px solid var(--accent-highlight);">
+        <div class="kpi-label eyebrow">Einkaufswert Lager</div>
+        <div class="kpi-value mono">{{ summary()!.kpis.totalStockValue | number:'1.2-2' }} €</div>
+        <div style="font-size:0.7rem; color:var(--ink-3); margin-top:0.25rem;">Einkaufspreise × Lagerbestand</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Trend-Balkendiagramm -->
+  @if (trendPoints().length > 0) {
+    <div class="sims-card mb-4">
+      <div class="eyebrow" style="margin-bottom:1rem;">Verbrauch & Inventur-Delta (letzte {{ trendPoints().length }} Tage)</div>
+      <div style="display:flex; align-items:flex-end; gap:4px; height:80px; overflow-x:auto;">
+        @for (p of trendPoints(); track p.day) {
+          <div style="display:flex; flex-direction:column; align-items:center; gap:2px; min-width:20px; flex:1;" [title]="p.label">
+            <div style="display:flex; align-items:flex-end; gap:2px; height:72px;">
+              <div [style.height.px]="getOutgoingH(p.outgoing)"
+                   style="width:8px; background:var(--accent-highlight); border-radius:2px; opacity:0.8;"
+                   [title]="'Verbrauch: ' + p.outgoing">
+              </div>
+              <div [style.height.px]="getAdjustmentH(p.adjustmentDelta)"
+                   [style.background]="p.adjustmentDelta >= 0 ? 'var(--status-success)' : 'var(--status-error)'"
+                   style="width:8px; border-radius:2px; opacity:0.7;"
+                   [title]="'Inventur-Delta: ' + p.adjustmentDelta">
+              </div>
+            </div>
+            <div style="font-size:0.55rem; color:var(--ink-3); writing-mode:vertical-rl; transform:rotate(180deg); max-height:32px; overflow:hidden;">{{ p.label }}</div>
+          </div>
+        }
+      </div>
+      <div style="display:flex; gap:1rem; margin-top:0.5rem; font-size:0.7rem; color:var(--ink-3);">
+        <span><span style="display:inline-block; width:8px; height:8px; background:var(--accent-highlight); border-radius:2px; margin-right:4px;"></span>Verbrauch</span>
+        <span><span style="display:inline-block; width:8px; height:8px; background:var(--status-success); border-radius:2px; margin-right:4px;"></span>Inventur-Delta</span>
+      </div>
+    </div>
+  }
+
+  <!-- Niedriger Bestand -->
+  @if (summary()!.lowStockItems.length) {
+    <div class="sims-card mb-4">
+      <div class="section-title eyebrow" style="margin-bottom:1rem;">Niedriger Bestand</div>
+      @for (item of summary()!.lowStockItems; track item.id) {
+        <div class="low-stock-row" (click)="goToArticle(item.code)" style="cursor:pointer;">
+          <span class="mono" style="font-size:0.8rem; color:var(--ink-3);">{{ item.code }}</span>
+          <span style="flex:1; padding:0 1rem;">{{ item.name }}</span>
+          <span class="sims-badge" [class]="item.stock <= 0 ? 'sims-badge-error' : 'sims-badge-warning'">
+            {{ item.stock }} {{ item.unit }}
+          </span>
+        </div>
+      }
+    </div>
+  }
+
+  <!-- Offene Dokumente (3 Spalten) -->
+  <div class="row g-3 mb-4">
+    <div class="col-12 col-md-4">
+      <div class="sims-card" style="height:100%;">
+        <div class="eyebrow" style="margin-bottom:1rem;">Offene Lieferscheine</div>
+        @if (!summary()!.documentQueue.openSlipsheets.length) {
+          <div class="sims-empty-state"><div class="empty-desc">Keine</div></div>
+        }
+        @for (slip of summary()!.documentQueue.openSlipsheets; track slip.id) {
+          <div class="doc-row" [routerLink]="['/slipsheets', slip.id]" style="cursor:pointer;">
+            <span class="mono" style="font-size:0.8rem;">{{ slip.slipsheetnumber }}</span>
+            <span style="flex:1; padding:0 0.75rem; font-size:0.875rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ slip.customerName }}</span>
+            <span class="sims-badge sims-badge-warning">offen</span>
+          </div>
+        }
+      </div>
+    </div>
+    <div class="col-12 col-md-4">
+      <div class="sims-card" style="height:100%;">
+        <div class="eyebrow" style="margin-bottom:1rem;">Geänderte Lieferscheine</div>
+        @if (!summary()!.documentQueue.changedSlipsheets.length) {
+          <div class="sims-empty-state"><div class="empty-desc">Keine</div></div>
+        }
+        @for (slip of summary()!.documentQueue.changedSlipsheets; track slip.id) {
+          <div class="doc-row" [routerLink]="['/slipsheets', slip.id]" style="cursor:pointer;">
+            <span class="mono" style="font-size:0.8rem;">{{ slip.slipsheetnumber }}</span>
+            <span style="flex:1; padding:0 0.75rem; font-size:0.875rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ slip.customerName }}</span>
+            <span class="sims-badge sims-badge-accent">geändert</span>
+          </div>
+        }
+      </div>
+    </div>
+    <div class="col-12 col-md-4">
+      <div class="sims-card" style="height:100%;">
+        <div class="eyebrow" style="margin-bottom:1rem;">Offene Rechnungen</div>
+        @if (!summary()!.documentQueue.openBills.length) {
+          <div class="sims-empty-state"><div class="empty-desc">Keine</div></div>
+        }
+        @for (bill of summary()!.documentQueue.openBills; track bill.id) {
+          <div class="doc-row" [routerLink]="['/bills', bill.id]" style="cursor:pointer;">
+            <span class="mono" style="font-size:0.8rem;">{{ bill.billNumber }}</span>
+            <span style="flex:1; padding:0 0.75rem; font-size:0.875rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ bill.customerName }}</span>
+            <span class="sims-badge sims-badge-neutral">offen</span>
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+
+  <!-- Top-Bewegungen -->
+  <div class="row g-3 mb-4">
+    <div class="col-12 col-md-6">
+      <div class="sims-card">
+        <div class="eyebrow" style="margin-bottom:1rem;">Top-Bewegungen (7 Tage)</div>
+        @if (!summary()!.topMovingArticles7.length) {
+          <div class="sims-empty-state"><div class="empty-desc">Keine Daten</div></div>
+        }
+        @for (a of summary()!.topMovingArticles7; track a.id; let i = $index) {
+          <div class="low-stock-row" (click)="goToArticle(a.code)" style="cursor:pointer;">
+            <span class="mono" style="font-size:0.7rem; color:var(--ink-3); min-width:1.5rem;">{{ i + 1 }}.</span>
+            <span style="flex:1; padding:0 0.75rem; font-size:0.875rem;">{{ a.name }}</span>
+            <span class="mono" style="font-size:0.875rem; font-weight:600;">{{ a.totalAmount }} {{ a.unit }}</span>
+          </div>
+        }
+      </div>
+    </div>
+    <div class="col-12 col-md-6">
+      <div class="sims-card">
+        <div class="eyebrow" style="margin-bottom:1rem;">Top-Bewegungen (30 Tage)</div>
+        @if (!summary()!.topMovingArticles30.length) {
+          <div class="sims-empty-state"><div class="empty-desc">Keine Daten</div></div>
+        }
+        @for (a of summary()!.topMovingArticles30; track a.id; let i = $index) {
+          <div class="low-stock-row" (click)="goToArticle(a.code)" style="cursor:pointer;">
+            <span class="mono" style="font-size:0.7rem; color:var(--ink-3); min-width:1.5rem;">{{ i + 1 }}.</span>
+            <span style="flex:1; padding:0 0.75rem; font-size:0.875rem;">{{ a.name }}</span>
+            <span class="mono" style="font-size:0.875rem; font-weight:600;">{{ a.totalAmount }} {{ a.unit }}</span>
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+
+  <!-- Letzte Inventuraktivitäten -->
+  @if (summary()!.recentInventoryActivities.length) {
+    <div class="sims-card mb-4">
+      <div class="eyebrow" style="margin-bottom:1rem;">Letzte Inventuraktivitäten</div>
+      <div class="sims-card-table" style="margin:0;">
+        <table class="table-responsive-cards">
+          <thead>
+            <tr>
+              <th [attr.aria-sort]="inventoryAriaSort('article')"><button type="button" class="table-sort-button" (click)="sortInventoryBy('article')" aria-label="Nach Artikel sortieren">Artikel <span class="table-sort-icon">{{ inventorySortIcon('article') }}</span></button></th>
+              <th [attr.aria-sort]="inventoryAriaSort('date')"><button type="button" class="table-sort-button" (click)="sortInventoryBy('date')" aria-label="Nach Datum sortieren">Datum <span class="table-sort-icon">{{ inventorySortIcon('date') }}</span></button></th>
+              <th [attr.aria-sort]="inventoryAriaSort('amountNew')"><button type="button" class="table-sort-button" (click)="sortInventoryBy('amountNew')" aria-label="Nach neuer Menge sortieren">Neue Menge <span class="table-sort-icon">{{ inventorySortIcon('amountNew') }}</span></button></th>
+              <th [attr.aria-sort]="inventoryAriaSort('diff')"><button type="button" class="table-sort-button" (click)="sortInventoryBy('diff')" aria-label="Nach Differenz sortieren">Differenz <span class="table-sort-icon">{{ inventorySortIcon('diff') }}</span></button></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (inv of sortedRecentInventoryActivities(); track inv.id) {
+              <tr (click)="goToArticle(inv.article?.code)" style="cursor:pointer;">
+                <td data-label="Artikel">{{ inv.article?.name || '—' }}</td>
+                <td data-label="Datum">{{ inv.createdAt | date:'dd.MM.yyyy HH:mm' }}</td>
+                <td data-label="Neue Menge" class="numeric">{{ inv.amountNew }} {{ inv.article?.unit }}</td>
+                <td data-label="Differenz" class="numeric">
+                  <span [style.color]="inv.diff > 0 ? 'var(--status-success)' : inv.diff < 0 ? 'var(--status-error)' : 'var(--ink-3)'"
+                        class="mono">
+                    {{ inv.diff > 0 ? '+' : '' }}{{ inv.diff }}
+                  </span>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  }
+}

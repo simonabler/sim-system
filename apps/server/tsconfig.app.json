@@ -1,0 +1,23 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "outDir": "../../dist/out-tsc",
+    "module": "commonjs",
+    "target": "ES2019",
+    "lib": ["ES2019"],
+    "types": ["node"],
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "strictPropertyInitialization": false,
+    "strict": false,
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true
+  },
+  "include": ["src/**/*.ts"],
+  "exclude": [
+    "jest.config.ts",
+    "jest.config.cts",
+    "src/**/*.spec.ts",
+    "src/**/*.test.ts"
+  ]
+}

@@ -1,0 +1,90 @@
+<div class="sims-page-header">
+  <div>
+    <div class="eyebrow">Stammdaten</div>
+    <h1 class="page-title">Artikel</h1>
+  </div>
+  <div class="header-actions">
+    <button class="btn-sims-outline" (click)="openImport()">CSV importieren</button>
+    <button class="btn-sims-primary" (click)="newArticle()">+ Artikel</button>
+  </div>
+</div>
+
+<app-article-import-dialog />
+
+<!-- Suchleiste -->
+<div class="row g-2 mb-3">
+  <div class="col-6">
+    <input type="search" class="sims-input" placeholder="Bezeichnung…" [formControl]="searchCtrl" />
+  </div>
+  <div class="col-6">
+    <input type="search" class="sims-input" placeholder="Barcode…" [formControl]="codeCtrl" />
+  </div>
+</div>
+
+@if (loading()) {
+  <div class="skel-table">
+    <div class="skel-header">
+      <div class="sk" style="width:28%;"></div>
+      <div class="sk" style="width:12%;"></div>
+      <div class="sk" style="width:12%;"></div>
+      <div class="sk" style="width:9%;"></div>
+      <div class="sk" style="width:7%;"></div>
+      <div class="sk" style="width:10%;"></div>
+      <div class="sk" style="width:13%;"></div>
+    </div>
+    @for (i of [1,2,3,4,5,6]; track i) {
+      <div class="skel-row">
+        <div class="sk" style="width:32%;"></div>
+        <div class="sk" style="width:10%;"></div>
+        <div class="sk" style="width:11%;"></div>
+        <div class="sk" style="width:7%;"></div>
+        <div class="sk" style="width:6%;"></div>
+        <div class="sk" style="width:9%;"></div>
+        <div class="sk" style="width:11%;"></div>
+      </div>
+    }
+  </div>
+}
+
+@if (!loading() && filtered().length === 0) {
+  <div class="sims-empty-state">
+    <div class="empty-icon">📦</div>
+    <div class="empty-title">Keine Artikel gefunden</div>
+    <div class="empty-desc">Passe die Suche an oder lege einen neuen Artikel an.</div>
+  </div>
+}
+
+@if (!loading() && filtered().length > 0) {
+  <div class="sims-card-table">
+    <table class="table-responsive-cards">
+      <thead>
+        <tr>
+          <th [attr.aria-sort]="ariaSort('name')"><button type="button" class="table-sort-button" (click)="sortBy('name')" aria-label="Nach Bezeichnung sortieren">Bezeichnung <span class="table-sort-icon">{{ sortIcon('name') }}</span></button></th>
+          <th [attr.aria-sort]="ariaSort('artNumber')"><button type="button" class="table-sort-button" (click)="sortBy('artNumber')" aria-label="Nach Artikelnummer sortieren">Artikel-Nr. <span class="table-sort-icon">{{ sortIcon('artNumber') }}</span></button></th>
+          <th [attr.aria-sort]="ariaSort('code')"><button type="button" class="table-sort-button" (click)="sortBy('code')" aria-label="Nach Barcode sortieren">Barcode <span class="table-sort-icon">{{ sortIcon('code') }}</span></button></th>
+          <th [attr.aria-sort]="ariaSort('price')" style="text-align:right;"><button type="button" class="table-sort-button" (click)="sortBy('price')" aria-label="Nach Preis sortieren">Preis <span class="table-sort-icon">{{ sortIcon('price') }}</span></button></th>
+          <th [attr.aria-sort]="ariaSort('stock')"><button type="button" class="table-sort-button" (click)="sortBy('stock')" aria-label="Nach Lagerstand sortieren">Lagerstand <span class="table-sort-icon">{{ sortIcon('stock') }}</span></button></th>
+          <th [attr.aria-sort]="ariaSort('unit')"><button type="button" class="table-sort-button" (click)="sortBy('unit')" aria-label="Nach Einheit sortieren">Einheit <span class="table-sort-icon">{{ sortIcon('unit') }}</span></button></th>
+          <th [attr.aria-sort]="ariaSort('status')"><button type="button" class="table-sort-button" (click)="sortBy('status')" aria-label="Nach Status sortieren">Status <span class="table-sort-icon">{{ sortIcon('status') }}</span></button></th>
+          <th [attr.aria-sort]="ariaSort('inventoryDate')"><button type="button" class="table-sort-button" (click)="sortBy('inventoryDate')" aria-label="Nach Inventurdatum sortieren">Inventurdatum <span class="table-sort-icon">{{ sortIcon('inventoryDate') }}</span></button></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (article of filtered(); track article.id) {
+          <tr (click)="goToArticle(article.id)">
+            <td data-label="Bezeichnung">{{ article.name }}</td>
+            <td data-label="Artikel-Nr." class="numeric">{{ article.artNumber }}</td>
+            <td data-label="Barcode" class="numeric">{{ article.code }}</td>
+            <td data-label="Preis" class="numeric mono">{{ article.price !== null && article.price !== undefined ? fmt(article.price) + ' €' : '—' }}</td>
+            <td data-label="Lagerstand" class="numeric">{{ stockLabel(article) }}</td>
+            <td data-label="Einheit">{{ article.unit }}</td>
+            <td data-label="Status">
+              <span [class]="getBadgeClass(article)">{{ getBadgeLabel(article) }}</span>
+            </td>
+            <td data-label="Inventurdatum">{{ article.inventoryDate ? (article.inventoryDate | date:'dd.MM.yyyy') : '—' }}</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+}

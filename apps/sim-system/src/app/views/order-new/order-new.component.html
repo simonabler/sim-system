@@ -1,0 +1,51 @@
+<div class="sims-page-header">
+  <div>
+    <div class="eyebrow">Neue Bestellung</div>
+    <h1 class="page-title">
+      @if (slipsheet()) { LS {{ slipsheet()!.slipsheetnumber }} }
+      @else { Neuer Lieferschein }
+    </h1>
+  </div>
+  <button class="btn-sims-ghost" (click)="back()">Verwerfen</button>
+</div>
+
+<!-- ─── Kunden-Strip ─────────────────────────────────────────────── -->
+<div class="customer-strip mb-3">
+  @if (selectedCustomer()) {
+    <div class="customer-avatar">{{ selectedCustomer()!.getInitials() }}</div>
+    <div style="flex:1; min-width:0;">
+      <div style="font-size:0.9rem; font-weight:500; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+        {{ selectedCustomer()!.getName() }}
+      </div>
+      <div class="mono" style="font-size:0.7rem; color:var(--ink-3);">{{ selectedCustomer()!.customerNumber }}</div>
+    </div>
+    <button class="btn-sims-ghost" style="font-size:0.8rem;" (click)="clearCustomer()">Ändern</button>
+  } @else {
+    <div style="flex:1; min-width:0; position:relative;">
+      <input type="search" class="sims-input" placeholder="Kunden suchen…"
+             [formControl]="customerSearchCtrl" autocomplete="off" />
+      @if (filteredCustomers().length && customerSearchCtrl.value) {
+        <div class="customer-dropdown">
+          @for (c of filteredCustomers().slice(0, 8); track c.id) {
+            <button class="customer-dropdown-item" (click)="selectCustomer(c)">
+              <span style="font-weight:500;">{{ c.getName() }}</span>
+              <span class="mono" style="font-size:0.7rem; color:var(--ink-3); margin-left:0.5rem;">{{ c.customerNumber }}</span>
+            </button>
+          }
+        </div>
+      }
+    </div>
+  }
+</div>
+
+<!-- ─── Editor ───────────────────────────────────────────────────── -->
+@if (selectedCustomer()) {
+  <div class="sims-card-table mb-3">
+    <app-slipsheet-editor
+      [slipsheet]="slipsheet()"
+      [customer]="selectedCustomer()"
+      (updated)="onSlipUpdated($event)"
+      (deleted)="onSlipDeleted()"
+    />
+  </div>
+}

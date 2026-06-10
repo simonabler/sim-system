@@ -1,0 +1,2143 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Design Guide — sims.abler.tirol</title>
+<link rel="preconnect" href="https://api.abler.tirol" />
+<link rel="stylesheet" href="https://api.abler.tirol/fonts/abler-stack.css" />
+<style>
+/* ============================================================
+   CSS VARIABLES — sims.abler.tirol
+   ============================================================ */
+:root {
+  /* Geteilte Neutrals (alle abler.tirol Produkte) */
+  --white:      #ffffff;
+  --bg-light:   #f7f7f4;
+  --bg-subtle:  #fbfbf9;
+  --ink:        #0f172a;
+  --ink-2:      #475569;
+  --ink-3:      #94a3b8;
+  --border:     #e2e8f0;
+  --border-sub: rgba(226,232,240,0.7);
+
+  /* Akzentfarben sims (Teal) */
+  --accent-primary:   #134e4a;
+  --accent-secondary: #0f3d3a;
+  --accent-highlight: #14b8a6;
+  --accent-light:     #f0fdfa;
+
+  /* Status-Farben */
+  --status-ok:      #14b8a6;  /* Teal — in Bestand */
+  --status-low:     #f59e0b;  /* Amber — niedrig */
+  --status-empty:   #ef4444;  /* Rot — leer */
+  --status-ok-bg:   #f0fdfa;
+  --status-low-bg:  #fffbeb;
+  --status-empty-bg:#fef2f2;
+
+  /* Typography */
+  --sans:  'Inter', sans-serif;
+  --mono:  'DM Mono', monospace;
+  --serif: 'DM Serif Display', serif;
+
+  /* Radius */
+  --radius-pill: 999px;
+  --radius-xl:   2rem;
+  --radius-lg:   1.5rem;
+  --radius-md:   1rem;
+  --radius-sm:   0.5rem;
+
+  /* Shadows */
+  --shadow-card: 0 25px 80px -30px rgba(15,23,42,0.18);
+  --shadow-sm:   0 1px 3px rgba(15,23,42,0.06);
+  --shadow-md:   0 4px 16px rgba(15,23,42,0.10);
+
+  /* Spacing */
+  --space-1:  4px;
+  --space-2:  8px;
+  --space-3:  12px;
+  --space-4:  16px;
+  --space-6:  24px;
+  --space-8:  32px;
+  --space-12: 48px;
+  --space-20: 80px;
+
+  /* Layout */
+  --max-w: 72rem;
+  --section-py: 5rem;
+}
+
+/* ============================================================
+   RESET & BASE
+   ============================================================ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: var(--sans);
+  font-size: 1rem;
+  line-height: 1.75;
+  color: var(--ink);
+  background: var(--bg-light);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ============================================================
+   GUIDE LAYOUT
+   ============================================================ */
+.guide-header {
+  background: var(--accent-secondary);
+  color: var(--white);
+  padding: 4rem 2.5rem 3rem;
+  position: relative;
+  overflow: hidden;
+}
+.guide-header::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    -45deg,
+    transparent,
+    transparent 40px,
+    rgba(20,184,166,0.04) 40px,
+    rgba(20,184,166,0.04) 41px
+  );
+  pointer-events: none;
+}
+.guide-header-inner {
+  max-width: var(--max-w);
+  margin: 0 auto;
+  position: relative;
+  z-index: 1;
+}
+.guide-eyebrow {
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--accent-highlight);
+  margin-bottom: 1rem;
+}
+.guide-title {
+  font-family: var(--serif);
+  font-size: clamp(2.2rem, 5vw, 3.5rem);
+  line-height: 1.1;
+  font-weight: 400;
+  color: var(--white);
+  margin-bottom: 1rem;
+}
+.guide-subtitle {
+  font-size: 1.05rem;
+  color: rgba(255,255,255,0.65);
+  max-width: 52rem;
+}
+
+.guide-nav {
+  background: var(--white);
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+.guide-nav-inner {
+  max-width: var(--max-w);
+  margin: 0 auto;
+  padding: 0 2.5rem;
+  display: flex;
+  gap: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.guide-nav-inner::-webkit-scrollbar { display: none; }
+.guide-nav-link {
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  text-decoration: none;
+  color: var(--ink-3);
+  padding: 1rem 1.25rem;
+  border-bottom: 2px solid transparent;
+  white-space: nowrap;
+  transition: color 0.18s, border-color 0.18s;
+}
+.guide-nav-link:hover,
+.guide-nav-link.active {
+  color: var(--accent-primary);
+  border-bottom-color: var(--accent-highlight);
+}
+
+.guide-content {
+  max-width: var(--max-w);
+  margin: 0 auto;
+  padding: 4rem 2.5rem;
+}
+
+.guide-section {
+  margin-bottom: 5rem;
+  padding-top: 1rem;
+}
+.guide-section + .guide-section {
+  border-top: 1px solid var(--border);
+  padding-top: 4rem;
+}
+
+.section-label {
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--accent-highlight);
+  margin-bottom: 0.5rem;
+}
+.section-title {
+  font-family: var(--serif);
+  font-size: clamp(1.6rem, 3vw, 2.25rem);
+  font-weight: 400;
+  color: var(--ink);
+  margin-bottom: 1rem;
+  line-height: 1.15;
+}
+.section-desc {
+  font-size: 0.97rem;
+  color: var(--ink-2);
+  max-width: 60rem;
+  margin-bottom: 3rem;
+  line-height: 1.75;
+}
+
+/* ============================================================
+   SUBSECTIONS
+   ============================================================ */
+.subsection {
+  margin-bottom: 3rem;
+}
+.subsection-title {
+  font-family: var(--mono);
+  font-size: 0.8rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  margin-bottom: 1.25rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--border);
+}
+
+/* ============================================================
+   CODE BLOCKS
+   ============================================================ */
+pre {
+  background: var(--ink);
+  color: #e2e8f0;
+  font-family: var(--mono);
+  font-size: 0.82rem;
+  line-height: 1.7;
+  padding: 1.5rem 1.75rem;
+  border-radius: var(--radius-md);
+  overflow-x: auto;
+  margin: 0.75rem 0;
+}
+code {
+  font-family: var(--mono);
+  font-size: 0.82rem;
+  background: rgba(20,184,166,0.1);
+  color: var(--accent-primary);
+  padding: 0.15em 0.45em;
+  border-radius: 0.3rem;
+}
+pre code {
+  background: none;
+  color: inherit;
+  padding: 0;
+}
+.code-comment { color: #64748b; }
+.code-key     { color: #7dd3fc; }
+.code-val     { color: #5bffc3; }
+.code-str     { color: #fda4af; }
+.code-tag     { color: #a5b4fc; }
+
+/* ============================================================
+   COLOR SWATCHES
+   ============================================================ */
+.color-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 1rem;
+}
+.color-swatch {
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+.swatch-color {
+  height: 80px;
+}
+.swatch-info {
+  background: var(--white);
+  padding: 0.75rem 1rem;
+}
+.swatch-name {
+  font-family: var(--mono);
+  font-size: 0.73rem;
+  letter-spacing: 0.05em;
+  color: var(--ink);
+  margin-bottom: 0.2rem;
+}
+.swatch-value {
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  color: var(--ink-3);
+}
+
+/* ============================================================
+   TYPOGRAPHY SPECIMENS
+   ============================================================ */
+.type-specimen {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  padding: 2rem 2.25rem;
+  margin-bottom: 1rem;
+}
+.type-meta {
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  margin-bottom: 1rem;
+}
+.type-sample-display {
+  font-family: var(--serif);
+  font-size: clamp(2.5rem, 6vw, 4rem);
+  font-weight: 400;
+  line-height: 1.1;
+  color: var(--ink);
+}
+.type-sample-h1 {
+  font-family: var(--serif);
+  font-size: clamp(1.8rem, 4vw, 3rem);
+  font-weight: 400;
+  line-height: 1.15;
+  color: var(--ink);
+}
+.type-sample-body {
+  font-family: var(--sans);
+  font-size: 1rem;
+  font-weight: 400;
+  line-height: 1.75;
+  color: var(--ink-2);
+}
+.type-sample-label {
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.type-sample-mono {
+  font-family: var(--mono);
+  font-size: 0.9rem;
+  color: var(--ink);
+}
+
+/* ============================================================
+   BUTTON DEMOS
+   ============================================================ */
+.component-demo {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  padding: 2rem 2.25rem;
+  margin-bottom: 1rem;
+}
+.demo-label {
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  margin-bottom: 1.5rem;
+}
+.demo-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+/* Buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: var(--sans);
+  font-size: 0.9rem;
+  font-weight: 500;
+  border-radius: var(--radius-pill);
+  padding: 0.65rem 1.5rem;
+  cursor: pointer;
+  border: none;
+  text-decoration: none;
+  transition: background 0.18s, transform 0.15s, box-shadow 0.18s;
+  white-space: nowrap;
+}
+.btn:hover { transform: translateY(-1px); }
+.btn-primary {
+  background: var(--accent-primary);
+  color: var(--white);
+}
+.btn-primary:hover {
+  background: var(--accent-secondary);
+  box-shadow: 0 4px 16px rgba(19,78,74,0.3);
+}
+.btn-highlight {
+  background: var(--accent-highlight);
+  color: var(--white);
+}
+.btn-highlight:hover {
+  background: #0d9488;
+  box-shadow: 0 4px 16px rgba(20,184,166,0.35);
+}
+.btn-outline {
+  background: var(--white);
+  color: var(--ink-2);
+  border: 1px solid var(--border);
+}
+.btn-outline:hover {
+  border-color: var(--accent-highlight);
+  color: var(--accent-primary);
+}
+.btn-ghost {
+  background: transparent;
+  color: var(--ink-2);
+}
+.btn-ghost:hover { color: var(--accent-primary); background: var(--accent-light); }
+.btn-sm {
+  font-size: 0.8rem;
+  padding: 0.4rem 1rem;
+}
+.btn-danger {
+  background: #fef2f2;
+  color: #ef4444;
+  border: 1px solid #fecaca;
+}
+.btn-danger:hover { background: #ef4444; color: var(--white); }
+
+/* ============================================================
+   CARDS
+   ============================================================ */
+.card {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+.card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-card);
+}
+.card-top {
+  height: 6px;
+  background: linear-gradient(90deg, var(--accent-primary), var(--accent-highlight));
+}
+.card-body { padding: 1.5rem; }
+.card-title {
+  font-family: var(--sans);
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--ink);
+  margin-bottom: 0.5rem;
+}
+.card-desc {
+  font-size: 0.875rem;
+  color: var(--ink-2);
+  line-height: 1.65;
+}
+
+.card-dark {
+  background: var(--accent-primary);
+  border-color: var(--accent-secondary);
+  color: var(--white);
+}
+.card-dark .card-title { color: var(--white); }
+.card-dark .card-desc { color: rgba(255,255,255,0.65); }
+.card-dark:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 60px -20px rgba(19,78,74,0.5);
+}
+
+/* ============================================================
+   BADGES / TAGS
+   ============================================================ */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-family: var(--mono);
+  font-size: 0.73rem;
+  padding: 0.28rem 0.75rem;
+  border-radius: var(--radius-pill);
+  font-weight: 400;
+}
+.badge-default {
+  background: var(--bg-subtle);
+  color: var(--ink-2);
+  border: 1px solid var(--border);
+}
+.badge-ok {
+  background: var(--status-ok-bg);
+  color: #0f766e;
+  border: 1px solid rgba(20,184,166,0.25);
+}
+.badge-low {
+  background: var(--status-low-bg);
+  color: #92400e;
+  border: 1px solid rgba(245,158,11,0.25);
+}
+.badge-empty {
+  background: var(--status-empty-bg);
+  color: #b91c1c;
+  border: 1px solid rgba(239,68,68,0.25);
+}
+.badge-teal {
+  background: var(--accent-light);
+  color: var(--accent-primary);
+  border: 1px solid rgba(20,184,166,0.2);
+}
+.badge-dot::before {
+  content: '';
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+/* ============================================================
+   TABLE
+   ============================================================ */
+.table-wrapper {
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+thead {
+  background: var(--bg-subtle);
+  border-bottom: 1px solid var(--border);
+}
+th {
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  padding: 0.9rem 1.25rem;
+  text-align: left;
+  font-weight: 400;
+}
+td {
+  padding: 0.85rem 1.25rem;
+  color: var(--ink-2);
+  border-bottom: 1px solid var(--border-sub);
+}
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: var(--accent-light); }
+.td-mono {
+  font-family: var(--mono);
+  font-size: 0.82rem;
+  color: var(--ink);
+}
+.td-primary { color: var(--ink); font-weight: 500; }
+
+/* ============================================================
+   FORM ELEMENTS
+   ============================================================ */
+.form-group { margin-bottom: 1.25rem; }
+label {
+  display: block;
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  margin-bottom: 0.5rem;
+}
+input, select, textarea {
+  width: 100%;
+  font-family: var(--sans);
+  font-size: 0.93rem;
+  color: var(--ink);
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 0.7rem 1rem;
+  outline: none;
+  transition: border-color 0.18s, box-shadow 0.18s;
+  appearance: none;
+}
+input:focus, select:focus, textarea:focus {
+  border-color: var(--accent-highlight);
+  box-shadow: 0 0 0 3px rgba(20,184,166,0.15);
+}
+input::placeholder { color: var(--ink-3); }
+.input-mono {
+  font-family: var(--mono);
+  font-size: 0.85rem;
+}
+
+/* Search Input */
+.search-wrapper {
+  position: relative;
+}
+.search-wrapper svg {
+  position: absolute;
+  left: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--ink-3);
+  width: 16px;
+  height: 16px;
+}
+.search-wrapper input {
+  padding-left: 2.75rem;
+}
+
+/* ============================================================
+   NAVIGATION
+   ============================================================ */
+.nav-demo {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  padding: 0 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.nav-logo {
+  font-family: var(--mono);
+  font-size: 0.85rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--ink);
+  font-weight: 500;
+  padding: 1.1rem 0;
+  text-decoration: none;
+}
+.nav-logo span { color: var(--accent-highlight); }
+.nav-links {
+  display: flex;
+  gap: 0;
+  list-style: none;
+}
+.nav-link {
+  font-family: var(--sans);
+  font-size: 0.88rem;
+  font-weight: 400;
+  color: var(--ink-2);
+  text-decoration: none;
+  padding: 1.1rem 1rem;
+  border-bottom: 2px solid transparent;
+  transition: color 0.18s, border-color 0.18s;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.nav-link:hover { color: var(--ink); }
+.nav-link.active {
+  color: var(--accent-primary);
+  border-bottom-color: var(--accent-highlight);
+  font-weight: 500;
+}
+.nav-actions { display: flex; gap: 0.5rem; align-items: center; }
+
+/* ============================================================
+   STATS / METRIC CARDS
+   ============================================================ */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 1rem;
+}
+.stat-card {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  padding: 1.5rem;
+  transition: transform 0.25s, box-shadow 0.25s;
+}
+.stat-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-card);
+}
+.stat-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+.stat-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-md);
+  background: var(--accent-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent-highlight);
+}
+.stat-badge { }
+.stat-value {
+  font-family: var(--mono);
+  font-size: 1.75rem;
+  font-weight: 500;
+  color: var(--ink);
+  letter-spacing: -0.02em;
+  margin-bottom: 0.25rem;
+}
+.stat-label {
+  font-size: 0.82rem;
+  color: var(--ink-3);
+}
+
+/* ============================================================
+   PAGE LAYOUT DEMO
+   ============================================================ */
+.layout-demo {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  background: var(--bg-light);
+}
+.layout-demo-nav {
+  background: var(--white);
+  border-bottom: 1px solid var(--border);
+  padding: 0.8rem 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+.layout-demo-nav .dot {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  background: var(--border);
+}
+.layout-demo-nav .dot.active { background: var(--accent-highlight); }
+.layout-demo-body {
+  display: flex;
+  min-height: 320px;
+}
+.layout-demo-sidebar {
+  width: 200px;
+  background: var(--accent-secondary);
+  padding: 1.25rem 1rem;
+  flex-shrink: 0;
+}
+.layout-sidebar-logo {
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.5);
+  margin-bottom: 1.5rem;
+}
+.layout-sidebar-logo span { color: var(--accent-highlight); }
+.sidebar-item {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.55rem 0.75rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.82rem;
+  color: rgba(255,255,255,0.55);
+  margin-bottom: 0.2rem;
+  cursor: default;
+  transition: background 0.15s, color 0.15s;
+}
+.sidebar-item:hover { background: rgba(255,255,255,0.07); color: rgba(255,255,255,0.85); }
+.sidebar-item.active {
+  background: rgba(20,184,166,0.18);
+  color: var(--accent-highlight);
+}
+.sidebar-item svg { width: 15px; height: 15px; flex-shrink: 0; }
+.sidebar-section {
+  font-family: var(--mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.25);
+  padding: 0.75rem 0.75rem 0.4rem;
+  margin-top: 0.5rem;
+}
+.layout-demo-main {
+  flex: 1;
+  padding: 1.5rem;
+  overflow: hidden;
+}
+.demo-table-mini { font-size: 0.78rem; }
+.demo-table-mini th { padding: 0.6rem 0.75rem; font-size: 0.62rem; }
+.demo-table-mini td { padding: 0.55rem 0.75rem; }
+
+/* ============================================================
+   SPACING DEMO
+   ============================================================ */
+.spacing-demo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.spacing-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+.spacing-block {
+  background: var(--accent-highlight);
+  height: 20px;
+  border-radius: 3px;
+  opacity: 0.7;
+  flex-shrink: 0;
+}
+.spacing-label {
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  color: var(--ink-3);
+  white-space: nowrap;
+}
+
+/* ============================================================
+   ANIMATION DEMO
+   ============================================================ */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(18px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.anim-item {
+  animation: fadeUp 0.5s ease both;
+}
+.anim-item:nth-child(2) { animation-delay: 0.08s; }
+.anim-item:nth-child(3) { animation-delay: 0.16s; }
+.anim-item:nth-child(4) { animation-delay: 0.24s; }
+
+/* ============================================================
+   DO / DON'T
+   ============================================================ */
+.rule-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+@media (max-width: 640px) { .rule-grid { grid-template-columns: 1fr; } }
+.rule-card {
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+  border: 1px solid transparent;
+}
+.rule-do {
+  background: var(--accent-light);
+  border-color: rgba(20,184,166,0.25);
+}
+.rule-dont {
+  background: #fef2f2;
+  border-color: rgba(239,68,68,0.2);
+}
+.rule-header {
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  margin-bottom: 0.75rem;
+  font-weight: 500;
+}
+.rule-do .rule-header  { color: #0f766e; }
+.rule-dont .rule-header { color: #b91c1c; }
+.rule-list {
+  list-style: none;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+.rule-list li {
+  font-size: 0.88rem;
+  color: var(--ink-2);
+  display: flex;
+  gap: 0.5rem;
+}
+.rule-list li::before {
+  flex-shrink: 0;
+  font-weight: 700;
+}
+.rule-do .rule-list li::before  { content: '✓'; color: #14b8a6; }
+.rule-dont .rule-list li::before { content: '✗'; color: #ef4444; }
+
+/* ============================================================
+   GRID HELPER
+   ============================================================ */
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+.grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }
+@media (max-width: 640px) {
+  .grid-2, .grid-3 { grid-template-columns: 1fr; }
+}
+
+/* ============================================================
+   SIDEBAR LAYOUT (GUIDE ITSELF)
+   ============================================================ */
+@media (max-width: 800px) {
+  .guide-content { padding: 2rem 1.25rem; }
+  .guide-header  { padding: 2.5rem 1.25rem 2rem; }
+}
+
+/* SVG icons inline */
+.icon { width: 16px; height: 16px; display: inline-block; vertical-align: middle; flex-shrink: 0; }
+
+/* ============================================================
+   LIEFERSCHEIN / RECHNUNG SPECIFIC
+   ============================================================ */
+.document-demo {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+}
+.document-header {
+  background: var(--accent-secondary);
+  color: var(--white);
+  padding: 1.5rem 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+}
+.document-header-logo {
+  font-family: var(--mono);
+  font-size: 0.8rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--accent-highlight);
+}
+.document-header-type {
+  font-family: var(--serif);
+  font-size: 1.6rem;
+  font-weight: 400;
+  color: var(--white);
+  margin-top: 0.25rem;
+}
+.document-header-meta {
+  text-align: right;
+}
+.document-header-nr {
+  font-family: var(--mono);
+  font-size: 1.1rem;
+  color: var(--accent-highlight);
+}
+.document-header-date {
+  font-size: 0.8rem;
+  color: rgba(255,255,255,0.5);
+  margin-top: 0.2rem;
+}
+.document-body {
+  padding: 1.5rem 2rem;
+}
+.document-footer {
+  background: var(--bg-subtle);
+  border-top: 1px solid var(--border);
+  padding: 1rem 2rem;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 2rem;
+}
+.total-label {
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.total-value {
+  font-family: var(--mono);
+  font-size: 1.3rem;
+  font-weight: 500;
+  color: var(--ink);
+}
+
+/* ============================================================
+   LANG TOGGLE DEMO
+   ============================================================ */
+.lang-toggle {
+  display: inline-flex;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  overflow: hidden;
+  background: var(--bg-subtle);
+}
+.lang-btn {
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 0.35rem 0.9rem;
+  border: none;
+  background: none;
+  cursor: pointer;
+  color: var(--ink-3);
+  transition: background 0.18s, color 0.18s;
+}
+.lang-btn.active {
+  background: var(--ink);
+  color: var(--white);
+}
+
+</style>
+</head>
+<body>
+
+<!-- ============================================================
+     HEADER
+     ============================================================ -->
+<header class="guide-header">
+  <div class="guide-header-inner">
+    <p class="guide-eyebrow">sims.abler.tirol · Design Guide</p>
+    <h1 class="guide-title">Design System</h1>
+    <p class="guide-subtitle">
+      Vollständige Designreferenz für das SIM-System — Lagerverwaltung, Artikel-Tracking,
+      Inventur, Lieferschein- und Rechnungserstellung. Teal-Farbwelt, funktional-industriell,
+      Teil des abler.tirol Ökosystems.
+    </p>
+  </div>
+</header>
+
+<!-- ============================================================
+     STICKY NAV
+     ============================================================ -->
+<nav class="guide-nav">
+  <div class="guide-nav-inner">
+    <a class="guide-nav-link active" href="#farben">Farben</a>
+    <a class="guide-nav-link" href="#typografie">Typografie</a>
+    <a class="guide-nav-link" href="#buttons">Buttons</a>
+    <a class="guide-nav-link" href="#badges">Badges</a>
+    <a class="guide-nav-link" href="#tabellen">Tabellen</a>
+    <a class="guide-nav-link" href="#formulare">Formulare</a>
+    <a class="guide-nav-link" href="#navigation">Navigation</a>
+    <a class="guide-nav-link" href="#cards">Cards</a>
+    <a class="guide-nav-link" href="#dokumente">Dokumente</a>
+    <a class="guide-nav-link" href="#layout">Layout</a>
+    <a class="guide-nav-link" href="#animationen">Animationen</a>
+    <a class="guide-nav-link" href="#regeln">Regeln</a>
+  </div>
+</nav>
+
+<main class="guide-content">
+
+  <!-- ============================================================
+       1. FARBEN
+       ============================================================ -->
+  <section class="guide-section" id="farben">
+    <p class="section-label">01 — Farben</p>
+    <h2 class="section-title">Farbsystem</h2>
+    <p class="section-desc">
+      sims verwendet <strong>Teal</strong> als Produktfarbe — industriell, ruhig, funktional.
+      Alle Produkte im abler.tirol-Ökosystem teilen dieselben Neutrals.
+      Maximal zwei Akzentfarben gleichzeitig sichtbar.
+    </p>
+
+    <div class="subsection">
+      <p class="subsection-title">Akzentfarben — sims (Teal)</p>
+      <div class="color-grid">
+        <div class="color-swatch">
+          <div class="swatch-color" style="background:#134e4a;"></div>
+          <div class="swatch-info">
+            <div class="swatch-name">--accent-primary</div>
+            <div class="swatch-value">#134e4a · Teal 900</div>
+          </div>
+        </div>
+        <div class="color-swatch">
+          <div class="swatch-color" style="background:#0f3d3a;"></div>
+          <div class="swatch-info">
+            <div class="swatch-name">--accent-secondary</div>
+            <div class="swatch-value">#0f3d3a · Teal 950</div>
+          </div>
+        </div>
+        <div class="color-swatch">
+          <div class="swatch-color" style="background:#14b8a6;"></div>
+          <div class="swatch-info">
+            <div class="swatch-name">--accent-highlight</div>
+            <div class="swatch-value">#14b8a6 · Teal 500</div>
+          </div>
+        </div>
+        <div class="color-swatch">
+          <div class="swatch-color" style="background:#f0fdfa; border-bottom:1px solid #e2e8f0;"></div>
+          <div class="swatch-info">
+            <div class="swatch-name">--accent-light</div>
+            <div class="swatch-value">#f0fdfa · Teal 50</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="subsection">
+      <p class="subsection-title">Geteilte Neutrals (alle abler.tirol Produkte)</p>
+      <div class="color-grid">
+        <div class="color-swatch">
+          <div class="swatch-color" style="background:#f7f7f4; border-bottom:1px solid #e2e8f0;"></div>
+          <div class="swatch-info">
+            <div class="swatch-name">--bg-light</div>
+            <div class="swatch-value">#f7f7f4</div>
+          </div>
+        </div>
+        <div class="color-swatch">
+          <div class="swatch-color" style="background:#fbfbf9; border-bottom:1px solid #e2e8f0;"></div>
+          <div class="swatch-info">
+            <div class="swatch-name">--bg-subtle</div>
+            <div class="swatch-value">#fbfbf9</div>
+          </div>
+        </div>
+        <div class="color-swatch">
+          <div class="swatch-color" style="background:#0f172a;"></div>
+          <div class="swatch-info">
+            <div class="swatch-name">--ink</div>
+            <div class="swatch-value">#0f172a · Haupttext</div>
+          </div>
+        </div>
+        <div class="color-swatch">
+          <div class="swatch-color" style="background:#475569;"></div>
+          <div class="swatch-info">
+            <div class="swatch-name">--ink-2</div>
+            <div class="swatch-value">#475569 · Body-Text</div>
+          </div>
+        </div>
+        <div class="color-swatch">
+          <div class="swatch-color" style="background:#94a3b8;"></div>
+          <div class="swatch-info">
+            <div class="swatch-name">--ink-3</div>
+            <div class="swatch-value">#94a3b8 · Muted</div>
+          </div>
+        </div>
+        <div class="color-swatch">
+          <div class="swatch-color" style="background:#e2e8f0; border-bottom:1px solid #e2e8f0;"></div>
+          <div class="swatch-info">
+            <div class="swatch-name">--border</div>
+            <div class="swatch-value">#e2e8f0</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="subsection">
+      <p class="subsection-title">Status-Farben (Bestandsstatus)</p>
+      <div class="color-grid">
+        <div class="color-swatch">
+          <div class="swatch-color" style="background:#f0fdfa;"></div>
+          <div class="swatch-info">
+            <div class="swatch-name">--status-ok-bg</div>
+            <div class="swatch-value">#14b8a6 Text · "In Bestand"</div>
+          </div>
+        </div>
+        <div class="color-swatch">
+          <div class="swatch-color" style="background:#fffbeb;"></div>
+          <div class="swatch-info">
+            <div class="swatch-name">--status-low-bg</div>
+            <div class="swatch-value">#f59e0b Text · "Niedrig"</div>
+          </div>
+        </div>
+        <div class="color-swatch">
+          <div class="swatch-color" style="background:#fef2f2;"></div>
+          <div class="swatch-info">
+            <div class="swatch-name">--status-empty-bg</div>
+            <div class="swatch-value">#ef4444 Text · "Leer"</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="subsection">
+      <p class="subsection-title">CSS Variablen — vollständig</p>
+<pre><span class="code-comment">/* sims.abler.tirol — CSS Custom Properties */</span>
+:root {
+  <span class="code-comment">/* Akzent (Teal) */</span>
+  <span class="code-key">--accent-primary</span>:   <span class="code-val">#134e4a</span>;   <span class="code-comment">/* Teal 900 */</span>
+  <span class="code-key">--accent-secondary</span>: <span class="code-val">#0f3d3a</span>;   <span class="code-comment">/* Teal 950 */</span>
+  <span class="code-key">--accent-highlight</span>: <span class="code-val">#14b8a6</span>;   <span class="code-comment">/* Teal 500 */</span>
+  <span class="code-key">--accent-light</span>:     <span class="code-val">#f0fdfa</span>;   <span class="code-comment">/* Teal 50 */</span>
+
+  <span class="code-comment">/* Neutrals (geteilt) */</span>
+  <span class="code-key">--white</span>:      <span class="code-val">#ffffff</span>;
+  <span class="code-key">--bg-light</span>:   <span class="code-val">#f7f7f4</span>;
+  <span class="code-key">--bg-subtle</span>:  <span class="code-val">#fbfbf9</span>;
+  <span class="code-key">--ink</span>:        <span class="code-val">#0f172a</span>;
+  <span class="code-key">--ink-2</span>:      <span class="code-val">#475569</span>;
+  <span class="code-key">--ink-3</span>:      <span class="code-val">#94a3b8</span>;
+  <span class="code-key">--border</span>:     <span class="code-val">#e2e8f0</span>;
+  <span class="code-key">--border-sub</span>: <span class="code-val">rgba(226,232,240,0.7)</span>;
+
+  <span class="code-comment">/* Status */</span>
+  <span class="code-key">--status-ok</span>:       <span class="code-val">#14b8a6</span>;
+  <span class="code-key">--status-low</span>:      <span class="code-val">#f59e0b</span>;
+  <span class="code-key">--status-empty</span>:    <span class="code-val">#ef4444</span>;
+  <span class="code-key">--status-ok-bg</span>:    <span class="code-val">#f0fdfa</span>;
+  <span class="code-key">--status-low-bg</span>:   <span class="code-val">#fffbeb</span>;
+  <span class="code-key">--status-empty-bg</span>: <span class="code-val">#fef2f2</span>;
+
+  <span class="code-comment">/* Typografie */</span>
+  <span class="code-key">--sans</span>:  <span class="code-str">'Inter'</span>, sans-serif;
+  <span class="code-key">--mono</span>:  <span class="code-str">'DM Mono'</span>, monospace;
+  <span class="code-key">--serif</span>: <span class="code-str">'DM Serif Display'</span>, serif;
+
+  <span class="code-comment">/* Radius */</span>
+  <span class="code-key">--radius-pill</span>: <span class="code-val">999px</span>;
+  <span class="code-key">--radius-xl</span>:   <span class="code-val">2rem</span>;
+  <span class="code-key">--radius-lg</span>:   <span class="code-val">1.5rem</span>;
+  <span class="code-key">--radius-md</span>:   <span class="code-val">1rem</span>;
+  <span class="code-key">--radius-sm</span>:   <span class="code-val">0.5rem</span>;
+
+  <span class="code-comment">/* Shadows */</span>
+  <span class="code-key">--shadow-card</span>: <span class="code-val">0 25px 80px -30px rgba(15,23,42,0.18)</span>;
+  <span class="code-key">--shadow-sm</span>:   <span class="code-val">0 1px 3px rgba(15,23,42,0.06)</span>;
+  <span class="code-key">--shadow-md</span>:   <span class="code-val">0 4px 16px rgba(15,23,42,0.10)</span>;
+}</pre>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       2. TYPOGRAFIE
+       ============================================================ -->
+  <section class="guide-section" id="typografie">
+    <p class="section-label">02 — Typografie</p>
+    <h2 class="section-title">Schriftsystem</h2>
+    <p class="section-desc">
+      Alle Fonts werden ausschließlich über <code>api.abler.tirol</code> geladen — nie von Google Fonts.
+      sims ist <strong>Inter-dominant</strong>. DM Serif Display sparsam einsetzen.
+      DM Mono für alle technischen Werte: Artikelnummern, Mengen, Badges.
+    </p>
+
+    <div class="subsection">
+      <p class="subsection-title">Font-Einbindung (Pflicht)</p>
+<pre><span class="code-comment">&lt;!-- IMMER — nie Google Fonts --&gt;</span>
+<span class="code-tag">&lt;link</span> rel=<span class="code-str">"preconnect"</span> href=<span class="code-str">"https://api.abler.tirol"</span> <span class="code-tag">/&gt;</span>
+<span class="code-tag">&lt;link</span> rel=<span class="code-str">"stylesheet"</span> href=<span class="code-str">"https://api.abler.tirol/fonts/abler-stack.css"</span> <span class="code-tag">/&gt;</span></pre>
+    </div>
+
+    <div class="type-specimen anim-item">
+      <p class="type-meta">DM Serif Display · 400 · Display</p>
+      <p class="type-sample-display">Lager&shy;verwaltung</p>
+    </div>
+
+    <div class="type-specimen anim-item">
+      <p class="type-meta">DM Serif Display · 400 italic · H1 Variante</p>
+      <p class="type-sample-h1" style="font-style:italic;">Inventur 2024</p>
+    </div>
+
+    <div class="type-specimen anim-item">
+      <p class="type-meta">Inter · 400 · Body-Text</p>
+      <p class="type-sample-body">
+        Artikel werden nach Lagerbestand und Bewegungshistorie verwaltet.
+        Jeder Lieferschein ist einem Kunden zugeordnet und kann als PDF exportiert werden.
+        Die Rechnungsstellung erfolgt direkt aus dem Lieferschein.
+      </p>
+    </div>
+
+    <div class="type-specimen anim-item">
+      <p class="type-meta">DM Mono · Label / Eyebrow</p>
+      <p class="type-sample-label">Artikelstamm · Lagerbewegung · Inventur</p>
+    </div>
+
+    <div class="type-specimen anim-item">
+      <p class="type-meta">DM Mono · Artikelnummer / Mengenangaben</p>
+      <p class="type-sample-mono">ART-00124 · 48 Stk. · €12,90/Stk. · Gesamt: €619,20</p>
+    </div>
+
+    <div class="subsection" style="margin-top:2rem;">
+      <p class="subsection-title">Größenraster</p>
+<pre><span class="code-comment">/* Größenraster sims */</span>
+<span class="code-key">--text-display</span>: <span class="code-val">clamp(3rem, 8vw, 6rem)</span>;      <span class="code-comment">/* DM Serif Display */</span>
+<span class="code-key">--text-h1</span>:      <span class="code-val">clamp(2.2rem, 5vw, 3.75rem)</span>;  <span class="code-comment">/* DM Serif Display */</span>
+<span class="code-key">--text-h2</span>:      <span class="code-val">clamp(1.8rem, 3.5vw, 3rem)</span>;   <span class="code-comment">/* DM Serif / Inter */</span>
+<span class="code-key">--text-h3</span>:      <span class="code-val">1.25rem – 1.5rem</span>;             <span class="code-comment">/* Inter 500 */</span>
+<span class="code-key">--text-body</span>:    <span class="code-val">0.95rem – 1.05rem</span>;            <span class="code-comment">/* Inter 400 */</span>
+<span class="code-key">--text-small</span>:   <span class="code-val">0.8rem – 0.88rem</span>;             <span class="code-comment">/* Inter */</span>
+<span class="code-key">--text-label</span>:   <span class="code-val">0.7rem – 0.75rem</span>;             <span class="code-comment">/* DM Mono + uppercase */</span>
+
+<span class="code-comment">/* Zeilenhöhe */</span>
+line-height: <span class="code-val">1.75</span>;   <span class="code-comment">/* Fließtext */</span>
+line-height: <span class="code-val">1.1</span>;    <span class="code-comment">/* Headlines */</span>
+
+<span class="code-comment">/* Letter-Spacing Labels */</span>
+letter-spacing: <span class="code-val">0.18em – 0.24em</span>; text-transform: <span class="code-val">uppercase</span>;</pre>
+    </div>
+
+    <div class="subsection">
+      <p class="subsection-title">Fontrollen</p>
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Rolle</th>
+              <th>Font</th>
+              <th>Verwendung in sims</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="td-primary">Display / H1</td>
+              <td><span class="badge badge-teal">DM Serif Display</span></td>
+              <td class="td-mono">Seitenüberschriften, Modul-Titel</td>
+            </tr>
+            <tr>
+              <td class="td-primary">Body / UI (dominant)</td>
+              <td><span class="badge badge-default">Inter</span></td>
+              <td class="td-mono">Fließtext, Nav, Labels, Formulare</td>
+            </tr>
+            <tr>
+              <td class="td-primary">Code / Mono</td>
+              <td><span class="badge badge-default">DM Mono</span></td>
+              <td class="td-mono">Artikelnr., Mengen, Beträge, Badges</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       3. BUTTONS
+       ============================================================ -->
+  <section class="guide-section" id="buttons">
+    <p class="section-label">03 — Buttons</p>
+    <h2 class="section-title">Button-System</h2>
+    <p class="section-desc">
+      Buttons haben <strong>immer</strong> <code>border-radius: 999px</code> (Pill-Form).
+      Keine eckigen Buttons. Drei Ebenen: Primary, Outline, Ghost.
+      Zusätzlich: Highlight für Hauptaktionen und Danger für destruktive Operationen.
+    </p>
+
+    <div class="component-demo">
+      <p class="demo-label">Primary</p>
+      <div class="demo-row">
+        <button class="btn btn-primary">Rechnung erstellen</button>
+        <button class="btn btn-primary">
+          <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+          Artikel anlegen
+        </button>
+        <button class="btn btn-primary btn-sm">Speichern</button>
+      </div>
+    </div>
+
+    <div class="component-demo">
+      <p class="demo-label">Highlight (Teal 500)</p>
+      <div class="demo-row">
+        <button class="btn btn-highlight">Lieferschein generieren</button>
+        <button class="btn btn-highlight">PDF exportieren</button>
+        <button class="btn btn-highlight btn-sm">Inventur starten</button>
+      </div>
+    </div>
+
+    <div class="component-demo">
+      <p class="demo-label">Outline</p>
+      <div class="demo-row">
+        <button class="btn btn-outline">Abbrechen</button>
+        <button class="btn btn-outline">
+          <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+          CSV Export
+        </button>
+        <button class="btn btn-outline btn-sm">Filter</button>
+      </div>
+    </div>
+
+    <div class="component-demo">
+      <p class="demo-label">Ghost & Danger</p>
+      <div class="demo-row">
+        <button class="btn btn-ghost">Details anzeigen</button>
+        <button class="btn btn-ghost">← Zurück</button>
+        <button class="btn btn-danger btn-sm">Löschen</button>
+        <button class="btn btn-danger">Rechnung stornieren</button>
+      </div>
+    </div>
+
+    <div class="subsection" style="margin-top:2rem;">
+      <p class="subsection-title">CSS</p>
+<pre><span class="code-comment">/* Basis aller Buttons — nie ohne border-radius: 999px */</span>
+.btn {
+  border-radius: <span class="code-val">var(--radius-pill)</span>;     <span class="code-comment">/* PFLICHT */</span>
+  font-family:   <span class="code-val">var(--sans)</span>;
+  font-size:     <span class="code-val">0.9rem</span>;
+  font-weight:   <span class="code-val">500</span>;
+  padding:       <span class="code-val">0.65rem 1.5rem</span>;
+  transition:    <span class="code-val">background 0.18s, transform 0.15s</span>;
+}
+.btn:hover { transform: <span class="code-val">translateY(-1px)</span>; }
+
+<span class="code-comment">/* Primary */</span>
+.btn-primary {
+  background: <span class="code-val">var(--accent-primary)</span>;
+  color:      <span class="code-val">white</span>;
+}
+<span class="code-comment">/* Highlight */</span>
+.btn-highlight {
+  background: <span class="code-val">var(--accent-highlight)</span>;
+  color:      <span class="code-val">white</span>;
+}
+<span class="code-comment">/* Outline */</span>
+.btn-outline {
+  background: <span class="code-val">white</span>;
+  border:     <span class="code-val">1px solid var(--border)</span>;
+  color:      <span class="code-val">var(--ink-2)</span>;
+}
+<span class="code-comment">/* Danger */</span>
+.btn-danger {
+  background: <span class="code-val">var(--status-empty-bg)</span>;
+  color:      <span class="code-val">var(--status-empty)</span>;
+  border:     <span class="code-val">1px solid #fecaca</span>;
+}</pre>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       4. BADGES
+       ============================================================ -->
+  <section class="guide-section" id="badges">
+    <p class="section-label">04 — Badges &amp; Tags</p>
+    <h2 class="section-title">Status-Badges</h2>
+    <p class="section-desc">
+      Badges verwenden immer <code>DM Mono</code>. Im SIM-System sind Bestandsstatus-Badges
+      besonders wichtig — Teal (OK), Amber (Niedrig), Rot (Leer).
+      Alle Badges haben <code>border-radius: 999px</code>.
+    </p>
+
+    <div class="component-demo">
+      <p class="demo-label">Bestandsstatus</p>
+      <div class="demo-row">
+        <span class="badge badge-ok badge-dot">In Bestand</span>
+        <span class="badge badge-low badge-dot">Niedrig</span>
+        <span class="badge badge-empty badge-dot">Leer</span>
+      </div>
+    </div>
+
+    <div class="component-demo">
+      <p class="demo-label">Dokument-Status</p>
+      <div class="demo-row">
+        <span class="badge badge-ok badge-dot">Bezahlt</span>
+        <span class="badge badge-low badge-dot">Offen</span>
+        <span class="badge badge-empty badge-dot">Überfällig</span>
+        <span class="badge badge-teal">Lieferschein</span>
+        <span class="badge badge-default">Rechnung</span>
+      </div>
+    </div>
+
+    <div class="component-demo">
+      <p class="demo-label">Allgemein</p>
+      <div class="demo-row">
+        <span class="badge badge-default">Lagerverwaltung</span>
+        <span class="badge badge-teal">Inventur</span>
+        <span class="badge badge-default">ART-00124</span>
+        <span class="badge badge-teal">48 Stk.</span>
+        <span class="badge badge-low badge-dot">Min-Bestand</span>
+      </div>
+    </div>
+
+    <div class="subsection" style="margin-top:2rem;">
+      <p class="subsection-title">CSS</p>
+<pre>.badge {
+  font-family:   <span class="code-val">var(--mono)</span>;   <span class="code-comment">/* PFLICHT */</span>
+  font-size:     <span class="code-val">0.73rem</span>;
+  padding:       <span class="code-val">0.28rem 0.75rem</span>;
+  border-radius: <span class="code-val">var(--radius-pill)</span>;
+}
+<span class="code-comment">/* Dot-Indikator */</span>
+.badge-dot::before {
+  content:  <span class="code-str">''</span>;
+  width:    <span class="code-val">6px</span>; height: <span class="code-val">6px</span>;
+  border-radius: <span class="code-val">50%</span>;
+  background:    <span class="code-val">currentColor</span>;
+  display:       <span class="code-val">inline-block</span>;
+  margin-right:  <span class="code-val">0.35rem</span>;
+}
+<span class="code-comment">/* Status */</span>
+.badge-ok    { background: var(--status-ok-bg);    color: #0f766e; border: 1px solid rgba(20,184,166,0.25); }
+.badge-low   { background: var(--status-low-bg);   color: #92400e; border: 1px solid rgba(245,158,11,0.25); }
+.badge-empty { background: var(--status-empty-bg); color: #b91c1c; border: 1px solid rgba(239,68,68,0.25); }</pre>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       5. TABELLEN
+       ============================================================ -->
+  <section class="guide-section" id="tabellen">
+    <p class="section-label">05 — Tabellen</p>
+    <h2 class="section-title">Datentabellen</h2>
+    <p class="section-desc">
+      Tabellen sind das Herzstück von sims. Responsive (horizontal scrollbar auf Mobile),
+      nie versteckt. Zeilenhover mit <code>--accent-light</code>.
+      Header in <code>DM Mono uppercase</code>. Artikelnummern und Mengen in <code>DM Mono</code>.
+    </p>
+
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>Artikel-Nr.</th>
+            <th>Bezeichnung</th>
+            <th>Bestand</th>
+            <th>Min-Bestand</th>
+            <th>Preis</th>
+            <th>Status</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="td-mono">ART-00124</td>
+            <td class="td-primary">Schrauben M8 × 40mm</td>
+            <td class="td-mono">482 Stk.</td>
+            <td class="td-mono">100 Stk.</td>
+            <td class="td-mono">€0,12</td>
+            <td><span class="badge badge-ok badge-dot">In Bestand</span></td>
+            <td><button class="btn btn-ghost btn-sm">Edit</button></td>
+          </tr>
+          <tr>
+            <td class="td-mono">ART-00087</td>
+            <td class="td-primary">Dichtungsring 12mm</td>
+            <td class="td-mono">38 Stk.</td>
+            <td class="td-mono">50 Stk.</td>
+            <td class="td-mono">€0,45</td>
+            <td><span class="badge badge-low badge-dot">Niedrig</span></td>
+            <td><button class="btn btn-ghost btn-sm">Edit</button></td>
+          </tr>
+          <tr>
+            <td class="td-mono">ART-00201</td>
+            <td class="td-primary">Hydraulikschlauch 1/2"</td>
+            <td class="td-mono">0 Stk.</td>
+            <td class="td-mono">10 Stk.</td>
+            <td class="td-mono">€14,90</td>
+            <td><span class="badge badge-empty badge-dot">Leer</span></td>
+            <td><button class="btn btn-ghost btn-sm">Edit</button></td>
+          </tr>
+          <tr>
+            <td class="td-mono">ART-00056</td>
+            <td class="td-primary">Lagergehäuse SKF 6205</td>
+            <td class="td-mono">12 Stk.</td>
+            <td class="td-mono">5 Stk.</td>
+            <td class="td-mono">€8,70</td>
+            <td><span class="badge badge-ok badge-dot">In Bestand</span></td>
+            <td><button class="btn btn-ghost btn-sm">Edit</button></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="subsection" style="margin-top:2rem;">
+      <p class="subsection-title">CSS</p>
+<pre><span class="code-comment">/* Wrapper — Responsive Scroll */</span>
+.table-wrapper {
+  overflow-x:    <span class="code-val">auto</span>;
+  border:        <span class="code-val">1px solid var(--border)</span>;
+  border-radius: <span class="code-val">var(--radius-lg)</span>;
+}
+thead {
+  background: <span class="code-val">var(--bg-subtle)</span>;
+}
+th {
+  font-family:    <span class="code-val">var(--mono)</span>;
+  font-size:      <span class="code-val">0.7rem</span>;
+  letter-spacing: <span class="code-val">0.12em</span>;
+  text-transform: <span class="code-val">uppercase</span>;
+  color:          <span class="code-val">var(--ink-3)</span>;
+}
+<span class="code-comment">/* Hover — Teal Highlight */</span>
+tr:hover td { background: <span class="code-val">var(--accent-light)</span>; }
+
+<span class="code-comment">/* Mono-Werte (Artikelnr., Mengen) */</span>
+.td-mono { font-family: var(--mono); font-size: 0.82rem; }</pre>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       6. FORMULARE
+       ============================================================ -->
+  <section class="guide-section" id="formulare">
+    <p class="section-label">06 — Formulare</p>
+    <h2 class="section-title">Form-Elemente</h2>
+    <p class="section-desc">
+      Labels immer in <code>DM Mono uppercase</code>. Focus-Outline in Teal Highlight.
+      Inputs mit <code>border-radius: var(--radius-lg)</code>.
+      Mengenfelder und Artikelnummern-Inputs mit <code>font-family: var(--mono)</code>.
+    </p>
+
+    <div class="component-demo">
+      <div class="grid-2">
+        <div>
+          <div class="form-group">
+            <label>Artikelbezeichnung</label>
+            <input type="text" placeholder="z.B. Schrauben M8 × 40mm" />
+          </div>
+          <div class="form-group">
+            <label>Artikelnummer</label>
+            <input type="text" class="input-mono" placeholder="ART-00124" />
+          </div>
+        </div>
+        <div>
+          <div class="form-group">
+            <label>Bestand (Stk.)</label>
+            <input type="number" class="input-mono" placeholder="0" />
+          </div>
+          <div class="form-group">
+            <label>Kategorie</label>
+            <select>
+              <option>Schrauben &amp; Verbindungselemente</option>
+              <option>Dichtungen</option>
+              <option>Hydraulik</option>
+              <option>Lager &amp; Gehäuse</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Beschreibung / Notiz</label>
+        <textarea rows="3" placeholder="Interne Notiz zum Artikel..."></textarea>
+      </div>
+      <div class="demo-row" style="margin-top:0.5rem;">
+        <button class="btn btn-primary">Artikel speichern</button>
+        <button class="btn btn-outline">Abbrechen</button>
+      </div>
+    </div>
+
+    <div class="component-demo">
+      <p class="demo-label">Schnellsuche (prominent platzieren)</p>
+      <div class="search-wrapper" style="max-width:400px;">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0"/></svg>
+        <input type="search" placeholder="Artikel-Nr. oder Bezeichnung..." />
+      </div>
+    </div>
+
+    <div class="subsection" style="margin-top:2rem;">
+      <p class="subsection-title">CSS</p>
+<pre>label {
+  font-family:    <span class="code-val">var(--mono)</span>;
+  font-size:      <span class="code-val">0.72rem</span>;
+  letter-spacing: <span class="code-val">0.12em</span>;
+  text-transform: <span class="code-val">uppercase</span>;
+  color:          <span class="code-val">var(--ink-3)</span>;
+}
+input, select, textarea {
+  border-radius: <span class="code-val">var(--radius-lg)</span>;
+  border:        <span class="code-val">1px solid var(--border)</span>;
+  font-family:   <span class="code-val">var(--sans)</span>;
+  font-size:     <span class="code-val">0.93rem</span>;
+}
+input:focus, select:focus {
+  border-color: <span class="code-val">var(--accent-highlight)</span>;
+  box-shadow:   <span class="code-val">0 0 0 3px rgba(20,184,166,0.15)</span>;
+  outline:      <span class="code-val">none</span>;
+}
+<span class="code-comment">/* Mono-Inputs für Artikelnr. und Mengen */</span>
+.input-mono { font-family: var(--mono); }</pre>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       7. NAVIGATION
+       ============================================================ -->
+  <section class="guide-section" id="navigation">
+    <p class="section-label">07 — Navigation</p>
+    <h2 class="section-title">App-Navigation</h2>
+    <p class="section-desc">
+      Sticky, <code>z-index: 50</code>. Logo in <code>DM Mono uppercase</code> mit Teal-Akzent.
+      Aktiver Link mit Teal-Underline. Maximal 5 Haupt-Navigationspunkte.
+      Für App-Ansichten empfiehlt sich eine Sidebar-Navigation (dunkler Teal-Hintergrund).
+    </p>
+
+    <div class="component-demo">
+      <p class="demo-label">Top Navigation (öffentliche Seite)</p>
+      <nav class="nav-demo">
+        <a class="nav-logo" href="#"><span>sims</span>.tirol</a>
+        <ul class="nav-links">
+          <li><a class="nav-link active" href="#">Artikel</a></li>
+          <li><a class="nav-link" href="#">Lager</a></li>
+          <li><a class="nav-link" href="#">Lieferscheine</a></li>
+          <li><a class="nav-link" href="#">Rechnungen</a></li>
+        </ul>
+        <div class="nav-actions">
+          <div class="lang-toggle">
+            <button class="lang-btn active">DE</button>
+            <button class="lang-btn">EN</button>
+          </div>
+        </div>
+      </nav>
+    </div>
+
+    <div class="component-demo">
+      <p class="demo-label">App Layout — Sidebar + Content</p>
+      <div class="layout-demo">
+        <div class="layout-demo-nav">
+          <div class="dot active"></div>
+          <div class="dot"></div>
+          <div class="dot"></div>
+          <span style="font-family:var(--mono);font-size:0.7rem;color:var(--ink-3);margin-left:0.5rem;">sims.abler.tirol</span>
+        </div>
+        <div class="layout-demo-body">
+          <div class="layout-demo-sidebar">
+            <div class="layout-sidebar-logo"><span>sims</span>.tirol</div>
+            <div class="sidebar-section">Stammdaten</div>
+            <div class="sidebar-item">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10"/></svg>
+              Artikel
+            </div>
+            <div class="sidebar-item active">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+              Lager
+            </div>
+            <div class="sidebar-section">Belege</div>
+            <div class="sidebar-item">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+              Lieferscheine
+            </div>
+            <div class="sidebar-item">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
+              Rechnungen
+            </div>
+            <div class="sidebar-section">System</div>
+            <div class="sidebar-item">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+              Inventur
+            </div>
+          </div>
+          <div class="layout-demo-main">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
+              <div>
+                <p style="font-family:var(--mono);font-size:0.65rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-3);margin-bottom:0.2rem;">Stammdaten</p>
+                <p style="font-family:var(--serif);font-size:1.3rem;font-weight:400;color:var(--ink);">Lagerübersicht</p>
+              </div>
+              <button class="btn btn-primary btn-sm">+ Artikel</button>
+            </div>
+            <div class="table-wrapper">
+              <table class="demo-table-mini">
+                <thead>
+                  <tr><th>Art.-Nr.</th><th>Bezeichnung</th><th>Bestand</th><th>Status</th></tr>
+                </thead>
+                <tbody>
+                  <tr><td class="td-mono">ART-00124</td><td class="td-primary">Schrauben M8</td><td class="td-mono">482</td><td><span class="badge badge-ok" style="font-size:0.65rem;padding:0.18rem 0.55rem;">OK</span></td></tr>
+                  <tr><td class="td-mono">ART-00087</td><td class="td-primary">Dichtungsring</td><td class="td-mono">38</td><td><span class="badge badge-low" style="font-size:0.65rem;padding:0.18rem 0.55rem;">Niedrig</span></td></tr>
+                  <tr><td class="td-mono">ART-00201</td><td class="td-primary">Hydraulikschlauch</td><td class="td-mono">0</td><td><span class="badge badge-empty" style="font-size:0.65rem;padding:0.18rem 0.55rem;">Leer</span></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       8. CARDS
+       ============================================================ -->
+  <section class="guide-section" id="cards">
+    <p class="section-label">08 — Cards</p>
+    <h2 class="section-title">Card-Komponenten</h2>
+    <p class="section-desc">
+      Cards haben <code>border-radius: var(--radius-xl)</code> (2rem).
+      Hover: <code>translateY(-4px)</code> + verstärkter Shadow.
+      Card-Top-Bar als Teal-Gradient für Produkt-Identität.
+    </p>
+
+    <div class="grid-3">
+      <div class="card anim-item">
+        <div class="card-top"></div>
+        <div class="card-body">
+          <div class="stat-card-top" style="margin-bottom:0.75rem;">
+            <span class="badge badge-teal">Artikel</span>
+          </div>
+          <p class="card-title">Schrauben M8 × 40mm</p>
+          <p class="card-desc" style="font-family:var(--mono);font-size:0.8rem;">ART-00124 · 482 Stk. · €0,12/Stk.</p>
+        </div>
+      </div>
+      <div class="card anim-item">
+        <div class="card-top"></div>
+        <div class="card-body">
+          <div class="stat-card-top" style="margin-bottom:0.75rem;">
+            <span class="badge badge-low badge-dot">Niedrig</span>
+          </div>
+          <p class="card-title">Dichtungsring 12mm</p>
+          <p class="card-desc" style="font-family:var(--mono);font-size:0.8rem;">ART-00087 · 38 Stk. · Min: 50 Stk.</p>
+        </div>
+      </div>
+      <div class="card card-dark anim-item">
+        <div class="card-body">
+          <p style="font-family:var(--mono);font-size:0.65rem;letter-spacing:0.16em;text-transform:uppercase;color:var(--accent-highlight);margin-bottom:0.75rem;">Quick Stats</p>
+          <p style="font-family:var(--mono);font-size:2rem;font-weight:500;color:white;margin-bottom:0.25rem;">247</p>
+          <p style="font-size:0.85rem;color:rgba(255,255,255,0.55);">Aktive Artikel gesamt</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="stats-grid" style="margin-top:1rem;">
+      <div class="stat-card anim-item">
+        <div class="stat-card-top">
+          <div class="stat-icon">
+            <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10"/></svg>
+          </div>
+          <span class="badge badge-ok">OK</span>
+        </div>
+        <p class="stat-value">247</p>
+        <p class="stat-label">Artikel in Bestand</p>
+      </div>
+      <div class="stat-card anim-item">
+        <div class="stat-card-top">
+          <div class="stat-icon" style="background:#fffbeb;color:#f59e0b;">
+            <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+          </div>
+          <span class="badge badge-low">!</span>
+        </div>
+        <p class="stat-value">12</p>
+        <p class="stat-label">Unter Mindestbestand</p>
+      </div>
+      <div class="stat-card anim-item">
+        <div class="stat-card-top">
+          <div class="stat-icon" style="background:#fef2f2;color:#ef4444;">
+            <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+          </div>
+          <span class="badge badge-empty">0</span>
+        </div>
+        <p class="stat-value">5</p>
+        <p class="stat-label">Leer / nicht vorrätig</p>
+      </div>
+      <div class="stat-card anim-item">
+        <div class="stat-card-top">
+          <div class="stat-icon">
+            <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+          </div>
+          <span class="badge badge-teal">Neu</span>
+        </div>
+        <p class="stat-value">18</p>
+        <p class="stat-label">Offene Lieferscheine</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       9. DOKUMENTE (Lieferschein / Rechnung)
+       ============================================================ -->
+  <section class="guide-section" id="dokumente">
+    <p class="section-label">09 — Dokumente</p>
+    <h2 class="section-title">Lieferschein &amp; Rechnung</h2>
+    <p class="section-desc">
+      Dokument-Vorschau im App-Kontext. Dunkler Teal-Header mit Dokumenttyp in
+      DM Serif Display, Nummer in DM Mono Teal-Highlight. Footer mit Gesamtbetrag.
+    </p>
+
+    <div class="document-demo">
+      <div class="document-header">
+        <div>
+          <div class="document-header-logo">sims.abler.tirol</div>
+          <div class="document-header-type">Lieferschein</div>
+        </div>
+        <div class="document-header-meta">
+          <div class="document-header-nr">LS-2024-0042</div>
+          <div class="document-header-date">17. März 2024</div>
+          <div style="margin-top:0.5rem;"><span class="badge badge-ok" style="font-size:0.65rem;">Geliefert</span></div>
+        </div>
+      </div>
+      <div class="document-body">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:2rem;margin-bottom:1.5rem;font-size:0.88rem;">
+          <div>
+            <p style="font-family:var(--mono);font-size:0.68rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-3);margin-bottom:0.4rem;">Kunde</p>
+            <p style="font-weight:500;color:var(--ink);">Musterfirma GmbH</p>
+            <p style="color:var(--ink-2);">Musterstraße 12, 6020 Innsbruck</p>
+          </div>
+          <div>
+            <p style="font-family:var(--mono);font-size:0.68rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-3);margin-bottom:0.4rem;">Lieferdatum</p>
+            <p style="font-family:var(--mono);color:var(--ink);">17.03.2024</p>
+          </div>
+        </div>
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr><th>Pos.</th><th>Artikel-Nr.</th><th>Bezeichnung</th><th>Menge</th><th>E-Preis</th><th>Gesamt</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="td-mono">1</td>
+                <td class="td-mono">ART-00124</td>
+                <td class="td-primary">Schrauben M8 × 40mm</td>
+                <td class="td-mono">200 Stk.</td>
+                <td class="td-mono">€0,12</td>
+                <td class="td-mono">€24,00</td>
+              </tr>
+              <tr>
+                <td class="td-mono">2</td>
+                <td class="td-mono">ART-00056</td>
+                <td class="td-primary">Lagergehäuse SKF 6205</td>
+                <td class="td-mono">4 Stk.</td>
+                <td class="td-mono">€8,70</td>
+                <td class="td-mono">€34,80</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="document-footer">
+        <div>
+          <p class="total-label">Gesamt netto</p>
+          <p class="total-value">€58,80</p>
+        </div>
+        <div>
+          <p class="total-label">MwSt. 20%</p>
+          <p class="total-value">€11,76</p>
+        </div>
+        <div>
+          <p class="total-label">Gesamt brutto</p>
+          <p style="font-family:var(--mono);font-size:1.5rem;font-weight:500;color:var(--accent-primary);">€70,56</p>
+        </div>
+        <div style="margin-left:1rem;">
+          <button class="btn btn-highlight btn-sm">
+            <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+            PDF
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="document-demo" style="margin-top:1rem;">
+      <div class="document-header">
+        <div>
+          <div class="document-header-logo">sims.abler.tirol</div>
+          <div class="document-header-type">Rechnung</div>
+        </div>
+        <div class="document-header-meta">
+          <div class="document-header-nr">RE-2024-0017</div>
+          <div class="document-header-date">17. März 2024 · Fällig: 31. März 2024</div>
+          <div style="margin-top:0.5rem;"><span class="badge badge-low badge-dot" style="font-size:0.65rem;">Offen</span></div>
+        </div>
+      </div>
+      <div class="document-footer">
+        <p style="font-size:0.85rem;color:var(--ink-2);">Basierend auf Lieferschein LS-2024-0042</p>
+        <div>
+          <p class="total-label">Rechnungsbetrag</p>
+          <p style="font-family:var(--mono);font-size:1.5rem;font-weight:500;color:var(--accent-primary);">€70,56</p>
+        </div>
+        <div style="display:flex;gap:0.5rem;">
+          <button class="btn btn-outline btn-sm">Als bezahlt markieren</button>
+          <button class="btn btn-highlight btn-sm">PDF</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       10. LAYOUT & SPACING
+       ============================================================ -->
+  <section class="guide-section" id="layout">
+    <p class="section-label">10 — Layout &amp; Spacing</p>
+    <h2 class="section-title">Raster &amp; Abstände</h2>
+    <p class="section-desc">
+      Max-Width <code>72rem</code>. Section-Padding <code>5rem</code> Desktop / <code>3rem</code> Mobile.
+      Spacing-Skala in 4px-Schritten.
+    </p>
+
+    <div class="subsection">
+      <p class="subsection-title">Spacing-Skala</p>
+      <div class="spacing-demo">
+        <div class="spacing-row"><div class="spacing-block" style="width:4px;"></div><span class="spacing-label">4px — Intra-Element (Icon → Text)</span></div>
+        <div class="spacing-row"><div class="spacing-block" style="width:8px;"></div><span class="spacing-label">8px — Tags, Badges</span></div>
+        <div class="spacing-row"><div class="spacing-block" style="width:12px;"></div><span class="spacing-label">12px — Kompakte Abstände</span></div>
+        <div class="spacing-row"><div class="spacing-block" style="width:16px;"></div><span class="spacing-label">16px — Standard-Gap</span></div>
+        <div class="spacing-row"><div class="spacing-block" style="width:24px;"></div><span class="spacing-label">24px — Zwischen Gruppen</span></div>
+        <div class="spacing-row"><div class="spacing-block" style="width:32px;"></div><span class="spacing-label">32px — Zwischen Sektionen</span></div>
+        <div class="spacing-row"><div class="spacing-block" style="width:48px;"></div><span class="spacing-label">48px — Zwischen großen Blöcken</span></div>
+        <div class="spacing-row"><div class="spacing-block" style="width:80px;"></div><span class="spacing-label">80px — Zwischen Sections (Desktop)</span></div>
+      </div>
+    </div>
+
+    <div class="subsection">
+      <p class="subsection-title">Border-Radius</p>
+      <div class="demo-row" style="flex-wrap:wrap;">
+        <div style="text-align:center;">
+          <div style="width:60px;height:40px;background:var(--accent-light);border:2px solid var(--accent-highlight);border-radius:999px;"></div>
+          <p style="font-family:var(--mono);font-size:0.68rem;color:var(--ink-3);margin-top:0.4rem;">999px<br>Buttons/Badges</p>
+        </div>
+        <div style="text-align:center;">
+          <div style="width:60px;height:40px;background:var(--accent-light);border:2px solid var(--accent-highlight);border-radius:0.5rem;"></div>
+          <p style="font-family:var(--mono);font-size:0.68rem;color:var(--ink-3);margin-top:0.4rem;">0.5rem<br>Tags / Code</p>
+        </div>
+        <div style="text-align:center;">
+          <div style="width:60px;height:40px;background:var(--accent-light);border:2px solid var(--accent-highlight);border-radius:1rem;"></div>
+          <p style="font-family:var(--mono);font-size:0.68rem;color:var(--ink-3);margin-top:0.4rem;">1rem<br>Kleine Cards</p>
+        </div>
+        <div style="text-align:center;">
+          <div style="width:60px;height:40px;background:var(--accent-light);border:2px solid var(--accent-highlight);border-radius:1.5rem;"></div>
+          <p style="font-family:var(--mono);font-size:0.68rem;color:var(--ink-3);margin-top:0.4rem;">1.5rem<br>Inputs / Tables</p>
+        </div>
+        <div style="text-align:center;">
+          <div style="width:60px;height:40px;background:var(--accent-light);border:2px solid var(--accent-highlight);border-radius:2rem;"></div>
+          <p style="font-family:var(--mono);font-size:0.68rem;color:var(--ink-3);margin-top:0.4rem;">2rem<br>Cards / Demos</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       11. ANIMATIONEN
+       ============================================================ -->
+  <section class="guide-section" id="animationen">
+    <p class="section-label">11 — Animationen</p>
+    <h2 class="section-title">Motion-Regeln</h2>
+    <p class="section-desc">
+      Animationen dienen der Orientierung, nicht der Unterhaltung.
+      Max. <code>0.7s</code> für UI-Feedback. Kein Parallax, kein Bounce.
+    </p>
+
+    <div class="subsection">
+      <p class="subsection-title">Erlaubte Animationen</p>
+<pre><span class="code-comment">/* Page Load — Hero-Elemente mit Stagger */</span>
+@keyframes fadeUp {
+  from { opacity: <span class="code-val">0</span>; transform: <span class="code-val">translateY(18px)</span>; }
+  to   { opacity: <span class="code-val">1</span>; transform: <span class="code-val">translateY(0)</span>; }
+}
+<span class="code-comment">/* Stagger: je 0.05s–0.15s zwischen Elementen */</span>
+.item-1 { animation: fadeUp <span class="code-val">0.5s</span> ease both; }
+.item-2 { animation: fadeUp <span class="code-val">0.5s</span> ease <span class="code-val">0.08s</span> both; }
+.item-3 { animation: fadeUp <span class="code-val">0.5s</span> ease <span class="code-val">0.16s</span> both; }
+
+<span class="code-comment">/* Hover — Cards */</span>
+.card { transition: transform <span class="code-val">0.25s</span> ease, box-shadow <span class="code-val">0.25s</span> ease; }
+.card:hover { transform: <span class="code-val">translateY(-4px)</span>; }
+
+<span class="code-comment">/* Hover — Buttons */</span>
+.btn { transition: background <span class="code-val">0.18s</span>, transform <span class="code-val">0.15s</span>; }
+.btn:hover { transform: <span class="code-val">translateY(-1px)</span>; }
+
+<span class="code-comment">/* Verboten */</span>
+<span class="code-comment">/* ❌ animation-duration > 0.7s für UI-Feedback */</span>
+<span class="code-comment">/* ❌ Bounce / Elastic-Easing */</span>
+<span class="code-comment">/* ❌ Scroll-Parallax */</span>
+<span class="code-comment">/* ❌ Animationen auf Text-Paragraphen */</span></pre>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       12. REGELN
+       ============================================================ -->
+  <section class="guide-section" id="regeln">
+    <p class="section-label">12 — Regeln</p>
+    <h2 class="section-title">Do &amp; Don't</h2>
+    <p class="section-desc">
+      Verbindliche Regeln für alle Komponenten und Seiten unter sims.abler.tirol.
+      Gelten genauso für alle anderen Produkte im abler.tirol Ökosystem.
+    </p>
+
+    <div class="rule-grid">
+      <div class="rule-card rule-do">
+        <div class="rule-header">✓ Do</div>
+        <ul class="rule-list">
+          <li>Fonts immer von <code>api.abler.tirol/fonts/</code> laden</li>
+          <li>Buttons immer Pill-Form (<code>border-radius: 999px</code>)</li>
+          <li>CSS-Variablen für alle Farbwerte verwenden</li>
+          <li>DM Mono für Artikelnummern, Mengen, Beträge</li>
+          <li>Teal als einzige Akzentfarbe (+ Neutrals)</li>
+          <li>Tabellen auf Mobile horizontal scrollbar machen</li>
+          <li>Status-Badges: Teal OK · Amber Niedrig · Rot Leer</li>
+          <li>Labels: DM Mono + uppercase + letter-spacing</li>
+          <li>Hover-State bei Cards: translateY(-4px) + Shadow</li>
+          <li>Focus-Outline: 3px Teal Ring (<code>rgba(20,184,166,0.15)</code>)</li>
+          <li>Max. 2 Akzentfarben gleichzeitig sichtbar</li>
+          <li>Schnellsuche prominent platzieren</li>
+        </ul>
+      </div>
+      <div class="rule-card rule-dont">
+        <div class="rule-header">✗ Don't</div>
+        <ul class="rule-list">
+          <li>Nie Google Fonts einbinden</li>
+          <li>Keine eckigen Buttons</li>
+          <li>Kein <code>#000000</code> als Textfarbe — immer <code>--ink</code></li>
+          <li>Keine hardcodierten Farbwerte in HTML/Templates</li>
+          <li>Kein lila/violetter Gradient auf weißem Hintergrund</li>
+          <li>Keine System-Fonts (Arial, Roboto, system-ui)</li>
+          <li>Kein reines Weiß (<code>#fff</code>) als Hintergrund — <code>--bg-light</code></li>
+          <li>Keine <code>animation-duration &gt; 0.7s</code> für UI-Feedback</li>
+          <li>Kein Scroll-Hijacking / Parallax</li>
+          <li>Kein Bounce- oder Elastic-Easing</li>
+          <li>Nie mehr als 5 Navigationspunkte</li>
+          <li>Keine dunklen Muster / irreführende CTAs</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="subsection" style="margin-top:2.5rem;">
+      <p class="subsection-title">Zweisprachigkeit DE/EN (außer App-Kern)</p>
+<pre><span class="code-tag">&lt;body</span> class=<span class="code-str">"de"</span><span class="code-tag">&gt;</span>
+
+<span class="code-tag">&lt;p</span> data-lang=<span class="code-str">"de"</span><span class="code-tag">&gt;</span>Lagerverwaltung<span class="code-tag">&lt;/p&gt;</span>
+<span class="code-tag">&lt;p</span> data-lang=<span class="code-str">"en"</span><span class="code-tag">&gt;</span>Inventory Management<span class="code-tag">&lt;/p&gt;</span>
+
+<span class="code-comment">/* CSS */</span>
+[data-lang] { display: none !important; }
+body.de [data-lang="de"] { display: revert !important; }
+body.en [data-lang="en"] { display: revert !important; }
+
+<span class="code-comment">/* JS Toggle */</span>
+function setLang(lang) {
+  document.body.className = lang;
+  document.documentElement.lang = lang;
+}</pre>
+    </div>
+
+    <div class="subsection">
+      <p class="subsection-title">Zweisprachigkeit — sims Ausnahme</p>
+      <div class="rule-card rule-do" style="max-width:48rem;">
+        <div class="rule-header">Hinweis sims</div>
+        <ul class="rule-list">
+          <li>Öffentliche Landing-Page: zweisprachig DE/EN mit Toggle</li>
+          <li>App-Kern (Dashboard, Tabellen, Formulare): nur DE — gemäß Design-Guide Ausnahme für sims/klara</li>
+          <li>Fehlermeldungen, Statusmeldungen: DE</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- ============================================================
+     FOOTER
+     ============================================================ -->
+<footer style="background:var(--accent-secondary);color:rgba(255,255,255,0.45);padding:2rem 2.5rem;text-align:center;font-family:var(--mono);font-size:0.72rem;letter-spacing:0.1em;">
+  <span style="color:var(--accent-highlight);">sims.abler.tirol</span> · Design Guide · Simon Abler · abler.tirol · 2026
+</footer>
+
+<script>
+// Active nav link on scroll
+const sections = document.querySelectorAll('.guide-section');
+const navLinks = document.querySelectorAll('.guide-nav-link');
+
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      navLinks.forEach(l => l.classList.remove('active'));
+      const id = entry.target.id;
+      const link = document.querySelector(`.guide-nav-link[href="#${id}"]`);
+      if (link) link.classList.add('active');
+    }
+  });
+}, { rootMargin: '-30% 0px -60% 0px' });
+
+sections.forEach(s => observer.observe(s));
+
+// Smooth scroll for nav
+navLinks.forEach(link => {
+  link.addEventListener('click', e => {
+    e.preventDefault();
+    const target = document.querySelector(link.getAttribute('href'));
+    if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+});
+</script>
+
+</body>
+</html>

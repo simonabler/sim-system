@@ -1,0 +1,20 @@
+h1, .page-title {
+  font-family: 'DM Serif Display', serif;
+  font-weight: 400;
+  font-size: 1.4rem;
+  line-height: 1.1;
+  color: var(--ink);
+}
+@media (min-width: 768px) {
+  h1, .page-title { font-size: 1.75rem; }
+}
+
+.eyebrow {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.6rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+.mono { font-family: 'DM Mono', monospace; }

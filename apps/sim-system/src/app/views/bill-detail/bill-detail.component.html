@@ -1,0 +1,136 @@
+<div class="sims-page-header">
+  <div>
+    <div class="eyebrow">Rechnungen</div>
+    <h1 class="page-title">Rechnung #{{ bill()?.getNumber() || '…' }}</h1>
+  </div>
+  <button class="btn-sims-ghost" (click)="back()">Zurück</button>
+</div>
+
+@if (loading()) {
+  <div class="sims-card skeleton" style="height:300px;"></div>
+}
+
+@if (error()) {
+  <div class="sims-card mb-3 error-card">{{ error() }}</div>
+}
+
+@if (bill() && !loading()) {
+  <div class="sims-card bill-overview mb-3">
+    <div class="row g-3">
+      <div class="col-12 col-lg-5">
+        <div class="eyebrow">Rechnungsdatum</div>
+        @if (!editingDate()) {
+          <div class="date-display">
+            <span class="date-value">{{ bill()!.billDate | date:'dd.MM.yyyy' }}</span>
+            <button
+              type="button"
+              class="date-edit-button"
+              (click)="startEditBillDate()"
+              [disabled]="busy()"
+              aria-label="Rechnungsdatum bearbeiten"
+              title="Rechnungsdatum bearbeiten"
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path
+                  d="M3 17.25V21h3.75L17.8 9.94l-3.75-3.75L3 17.25Zm17.71-10.04a1.003 1.003 0 0 0 0-1.42l-2.5-2.5a1.003 1.003 0 0 0-1.42 0l-1.96 1.96 3.75 3.75 2.13-1.79Z"
+                  fill="currentColor"
+                />
+              </svg>
+            </button>
+          </div>
+        } @else {
+          <div class="date-editor">
+            <input
+              type="date"
+              class="sims-input"
+              [value]="billDateDraft()"
+              (input)="billDateDraft.set($any($event.target).value)"
+              [disabled]="busy()"
+            />
+            <button
+              class="btn-sims-primary"
+              (click)="saveBillDate()"
+              [disabled]="busy() || !billDateDraft() || !hasDateChanges()"
+            >
+              {{ savingDate() ? 'Wird gespeichert…' : 'Datum speichern' }}
+            </button>
+            <button
+              type="button"
+              class="btn-sims-ghost"
+              (click)="cancelEditBillDate()"
+              [disabled]="savingDate()"
+            >
+              Abbrechen
+            </button>
+          </div>
+          <div class="date-hint">Speichern aktualisiert auch das Rechnungs-PDF.</div>
+        }
+      </div>
+      <div class="col-6 col-lg-2">
+        <div class="eyebrow">Status</div>
+        <div class="meta-value">
+          <span [class]="badgeClass(bill()!.state)">{{ badgeLabel(bill()!.state) }}</span>
+        </div>
+      </div>
+      <div class="col-6 col-lg-2">
+        <div class="eyebrow">Lieferscheine</div>
+        <div class="meta-value mono">{{ bill()!.slipsheets.length }}</div>
+      </div>
+      <div class="col-12 col-lg-3">
+        <div class="eyebrow">Rechnungsnummer</div>
+        <div class="meta-value mono">{{ bill()!.getNumber() }}</div>
+      </div>
+    </div>
+  </div>
+
+
+  @if (bill()!.slipsheets.length) {
+    <div class="sims-card-table mb-3">
+      <table class="table-responsive-cards">
+        <thead>
+          <tr>
+            <th [attr.aria-sort]="slipAriaSort('number')"><button type="button" class="table-sort-button" (click)="sortSlipsBy('number')" aria-label="Nach Lieferscheinnummer sortieren">Lieferschein-Nr. <span class="table-sort-icon">{{ slipSortIcon('number') }}</span></button></th>
+            <th [attr.aria-sort]="slipAriaSort('date')"><button type="button" class="table-sort-button" (click)="sortSlipsBy('date')" aria-label="Nach Datum sortieren">Datum <span class="table-sort-icon">{{ slipSortIcon('date') }}</span></button></th>
+            <th [attr.aria-sort]="slipAriaSort('state')"><button type="button" class="table-sort-button" (click)="sortSlipsBy('state')" aria-label="Nach Status sortieren">Status <span class="table-sort-icon">{{ slipSortIcon('state') }}</span></button></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (slipsheet of sortedSlipsheets(); track slipsheet.id) {
+            <tr [routerLink]="['/slipsheets', slipsheet.id]">
+              <td data-label="Nr." class="numeric">{{ slipsheet.slipsheetnumber }}</td>
+              <td data-label="Datum">{{ slipsheet.createdAt | date:'dd.MM.yyyy' }}</td>
+              <td data-label="Status">
+                <span [class]="slipsheet.state === 'closed' ? 'sims-badge sims-badge-success' : 'sims-badge sims-badge-neutral'">
+                  {{ slipsheet.getStateLabel() }}
+                </span>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+
+  <div class="sticky-actions">
+    <button class="btn-sims-primary" (click)="downloadPdf()" [disabled]="busy()">
+      {{ downloading() ? 'Wird geladen…' : 'PDF herunterladen' }}
+    </button>
+    <button class="btn-sims-outline" (click)="recreatePdf()" [disabled]="busy()">
+      {{ recreating() ? 'Wird neu erzeugt…' : 'PDF neu erzeugen' }}
+    </button>
+  </div>
+
+  <div class="sims-card release-card mt-3">
+    <div>
+      <div class="eyebrow">Rückgängig machen</div>
+      <h2 class="release-title">Rechnung löschen und Lieferscheine wieder freigeben</h2>
+      <p class="release-copy">
+        Die Rechnung wird entfernt. Zugeordnete Lieferscheine bleiben abgeschlossen, können danach aber wieder neu verrechnet werden.
+      </p>
+    </div>
+    <button class="btn-sims-danger" (click)="releaseBill()" [disabled]="busy()">
+      {{ deleting() ? 'Wird zurückgeholt…' : 'Rechnung zurückholen' }}
+    </button>
+  </div>
+
+}

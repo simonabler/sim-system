@@ -1,0 +1,137 @@
+<div class="sims-page-header">
+  <div>
+    <div class="eyebrow">Werkzeuge</div>
+    <h1 class="page-title">Inventur</h1>
+  </div>
+</div>
+
+<div class="sims-card scan-card">
+  <label class="sims-label eyebrow">Barcode scannen oder eingeben</label>
+  <div class="scan-row">
+    <div class="scan-input-wrap">
+      <input
+        #codeInput
+        type="text"
+        class="scan-input"
+        [formControl]="codeCtrl"
+        placeholder="Barcode…"
+        autofocus
+        autocomplete="off"
+        inputmode="text"
+      />
+    </div>
+    <button class="scan-camera-btn" title="Kamera" aria-label="Kamera öffnen">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/>
+        <circle cx="12" cy="13" r="4"/>
+      </svg>
+    </button>
+  </div>
+</div>
+
+@if (article()) {
+  <div class="sims-card article-card">
+    <div class="article-card-header">
+      <div class="article-name">{{ article()!.name }}</div>
+      <div class="article-meta">
+        <span class="mono">{{ article()!.artNumber }}</span>
+        @if (article()!.code) {
+          <span class="sep">·</span>
+          <span class="mono">{{ article()!.code }}</span>
+        }
+      </div>
+    </div>
+
+    <table class="article-info-table">
+      @if (article()!.type) {
+        <tr>
+          <th>Typ</th>
+          <td><span class="sims-badge sims-badge-neutral badge-sm">{{ article()!.type }}</span></td>
+        </tr>
+      }
+      @if (article()!.trackStock) {
+        <tr>
+          <th>Lagerstand</th>
+          <td class="mono stock-val">{{ article()!.stock }} <small>{{ article()!.unit }}</small></td>
+        </tr>
+      } @else {
+        <tr>
+          <th>Lagerstand</th>
+          <td><span class="sims-badge sims-badge-neutral badge-sm">Ohne Bestand</span></td>
+        </tr>
+      }
+      @if (article()!.supplier) {
+        <tr>
+          <th>Hersteller</th>
+          <td>{{ article()!.supplier }}</td>
+        </tr>
+      }
+      @if (article()!.description) {
+        <tr>
+          <th>Beschreibung</th>
+          <td>{{ article()!.description }}</td>
+        </tr>
+      }
+    </table>
+  </div>
+
+  @if (article()!.trackStock) {
+    <div class="count-card">
+      <div class="count-half">
+        <div class="eyebrow">Soll</div>
+        <div class="mono count-val muted">{{ shouldVal() }} <small>{{ article()!.unit }}</small></div>
+      </div>
+      <div class="count-divider"></div>
+      <div class="count-half">
+        <div class="eyebrow">Ist</div>
+        <div class="count-ist-row">
+          <button class="step-btn" (click)="stepIs(-1)" aria-label="Weniger">−</button>
+          <input
+            #isInput
+            type="number"
+            class="is-input mono"
+            [value]="isVal()"
+            (input)="onIsInput($event)"
+            (focus)="$any($event.target).select()"
+            inputmode="decimal"
+            min="0"
+            step="0.01"
+          />
+          <button class="step-btn" (click)="stepIs(1)" aria-label="Mehr">+</button>
+          <small class="mono unit-label">{{ article()!.unit }}</small>
+        </div>
+      </div>
+    </div>
+
+    <div class="diff-banner" [class]="diffClass()">
+      <span class="eyebrow">Differenz</span>
+      <span class="mono diff-val">
+        {{ diff() > 0 ? '+' : '' }}{{ diff() }} {{ article()!.unit }}
+      </span>
+    </div>
+
+    <button class="btn-sims-primary inv-submit" (click)="onSubmit()" [disabled]="submitting()">
+      {{ submitting() ? 'Wird gebucht…' : 'Inventur buchen' }}
+    </button>
+  } @else {
+    <div class="sims-card">
+      Für diesen Artikel ist keine Bestandsführung aktiviert. Es wird kein Lagerstand berechnet und keine Inventur gebucht.
+    </div>
+  }
+}
+
+@if (recentLog().length > 0) {
+  <div class="log-section">
+    <div class="eyebrow">Zuletzt gebucht</div>
+    @for (entry of recentLog(); track entry.code) {
+      <div class="log-item sims-card">
+        <svg class="log-check" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+        <span class="log-name">{{ entry.articleName }}</span>
+        <span class="mono log-qty">{{ entry.isVal }} {{ entry.unit }}</span>
+        <span class="mono log-diff" [class]="logDiffClass(entry.diff)">
+          {{ entry.diff > 0 ? '+' : '' }}{{ entry.diff }}
+        </span>
+      </div>
+    }
+  </div>
+}

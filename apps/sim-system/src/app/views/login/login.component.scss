@@ -1,0 +1,24 @@
+.login-fullscreen {
+  min-height: 100vh;
+  background: var(--bg-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+}
+.login-card { max-width: 24rem; width: 100%; }
+.login-logo {
+  font-size: 1rem;
+  letter-spacing: 0.3em;
+  color: var(--accent-primary);
+  margin-bottom: 1rem;
+}
+.login-error {
+  background: var(--status-error-light);
+  color: var(--status-error);
+  border: 1px solid var(--status-error-border);
+  border-radius: 0.75rem;
+  padding: 0.75rem 1rem;
+  font-size: 0.875rem;
+  margin-bottom: 1rem;
+}

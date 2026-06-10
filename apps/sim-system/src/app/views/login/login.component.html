@@ -1,0 +1,22 @@
+<div class="login-fullscreen">
+  <div class="sims-card login-card">
+    <div class="login-logo eyebrow">SIMS</div>
+    <h1 class="page-title" style="font-size: 1.4rem; margin-bottom: 1.5rem;">Anmelden</h1>
+    @if (error) {
+      <div class="login-error">{{ error }}</div>
+    }
+    <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
+      <div style="margin-bottom: 1rem;">
+        <label class="sims-label" for="login">Benutzername</label>
+        <input id="login" type="text" class="sims-input" formControlName="login" autocomplete="username" />
+      </div>
+      <div style="margin-bottom: 1.5rem;">
+        <label class="sims-label" for="password">Passwort</label>
+        <input id="password" type="password" class="sims-input" formControlName="password" autocomplete="current-password" />
+      </div>
+      <button type="submit" class="btn-sims-primary" [disabled]="loading">
+        {{ loading ? 'Wird angemeldet…' : 'Anmelden' }}
+      </button>
+    </form>
+  </div>
+</div>

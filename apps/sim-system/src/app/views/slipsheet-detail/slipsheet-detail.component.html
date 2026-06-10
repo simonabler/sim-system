@@ -1,0 +1,56 @@
+<div class="sims-page-header">
+  <div>
+    <div class="eyebrow">Lieferscheine</div>
+    <h1 class="page-title">
+      @if (slipsheet()) { LS {{ slipsheet()!.slipsheetnumber }} }
+      @else { Lieferschein }
+    </h1>
+  </div>
+  <button class="btn-sims-ghost" (click)="back()">← Zurück</button>
+</div>
+
+@if (loading()) { <div class="sims-card skeleton" style="height:300px;"></div> }
+@if (error()) { <div class="sims-card" style="color:var(--status-empty); border-left:3px solid var(--status-empty);">{{ error() }}</div> }
+
+@if (slipsheet(); as s) {
+  <!-- Meta-Card -->
+  <div class="sims-card mb-3">
+    <div class="meta-grid">
+      <div>
+        <div class="eyebrow">Kunde</div>
+        <div class="meta-val">
+          {{ s.customer?.companyName || (s.customer?.lastName + ' ' + s.customer?.firstName) }}
+        </div>
+      </div>
+      <div>
+        <div class="eyebrow">Datum</div>
+        <div class="meta-val mono">{{ s.createdAt | date:'dd.MM.yyyy' }}</div>
+      </div>
+      <div>
+        <div class="eyebrow">Status</div>
+        <div class="meta-val">
+          <span [class]="badgeClass(s.state)">{{ s.getStateLabel() }}</span>
+        </div>
+      </div>
+      <div>
+        <div class="eyebrow">Verrechnung</div>
+        <div class="meta-val">
+          @if (s.isOpen()) {
+            <span class="sims-badge sims-badge-low">Offen</span>
+          } @else {
+            <span class="sims-badge sims-badge-ok">Verrechnet · RE-{{ s.bill?.id }}</span>
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Editor -->
+  <div class="sims-card-table">
+    <app-slipsheet-editor
+      [slipsheet]="slipsheet()"
+      [customer]="customer()"
+      (updated)="onSlipUpdated($event)"
+    />
+  </div>
+}

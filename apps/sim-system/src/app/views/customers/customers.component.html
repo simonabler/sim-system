@@ -1,0 +1,45 @@
+<div class="sims-page-header">
+  <div>
+    <div class="eyebrow">Stammdaten</div>
+    <h1 class="page-title">Kunden</h1>
+  </div>
+  <button class="btn-sims-primary" (click)="newCustomer()">+ Kunde</button>
+</div>
+
+<div class="mb-3">
+  <input type="search" class="sims-input" placeholder="Name oder Firma suchen…" [formControl]="searchCtrl" />
+</div>
+
+@if (loading()) { <div class="sims-card skeleton" style="height:200px;"></div> }
+
+@if (!loading() && filtered().length === 0) {
+  <div class="sims-empty-state">
+    <div class="empty-icon">👤</div>
+    <div class="empty-title">Keine Kunden gefunden</div>
+  </div>
+}
+
+@if (!loading() && filtered().length > 0) {
+  <div class="sims-card-table">
+    <table class="table-responsive-cards">
+      <thead>
+        <tr>
+          <th [attr.aria-sort]="ariaSort('name')"><button type="button" class="table-sort-button" (click)="sortBy('name')" aria-label="Nach Name oder Firma sortieren">Name / Firma <span class="table-sort-icon">{{ sortIcon('name') }}</span></button></th>
+          <th [attr.aria-sort]="ariaSort('customerNumber')"><button type="button" class="table-sort-button" (click)="sortBy('customerNumber')" aria-label="Nach Kundennummer sortieren">Kundennummer <span class="table-sort-icon">{{ sortIcon('customerNumber') }}</span></button></th>
+          <th [attr.aria-sort]="ariaSort('email')"><button type="button" class="table-sort-button" (click)="sortBy('email')" aria-label="Nach E-Mail sortieren">E-Mail <span class="table-sort-icon">{{ sortIcon('email') }}</span></button></th>
+          <th [attr.aria-sort]="ariaSort('place')"><button type="button" class="table-sort-button" (click)="sortBy('place')" aria-label="Nach Ort sortieren">Ort <span class="table-sort-icon">{{ sortIcon('place') }}</span></button></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (c of filtered(); track c.id) {
+          <tr (click)="goToCustomer(c.id)">
+            <td data-label="Name / Firma">{{ c.getName() }}</td>
+            <td data-label="Kundennummer" class="numeric">{{ c.customerNumber }}</td>
+            <td data-label="E-Mail">{{ c.email }}</td>
+            <td data-label="Ort">{{ c.postcode }} {{ c.country }}</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+}
