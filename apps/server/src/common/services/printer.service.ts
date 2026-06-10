@@ -14,12 +14,10 @@ export class PrinterService {
     const settings = await this.settingsService.get();
     const printer = settings?.printerName?.trim() || this.appConfigService.printer;
     const copies = Math.max(1, settings?.printCopies ?? 1);
-    const options = { printer };
+    const options = { printer, copies };
 
     try {
-      for (let i = 0; i < copies; i++) {
-        await print(path, options);
-      }
+      await print(path, options);
       return true;
     } catch (error) {
       throw new InternalServerErrorException('Drucken fehlgeschlagen');
