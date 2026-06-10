@@ -148,6 +148,7 @@
         <thead>
           <tr>
             <th>Artikel / Text</th>
+            <th>Artikel-Nr.</th>
             <th style="text-align:right;">Menge</th>
             <th style="text-align:right;">Preis/Stk.</th>
             <th style="text-align:right;">Gesamt</th>
@@ -159,12 +160,8 @@
             @if (editingOrder()?.id === order.id) {
               <!-- Inline-Edit Zeile Row 1 -->
               <tr class="row-editing">
-                <td>
-                  {{ order.article?.name || order.text }}
-                  @if (order.article?.artNumber) {
-                    <div class="mono" style="font-size:0.7rem; color:var(--ink-3); margin-top:0.1rem;">{{ order.article.artNumber }}</div>
-                  }
-                </td>
+                <td>{{ order.article?.name || order.text }}</td>
+                <td class="mono" style="font-size:0.8rem; color:var(--ink-3);">{{ order.article?.artNumber || '—' }}</td>
                 <td>
                   <input
                     type="number"
@@ -197,7 +194,7 @@
               </tr>
               <!-- Inline-Edit Zeile Row 2: Rabatte -->
               <tr class="row-editing row-editing-discounts">
-                <td colspan="5">
+                <td colspan="6">
                   <div class="edit-discount-row">
                     <div class="field-group">
                       <label class="field-label" for="edit-customer-rabatt">Kunden-Rabatt %</label>
@@ -240,6 +237,7 @@
                     <span class="sims-badge sims-badge-neutral" style="margin-left:0.5rem; font-size:0.6rem;">TEXT</span>
                   }
                 </td>
+                <td class="mono" style="font-size:0.8rem; color:var(--ink-3);">{{ order.article?.artNumber || '—' }}</td>
                 <td class="numeric mono">{{ order.amount }} {{ order.article?.unit || '' }}</td>
                 <td class="numeric mono">
                   {{ fmt(order.price) }} €
