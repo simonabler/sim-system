@@ -10,7 +10,7 @@ import { Article } from '../../models/article.model';
 import { ArticleImportDialogComponent } from './import-dialog/article-import-dialog.component';
 import { ariaSort, nextSortState, sortIcon, sortItems, SortState } from '../../shared/table-sort';
 
-type ArticleSortKey = 'name' | 'artNumber' | 'code' | 'stock' | 'unit' | 'status' | 'inventoryDate';
+type ArticleSortKey = 'name' | 'artNumber' | 'code' | 'price' | 'stock' | 'unit' | 'status' | 'inventoryDate';
 
 @Component({
   selector: 'app-articles',
@@ -74,6 +74,7 @@ export class ArticlesComponent {
       name: article => article.name,
       artNumber: article => article.artNumber,
       code: article => article.code,
+      price: article => article.price,
       stock: article => article.stock,
       unit: article => article.unit,
       status: article => this.stockRank(article),
